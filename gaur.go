@@ -653,6 +653,52 @@ func highlightMatches(s string, matchedIndices []int) string {
 	return result.String()
 }
 
+// highlightMatchesWithSourceColor renders a package string (source/name) with:
+// - Source portion colored by repository
+// - Matched characters highlighted with matchHighlightStyle
+// - Non-matched characters in normal text color
+func highlightMatchesWithSourceColor(pkg Package, matchedIndices []int) string {
+	pkgStr := pkg.Source + "/" + pkg.Name
+	
+	// Get source color
+	sourceColor, hasSourceColor := sourceColors[pkg.Source]
+	
+	// If no matches, just apply source coloring
+	if len(matchedIndices) == 0 {
+		if hasSourceColor {
+			return lipgloss.NewStyle().Foreground(sourceColor).Render(pkg.Source) + "/" + pkg.Name
+		}
+		return pkgStr
+	}
+
+	// Create a set of matched indices for O(1) lookup
+	matchSet := make(map[int]struct{}, len(matchedIndices))
+	for _, idx := range matchedIndices {
+		matchSet[idx] = struct{}{}
+	}
+
+	// Find where the slash is (end of source)
+	slashIdx := len(pkg.Source)
+
+	var result strings.Builder
+	result.Grow(len(pkgStr) * 2)
+	runes := []rune(pkgStr)
+	
+	for i, r := range runes {
+		if _, matched := matchSet[i]; matched {
+			// Matched character - use highlight color
+			result.WriteString(matchHighlightStyle.Render(string(r)))
+		} else if i < slashIdx && hasSourceColor {
+			// Source portion (before slash) - use source color
+			result.WriteString(lipgloss.NewStyle().Foreground(sourceColor).Render(string(r)))
+		} else {
+			// Name portion or no source color - use normal text
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
 // Commands
 // loadRepoPackages loads all packages from local pacman database
 func loadRepoPackages() tea.Cmd {
@@ -1078,8 +1124,31 @@ func parseInstalledPackages(output string) []Package {
 		}
 	}
 
+	// Build a map of package name -> repository from pacman -Sl
+	// This gives us the actual repo (core, extra, multilib) for installed packages
+	repoMap := make(map[string]string)
+	cmd := exec.Command("pacman", "-Sl")
+	var repoOut bytes.Buffer
+	cmd.Stdout = &repoOut
+	if cmd.Run() == nil {
+		for _, line := range strings.Split(repoOut.String(), "\n") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				// Format: "repo name version [installed]"
+				repoMap[parts[1]] = parts[0]
+			}
+		}
+	}
+
+	// Apply actual repository to installed packages
+	for i := range packages {
+		if repo, ok := repoMap[packages[i].Name]; ok {
+			packages[i].Source = repo
+		}
+	}
+
 	// Get foreign packages (AUR) to mark them
-	cmd := exec.Command("pacman", "-Qm")
+	cmd = exec.Command("pacman", "-Qm")
 	var foreignOut bytes.Buffer
 	cmd.Stdout = &foreignOut
 	if cmd.Run() == nil {
@@ -2927,14 +2996,12 @@ func (m model) View() string {
 				sourceStyle = sourceStyle.Foreground(color)
 			}
 
-			// Build the package string for highlighting (source/name)
-			pkgStr := fmt.Sprintf("%s/%s", pkg.Source, pkg.Name)
-
-			// Apply highlighting if we have match indices
+			// Apply highlighting with source colors
 			var displayPkgStr string
 			if matchIndicesMap != nil {
 				if indices, ok := matchIndicesMap[i]; ok {
-					displayPkgStr = highlightMatches(pkgStr, indices)
+					// Use combined highlighting that preserves source colors
+					displayPkgStr = highlightMatchesWithSourceColor(pkg, indices)
 				} else {
 					displayPkgStr = sourceStyle.Render(pkg.Source) + "/" + pkg.Name
 				}
