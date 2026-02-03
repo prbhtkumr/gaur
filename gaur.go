@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -35,6 +36,186 @@ const (
 	confirmCleanCache
 	confirmRemoveOrphans
 )
+
+// Theme type for TUI theming
+type themeType int
+
+const (
+	themeBasic themeType = iota
+	themeCatppuccinMocha
+)
+
+// Theme holds all color definitions for the UI
+type Theme struct {
+	Name string
+
+	// Base colors
+	BorderColor     lipgloss.Color
+	SelectedColor   lipgloss.Color
+	TextColor       lipgloss.Color
+	SubtleColor     lipgloss.Color
+	TitleColor      lipgloss.Color
+
+	// Mode colors
+	InstallColor   lipgloss.Color
+	InstalledColor lipgloss.Color
+	UninstallColor lipgloss.Color
+	UpdateColor    lipgloss.Color
+
+	// Source colors
+	CoreColor     lipgloss.Color
+	ExtraColor    lipgloss.Color
+	MultilibColor lipgloss.Color
+	AurColor      lipgloss.Color
+
+	// Status colors
+	SuccessColor   lipgloss.Color
+	WarningColor   lipgloss.Color
+	ErrorColor     lipgloss.Color
+	HighlightColor lipgloss.Color
+
+	// Dashboard colors
+	DashboardLabel   lipgloss.Color
+	DashboardValue   lipgloss.Color
+	DashboardWarning lipgloss.Color
+	DashboardDesc    lipgloss.Color
+}
+
+// Available themes
+var themes = map[themeType]Theme{
+	themeBasic: {
+		Name:            "Basic",
+		BorderColor:     lipgloss.Color("62"),
+		SelectedColor:   lipgloss.Color("170"),
+		TextColor:       lipgloss.Color("252"),
+		SubtleColor:     lipgloss.Color("241"),
+		TitleColor:      lipgloss.Color("229"),
+		InstallColor:    lipgloss.Color("39"),
+		InstalledColor:  lipgloss.Color("213"),
+		UninstallColor:  lipgloss.Color("196"),
+		UpdateColor:     lipgloss.Color("46"),
+		CoreColor:       lipgloss.Color("46"),
+		ExtraColor:      lipgloss.Color("39"),
+		MultilibColor:   lipgloss.Color("214"),
+		AurColor:        lipgloss.Color("201"),
+		SuccessColor:    lipgloss.Color("46"),
+		WarningColor:    lipgloss.Color("226"),
+		ErrorColor:      lipgloss.Color("196"),
+		HighlightColor:  lipgloss.Color("226"),
+		DashboardLabel:  lipgloss.Color("252"),
+		DashboardValue:  lipgloss.Color("39"),
+		DashboardWarning: lipgloss.Color("196"),
+		DashboardDesc:   lipgloss.Color("241"),
+	},
+	themeCatppuccinMocha: {
+		Name:            "Catppuccin Mocha",
+		BorderColor:     lipgloss.Color("#6c7086"), // Overlay0
+		SelectedColor:   lipgloss.Color("#cba6f7"), // Mauve
+		TextColor:       lipgloss.Color("#cdd6f4"), // Text
+		SubtleColor:     lipgloss.Color("#6c7086"), // Overlay0
+		TitleColor:      lipgloss.Color("#f9e2af"), // Yellow
+		InstallColor:    lipgloss.Color("#89b4fa"), // Blue
+		InstalledColor:  lipgloss.Color("#f5c2e7"), // Pink
+		UninstallColor:  lipgloss.Color("#f38ba8"), // Red
+		UpdateColor:     lipgloss.Color("#a6e3a1"), // Green
+		CoreColor:       lipgloss.Color("#a6e3a1"), // Green
+		ExtraColor:      lipgloss.Color("#89b4fa"), // Blue
+		MultilibColor:   lipgloss.Color("#fab387"), // Peach
+		AurColor:        lipgloss.Color("#cba6f7"), // Mauve
+		SuccessColor:    lipgloss.Color("#a6e3a1"), // Green
+		WarningColor:    lipgloss.Color("#f9e2af"), // Yellow
+		ErrorColor:      lipgloss.Color("#f38ba8"), // Red
+		HighlightColor:  lipgloss.Color("#f9e2af"), // Yellow
+		DashboardLabel:  lipgloss.Color("#cdd6f4"), // Text
+		DashboardValue:  lipgloss.Color("#89dceb"), // Sky
+		DashboardWarning: lipgloss.Color("#f38ba8"), // Red
+		DashboardDesc:   lipgloss.Color("#a6adc8"), // Subtext0
+	},
+}
+
+// Current active theme
+var currentTheme = themes[themeCatppuccinMocha]
+
+// setTheme changes the active theme and updates all styles
+func setTheme(t themeType) {
+	if theme, ok := themes[t]; ok {
+		currentTheme = theme
+		// Update all style variables
+		defaultBorderColor = currentTheme.BorderColor
+		selectedColor = currentTheme.SelectedColor
+		modeColors = getModeColors()
+		sourceColors = getSourceColors()
+
+		baseTitleStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(currentTheme.TitleColor).
+			Padding(0, 1)
+
+		selectedStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(currentTheme.SelectedColor)
+
+		normalStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.TextColor)
+
+		infoStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.TextColor).
+			Padding(1)
+
+		statusStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.SubtleColor)
+
+		helpStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.SubtleColor).
+			Bold(true)
+
+		installedBadge = lipgloss.NewStyle().
+			Foreground(currentTheme.SuccessColor).
+			Bold(true)
+
+		matchHighlightStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.HighlightColor).
+			Bold(true)
+
+		dashboardLabelStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.DashboardLabel).
+			Bold(true)
+
+		dashboardValueStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.DashboardValue).
+			Bold(true)
+
+		dashboardWarningStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.DashboardWarning).
+			Bold(true)
+
+		dashboardDescStyle = lipgloss.NewStyle().
+			Foreground(currentTheme.DashboardDesc)
+	}
+}
+
+// getThemeByName returns a theme type by its name (case-insensitive)
+func getThemeByName(name string) (themeType, bool) {
+	nameLower := strings.ToLower(name)
+	for t, theme := range themes {
+		if strings.ToLower(theme.Name) == nameLower ||
+			strings.ToLower(strings.ReplaceAll(theme.Name, " ", "-")) == nameLower ||
+			strings.ToLower(strings.ReplaceAll(theme.Name, " ", "")) == nameLower {
+			return t, true
+		}
+	}
+	return themeBasic, false
+}
+
+// listThemes returns a list of available theme names
+func listThemes() []string {
+	var names []string
+	for _, theme := range themes {
+		names = append(names, theme.Name)
+	}
+	sort.Strings(names)
+	return names
+}
 
 // UI configuration constants
 const (
@@ -310,30 +491,40 @@ type model struct {
 	errorDetails          string
 }
 
-// Styles
+// getModeColors returns the mode colors based on current theme
+func getModeColors() map[viewMode]lipgloss.Color {
+	return map[viewMode]lipgloss.Color{
+		modeInstall:   currentTheme.InstallColor,
+		modeInstalled: currentTheme.InstalledColor,
+		modeUninstall: currentTheme.UninstallColor,
+		modeUpdate:    currentTheme.UpdateColor,
+	}
+}
+
+// getSourceColors returns the source colors based on current theme
+func getSourceColors() map[string]lipgloss.Color {
+	return map[string]lipgloss.Color{
+		"core":     currentTheme.CoreColor,
+		"extra":    currentTheme.ExtraColor,
+		"multilib": currentTheme.MultilibColor,
+		"aur":      currentTheme.AurColor,
+	}
+}
+
+// Styles - initialized with theme colors
 var (
-	defaultBorderColor = lipgloss.Color("62")
-	selectedColor      = lipgloss.Color("170")
+	defaultBorderColor = currentTheme.BorderColor
+	selectedColor      = currentTheme.SelectedColor
 
 	// Mode-specific colors for active view highlighting
-	modeColors = map[viewMode]lipgloss.Color{
-		modeInstall:   lipgloss.Color("39"),  // Blue
-		modeInstalled: lipgloss.Color("213"), // Pink
-		modeUninstall: lipgloss.Color("196"), // Red
-		modeUpdate:    lipgloss.Color("46"),  // Green
-	}
+	modeColors = getModeColors()
 
-	sourceColors = map[string]lipgloss.Color{
-		"core":     lipgloss.Color("46"),  // Green
-		"extra":    lipgloss.Color("39"),  // Blue
-		"multilib": lipgloss.Color("214"), // Orange
-		"aur":      lipgloss.Color("201"), // Magenta
-	}
+	sourceColors = getSourceColors()
 
 	// Base styles (will be customized per mode in View)
 	baseTitleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("229")).
+			Foreground(currentTheme.TitleColor).
 			Padding(0, 1)
 
 	baseBorderStyle = lipgloss.NewStyle().
@@ -341,44 +532,44 @@ var (
 
 	selectedStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(selectedColor)
+			Foreground(currentTheme.SelectedColor)
 
 	normalStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("252"))
+			Foreground(currentTheme.TextColor)
 
 	infoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("250")).
+			Foreground(currentTheme.TextColor).
 			Padding(1)
 
 	statusStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
+			Foreground(currentTheme.SubtleColor)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
+			Foreground(currentTheme.SubtleColor).
 			Bold(true)
 
 	installedBadge = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("46")).
+			Foreground(currentTheme.SuccessColor).
 			Bold(true)
 
 	matchHighlightStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("226")).
+				Foreground(currentTheme.HighlightColor).
 				Bold(true)
 
 	dashboardLabelStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("252")).
+				Foreground(currentTheme.DashboardLabel).
 				Bold(true)
 
 	dashboardValueStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("39")).
+				Foreground(currentTheme.DashboardValue).
 				Bold(true)
 
 	dashboardWarningStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("196")).
+				Foreground(currentTheme.DashboardWarning).
 				Bold(true)
 
 	dashboardDescStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("241"))
+				Foreground(currentTheme.DashboardDesc)
 )
 
 func initialModel() model {
@@ -3637,6 +3828,32 @@ func (m model) renderDashboard(helpText string, contentWidth, contentHeight int)
 }
 
 func main() {
+	themeFlag := flag.String("theme", "", "Color theme to use (basic, catppuccin-mocha)")
+	listThemesFlag := flag.Bool("list-themes", false, "List available themes and exit")
+	flag.Parse()
+
+	// Handle --list-themes
+	if *listThemesFlag {
+		fmt.Println("Available themes:")
+		for _, name := range listThemes() {
+			fmt.Printf("  - %s\n", name)
+		}
+		return
+	}
+
+	// Apply theme if specified
+	if *themeFlag != "" {
+		if t, ok := getThemeByName(*themeFlag); ok {
+			setTheme(t)
+		} else {
+			fmt.Printf("Unknown theme: %s\nAvailable themes:\n", *themeFlag)
+			for _, name := range listThemes() {
+				fmt.Printf("  - %s\n", name)
+			}
+			os.Exit(1)
+		}
+	}
+
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v\n", err)
