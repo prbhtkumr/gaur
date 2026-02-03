@@ -153,6 +153,29 @@ Filter installed packages by type:
 | 🟠 Orange  | multilib |
 | 🟣 Magenta | AUR      |
 
+### Themes
+
+Gaur supports customizable color themes. Use the `--theme` flag to select a theme:
+
+```bash
+gaur --theme catppuccin-mocha
+```
+
+To list available themes:
+
+```bash
+gaur --list-themes
+```
+
+#### Currently Supported Themes
+
+| Theme              | Description                                      |
+| ------------------ | ------------------------------------------------ |
+| `basic`            | Original color scheme                            |
+| `catppuccin-mocha` | [Catppuccin Mocha](https://catppuccin.com) theme |
+
+> 💡 More themes will be added soon!
+
 ## 🖼️ Interface
 
 ```
