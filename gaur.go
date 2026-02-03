@@ -225,6 +225,38 @@ const (
 	packageInfoDebounceTime = 150 * time.Millisecond
 )
 
+// isValidPackageName checks if a package name contains only safe characters.
+// Valid package names contain only alphanumeric, @, ., _, +, and - characters.
+// This prevents command injection through malicious package names.
+func isValidPackageName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, r := range name {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+			(r >= '0' && r <= '9') || r == '@' || r == '.' ||
+			r == '_' || r == '+' || r == '-') {
+			return false
+		}
+	}
+	return true
+}
+
+// sanitizePackageNames filters a list of package names to only include valid ones.
+// Returns the filtered list and a boolean indicating if all names were valid.
+func sanitizePackageNames(names []string) ([]string, bool) {
+	var valid []string
+	allValid := true
+	for _, name := range names {
+		if isValidPackageName(name) {
+			valid = append(valid, name)
+		} else {
+			allValid = false
+		}
+	}
+	return valid, allValid
+}
+
 // Package represents a package with its source and name
 type Package struct {
 	Source      string // core, extra, multilib, aur
@@ -917,8 +949,24 @@ func searchAUR(query string) tea.Cmd {
 			return aurSearchMsg{packages: []Package{}, query: query}
 		}
 
+		// Sanitize search query - only allow safe characters for search
+		// This prevents command injection through the search query
+		var sanitized strings.Builder
+		for _, r := range query {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+				(r >= '0' && r <= '9') || r == '-' || r == '_' || r == '.' {
+				sanitized.WriteRune(r)
+			} else if r == ' ' {
+				sanitized.WriteRune('-')
+			}
+			// Skip any other characters (potential injection attempts)
+		}
+		searchQuery := sanitized.String()
+		if searchQuery == "" {
+			return aurSearchMsg{packages: []Package{}, query: query}
+		}
+
 		// Search AUR only with paru -Ss --aur
-		searchQuery := strings.ReplaceAll(query, " ", "-")
 		cmd := exec.Command("paru", "-Ss", "-a", searchQuery)
 		var stdout bytes.Buffer
 		cmd.Stdout = &stdout
@@ -1054,6 +1102,11 @@ func debouncePackageInfo(pkgName string) tea.Cmd {
 
 func getPackageInfo(pkg Package) tea.Cmd {
 	return func() tea.Msg {
+		// Validate package name to prevent command injection
+		if !isValidPackageName(pkg.Name) {
+			return packageInfoMsg{info: "Invalid package name", packageName: pkg.Name, err: fmt.Errorf("invalid package name: %s", pkg.Name)}
+		}
+
 		cmd := exec.Command("paru", "-Si", pkg.Name)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1416,9 +1469,15 @@ func removeOrphans() tea.Cmd {
 			return removeOrphansMsg{output: "No orphans to remove", err: nil}
 		}
 		
-		// Remove them
+		// Validate orphan names before using them (defense in depth)
 		orphans := strings.Fields(orphanList.String())
-		args := append([]string{"-Rns", "--noconfirm"}, orphans...)
+		validOrphans, _ := sanitizePackageNames(orphans)
+		if len(validOrphans) == 0 {
+			return removeOrphansMsg{output: "No valid orphans to remove", err: nil}
+		}
+
+		// Remove them
+		args := append([]string{"-Rns", "--noconfirm"}, validOrphans...)
 		cmd = exec.Command("paru", args...)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1430,6 +1489,14 @@ func removeOrphans() tea.Cmd {
 
 func installPackage(pkg Package) tea.Cmd {
 	return func() tea.Msg {
+		// Validate package name to prevent command injection
+		if !isValidPackageName(pkg.Name) {
+			return actionCompleteMsg{
+				message: fmt.Sprintf("Invalid package name: %s", pkg.Name),
+				err:     fmt.Errorf("invalid package name"),
+			}
+		}
+
 		cmd := exec.Command("paru", "-S", "--noconfirm", pkg.Name)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1451,7 +1518,22 @@ func installPackage(pkg Package) tea.Cmd {
 
 func installMultiplePackages(pkgNames []string) tea.Cmd {
 	return func() tea.Msg {
-		args := append([]string{"-S", "--noconfirm"}, pkgNames...)
+		// Validate all package names to prevent command injection
+		validNames, allValid := sanitizePackageNames(pkgNames)
+		if !allValid {
+			return actionCompleteMsg{
+				message: "Some package names contain invalid characters and were skipped",
+				err:     fmt.Errorf("invalid package names detected"),
+			}
+		}
+		if len(validNames) == 0 {
+			return actionCompleteMsg{
+				message: "No valid package names to install",
+				err:     fmt.Errorf("no valid packages"),
+			}
+		}
+
+		args := append([]string{"-S", "--noconfirm"}, validNames...)
 		cmd := exec.Command("paru", args...)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1466,13 +1548,21 @@ func installMultiplePackages(pkgNames []string) tea.Cmd {
 		}
 
 		return actionCompleteMsg{
-			message: fmt.Sprintf("Successfully installed %d packages", len(pkgNames)),
+			message: fmt.Sprintf("Successfully installed %d packages", len(validNames)),
 		}
 	}
 }
 
 func uninstallPackage(pkg Package) tea.Cmd {
 	return func() tea.Msg {
+		// Validate package name to prevent command injection
+		if !isValidPackageName(pkg.Name) {
+			return actionCompleteMsg{
+				message: fmt.Sprintf("Invalid package name: %s", pkg.Name),
+				err:     fmt.Errorf("invalid package name"),
+			}
+		}
+
 		cmd := exec.Command("paru", "-Rns", "--noconfirm", pkg.Name)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1494,7 +1584,22 @@ func uninstallPackage(pkg Package) tea.Cmd {
 
 func uninstallMultiplePackages(pkgNames []string) tea.Cmd {
 	return func() tea.Msg {
-		args := append([]string{"-Rns", "--noconfirm"}, pkgNames...)
+		// Validate all package names to prevent command injection
+		validNames, allValid := sanitizePackageNames(pkgNames)
+		if !allValid {
+			return actionCompleteMsg{
+				message: "Some package names contain invalid characters and were skipped",
+				err:     fmt.Errorf("invalid package names detected"),
+			}
+		}
+		if len(validNames) == 0 {
+			return actionCompleteMsg{
+				message: "No valid package names to uninstall",
+				err:     fmt.Errorf("no valid packages"),
+			}
+		}
+
+		args := append([]string{"-Rns", "--noconfirm"}, validNames...)
 		cmd := exec.Command("paru", args...)
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -1509,7 +1614,7 @@ func uninstallMultiplePackages(pkgNames []string) tea.Cmd {
 		}
 
 		return actionCompleteMsg{
-			message: fmt.Sprintf("Successfully uninstalled %d packages", len(pkgNames)),
+			message: fmt.Sprintf("Successfully uninstalled %d packages", len(validNames)),
 		}
 	}
 }
@@ -1554,15 +1659,20 @@ func checkUpdates() tea.Cmd {
 			}
 			parts := strings.Fields(line)
 			if len(parts) >= 2 {
+				pkgName := parts[0]
+				// Validate package name (defense in depth)
+				if !isValidPackageName(pkgName) {
+					continue
+				}
 				pkg := Package{
-					Name:    parts[0],
+					Name:    pkgName,
 					Version: strings.Join(parts[1:], " "), // "oldver -> newver" format
 				}
 				// Determine source (foreign = aur)
-				checkCmd := exec.Command("pacman", "-Qq", parts[0])
+				checkCmd := exec.Command("pacman", "-Qq", pkgName)
 				if checkCmd.Run() == nil {
 					// Check if foreign
-					foreignCmd := exec.Command("pacman", "-Qm", parts[0])
+					foreignCmd := exec.Command("pacman", "-Qm", pkgName)
 					if foreignCmd.Run() == nil {
 						pkg.Source = "aur"
 					} else {
@@ -1578,19 +1688,35 @@ func checkUpdates() tea.Cmd {
 
 // executeInstallInTerminal runs paru -S interactively using tea.ExecProcess
 func executeInstallInTerminal(packages []string) tea.Cmd {
-	args := append([]string{"-S"}, packages...)
+	// Validate all package names to prevent command injection
+	validNames, _ := sanitizePackageNames(packages)
+	if len(validNames) == 0 {
+		return func() tea.Msg {
+			return execCompleteMsg{operation: confirmInstall, packages: packages, err: fmt.Errorf("no valid package names")}
+		}
+	}
+
+	args := append([]string{"-S"}, validNames...)
 	c := exec.Command("paru", args...)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
-		return execCompleteMsg{operation: confirmInstall, packages: packages, err: err}
+		return execCompleteMsg{operation: confirmInstall, packages: validNames, err: err}
 	})
 }
 
 // executeUninstallInTerminal runs paru -Rns interactively using tea.ExecProcess
 func executeUninstallInTerminal(packages []string) tea.Cmd {
-	args := append([]string{"-Rns"}, packages...)
+	// Validate all package names to prevent command injection
+	validNames, _ := sanitizePackageNames(packages)
+	if len(validNames) == 0 {
+		return func() tea.Msg {
+			return execCompleteMsg{operation: confirmUninstall, packages: packages, err: fmt.Errorf("no valid package names")}
+		}
+	}
+
+	args := append([]string{"-Rns"}, validNames...)
 	c := exec.Command("paru", args...)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
-		return execCompleteMsg{operation: confirmUninstall, packages: packages, err: err}
+		return execCompleteMsg{operation: confirmUninstall, packages: validNames, err: err}
 	})
 }
 
@@ -1612,10 +1738,18 @@ func executeCleanCacheInTerminal() tea.Cmd {
 
 // executeRemoveOrphansInTerminal runs paru -Rns $(paru -Qdtq) interactively using tea.ExecProcess
 func executeRemoveOrphansInTerminal(orphans []string) tea.Cmd {
-	args := append([]string{"-Rns"}, orphans...)
+	// Validate all package names to prevent command injection
+	validNames, _ := sanitizePackageNames(orphans)
+	if len(validNames) == 0 {
+		return func() tea.Msg {
+			return execCompleteMsg{operation: confirmRemoveOrphans, packages: orphans, err: fmt.Errorf("no valid package names")}
+		}
+	}
+
+	args := append([]string{"-Rns"}, validNames...)
 	c := exec.Command("paru", args...)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
-		return execCompleteMsg{operation: confirmRemoveOrphans, packages: orphans, err: err}
+		return execCompleteMsg{operation: confirmRemoveOrphans, packages: validNames, err: err}
 	})
 }
 
