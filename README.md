@@ -9,7 +9,7 @@
 Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) • Powered by [paru](https://github.com/Morganamilo/paru)
 
 > ⚠️ **Disclaimer:** This project is mostly vibecoded and continues to be developed through vibecoding.  
-> Do report rough edges, and expect an occasional "it works on my machine" moment (trying my best to eliminated those).
+> Do report rough edges, and expect an occasional "it works on my machine" moment (trying my best to eliminate those).
 
 </div>
 
