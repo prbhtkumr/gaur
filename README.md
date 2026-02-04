@@ -19,9 +19,9 @@ Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) • Powered 
 
 - [Features](#-features)
 - [Requirements](#-requirements)
+- [Interface](#-interface)
 - [Installation](#-installation)
 - [Usage](#-usage)
-- [Interface](#-interface)
 - [How It Works](#-how-it-works)
 - [License](#-license)
 
@@ -55,6 +55,29 @@ Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) • Powered 
 - [paru](https://github.com/Morganamilo/paru) — AUR helper
 - [fzf](https://github.com/junegunn/fzf) — Fuzzy finder (for search)
 - Go 1.21+ (for building from source)
+
+## 🖼️ Interface
+
+```
+╭─────────────────────────────────────────────────────────╭──────────────────╮
+│ Repository   : extra                                    | Selected (2) [*] │
+│ Name         : firefox                                  |  firefox         │
+│ Version      : 133.0-1                                  |  firefoxpwa      |
+│ Description  : Fast, Private & Safe Web Browser         ╰──────────────────│
+│ Architecture : x86_64                                                      │
+│ URL          : https://www.mozilla.org/firefox                             │
+│                                                                            │
+├────────────────────────────────────────────────────────────────────────────┤
+│  extra/firefox-i18n-an 147.0.2-1                                           │
+│  extra/firefox-i18n-af 147.0.2-1                                           │
+│ *extra/firefoxpwa 2.18.0.1                                                 │
+│>*extra/firefox 147.0.2-1 [installed]                                       │
+│                                                                            │
+│Found 610 packages (492 from AUR)                                           │
+│> firefox                                                                   │
+╰────────────────────────────────────────────────────────────────────────────╯
+       [/] search  [tab] mark  [i]nstall  i[n]fo  [r]emove  [u]pdate  [q]uit
+```
 
 ## 🚀 Installation
 
@@ -192,29 +215,6 @@ gaur --list-themes
 | `solarized-dark`       | <img src="screenshots/solarized-dark.png" width="320" />       |
 | `tokyonight-night`     | <img src="screenshots/tokyonight-night.png" width="320" />     |
 | `tokyonight-storm`     | <img src="screenshots/tokyonight-storm.png" width="320" />     |
-
-## 🖼️ Interface
-
-```
-╭─────────────────────────────────────────────────────────╭──────────────────╮
-│ Repository   : extra                                    | Selected (2) [*] │
-│ Name         : firefox                                  |  firefox         │
-│ Version      : 133.0-1                                  |  firefoxpwa      |
-│ Description  : Fast, Private & Safe Web Browser         ╰──────────────────│
-│ Architecture : x86_64                                                      │
-│ URL          : https://www.mozilla.org/firefox                             │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│  extra/firefox-i18n-an 147.0.2-1                                           │
-│  extra/firefox-i18n-af 147.0.2-1                                           │
-│ *extra/firefoxpwa 2.18.0.1                                                 │
-│>*extra/firefox 147.0.2-1 [installed]                                       │
-│                                                                            │
-│Found 610 packages (492 from AUR)                                           │
-│> firefox                                                                   │
-╰────────────────────────────────────────────────────────────────────────────╯
-       [/] search  [tab] mark  [i]nstall  i[n]fo  [r]emove  [u]pdate  [q]uit
-```
 
 ## 🔧 How It Works
 
