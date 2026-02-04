@@ -182,19 +182,14 @@ gaur --list-themes
 | Theme                  | Description                                                   |
 | ---------------------- | ------------------------------------------------------------- |
 | `basic`                | Original color scheme                                         |
-| `catppuccin-frappe`    | [Catppuccin Frappé](https://catppuccin.com) theme             |
-| `catppuccin-latte`     | [Catppuccin Latte](https://catppuccin.com) theme              |
 | `catppuccin-macchiato` | [Catppuccin Macchiato](https://catppuccin.com) theme          |
 | `catppuccin-mocha`     | [Catppuccin Mocha](https://catppuccin.com) theme              |
 | `dracula`              | [Dracula](https://draculatheme.com) theme                     |
 | `gruvbox-dark`         | [Gruvbox](https://github.com/morhetz/gruvbox) dark            |
-| `gruvbox-light`        | [Gruvbox](https://github.com/morhetz/gruvbox) light           |
 | `monokai-pro`          | [Monokai Pro](https://monokai.pro) theme                      |
 | `onedark`              | [One Dark](https://github.com/atom/atom) theme                |
 | `rose-pine`            | [Rosé Pine](https://rosepinetheme.com) theme                  |
 | `solarized-dark`       | [Solarized](https://ethanschoonover.com/solarized) dark       |
-| `solarized-light`      | [Solarized](https://ethanschoonover.com/solarized) light      |
-| `tokyonight-day`       | [Tokyo Night](https://github.com/folke/tokyonight.nvim) day   |
 | `tokyonight-night`     | [Tokyo Night](https://github.com/folke/tokyonight.nvim) night |
 | `tokyonight-storm`     | [Tokyo Night](https://github.com/folke/tokyonight.nvim) storm |
 

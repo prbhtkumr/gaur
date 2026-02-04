@@ -43,18 +43,14 @@ type themeType int
 const (
 	themeBasic themeType = iota
 	themeCatppuccinFrappe
-	themeCatppuccinLatte
 	themeCatppuccinMacchiato
 	themeCatppuccinMocha
 	themeDracula
 	themeGruvboxDark
-	themeGruvboxLight
 	themeOneDark
 	themeMonokaiPro
 	themeRosePine
 	themeSolarizedDark
-	themeSolarizedLight
-	themeTokyonightDay
 	themeTokyonightNight
 	themeTokyonightStorm
 )
@@ -120,54 +116,6 @@ var themes = map[themeType]Theme{
 		DashboardValue:   lipgloss.Color("39"),
 		DashboardWarning: lipgloss.Color("196"),
 		DashboardDesc:    lipgloss.Color("241"),
-	},
-	themeCatppuccinFrappe: {
-		Name:             "Catppuccin Frappe",
-		BorderColor:      lipgloss.Color("#737994"), // Overlay0
-		SelectedColor:    lipgloss.Color("#ca9ee6"), // Mauve
-		TextColor:        lipgloss.Color("#c6d0f5"), // Text
-		SubtleColor:      lipgloss.Color("#737994"), // Overlay0
-		TitleColor:       lipgloss.Color("#e5c890"), // Yellow
-		InstallColor:     lipgloss.Color("#8caaee"), // Blue
-		InstalledColor:   lipgloss.Color("#f4b8e4"), // Pink
-		UninstallColor:   lipgloss.Color("#e78284"), // Red
-		UpdateColor:      lipgloss.Color("#a6d189"), // Green
-		CoreColor:        lipgloss.Color("#a6d189"), // Green
-		ExtraColor:       lipgloss.Color("#8caaee"), // Blue
-		MultilibColor:    lipgloss.Color("#ef9f76"), // Peach
-		AurColor:         lipgloss.Color("#ca9ee6"), // Mauve
-		SuccessColor:     lipgloss.Color("#a6d189"), // Green
-		WarningColor:     lipgloss.Color("#e5c890"), // Yellow
-		ErrorColor:       lipgloss.Color("#e78284"), // Red
-		HighlightColor:   lipgloss.Color("#e5c890"), // Yellow
-		DashboardLabel:   lipgloss.Color("#c6d0f5"), // Text
-		DashboardValue:   lipgloss.Color("#99d1db"), // Sky
-		DashboardWarning: lipgloss.Color("#e78284"), // Red
-		DashboardDesc:    lipgloss.Color("#a5adce"), // Subtext0
-	},
-	themeCatppuccinLatte: {
-		Name:             "Catppuccin Latte",
-		BorderColor:      lipgloss.Color("#9ca0b0"), // Overlay0
-		SelectedColor:    lipgloss.Color("#8839ef"), // Mauve
-		TextColor:        lipgloss.Color("#4c4f69"), // Text
-		SubtleColor:      lipgloss.Color("#9ca0b0"), // Overlay0
-		TitleColor:       lipgloss.Color("#df8e1d"), // Yellow
-		InstallColor:     lipgloss.Color("#1e66f5"), // Blue
-		InstalledColor:   lipgloss.Color("#ea76cb"), // Pink
-		UninstallColor:   lipgloss.Color("#d20f39"), // Red
-		UpdateColor:      lipgloss.Color("#40a02b"), // Green
-		CoreColor:        lipgloss.Color("#40a02b"), // Green
-		ExtraColor:       lipgloss.Color("#1e66f5"), // Blue
-		MultilibColor:    lipgloss.Color("#fe640b"), // Peach
-		AurColor:         lipgloss.Color("#8839ef"), // Mauve
-		SuccessColor:     lipgloss.Color("#40a02b"), // Green
-		WarningColor:     lipgloss.Color("#df8e1d"), // Yellow
-		ErrorColor:       lipgloss.Color("#d20f39"), // Red
-		HighlightColor:   lipgloss.Color("#df8e1d"), // Yellow
-		DashboardLabel:   lipgloss.Color("#4c4f69"), // Text
-		DashboardValue:   lipgloss.Color("#04a5e5"), // Sky
-		DashboardWarning: lipgloss.Color("#d20f39"), // Red
-		DashboardDesc:    lipgloss.Color("#6c6f85"), // Subtext0
 	},
 	themeCatppuccinMacchiato: {
 		Name:             "Catppuccin Macchiato",
@@ -265,30 +213,6 @@ var themes = map[themeType]Theme{
 		DashboardWarning: lipgloss.Color("#fb4934"), // Red
 		DashboardDesc:    lipgloss.Color("#a89984"), // gray
 	},
-	themeGruvboxLight: {
-		Name:             "Gruvbox Light",
-		BorderColor:      lipgloss.Color("#bdae93"), // bg3
-		SelectedColor:    lipgloss.Color("#8f3f71"), // Purple
-		TextColor:        lipgloss.Color("#3c3836"), // fg
-		SubtleColor:      lipgloss.Color("#bdae93"), // bg3
-		TitleColor:       lipgloss.Color("#b57614"), // Yellow
-		InstallColor:     lipgloss.Color("#076678"), // Blue
-		InstalledColor:   lipgloss.Color("#8f3f71"), // Purple
-		UninstallColor:   lipgloss.Color("#9d0006"), // Red
-		UpdateColor:      lipgloss.Color("#79740e"), // Green
-		CoreColor:        lipgloss.Color("#79740e"), // Green
-		ExtraColor:       lipgloss.Color("#076678"), // Blue
-		MultilibColor:    lipgloss.Color("#af3a03"), // Orange
-		AurColor:         lipgloss.Color("#8f3f71"), // Purple
-		SuccessColor:     lipgloss.Color("#79740e"), // Green
-		WarningColor:     lipgloss.Color("#b57614"), // Yellow
-		ErrorColor:       lipgloss.Color("#9d0006"), // Red
-		HighlightColor:   lipgloss.Color("#b57614"), // Yellow
-		DashboardLabel:   lipgloss.Color("#3c3836"), // fg
-		DashboardValue:   lipgloss.Color("#427b58"), // Aqua
-		DashboardWarning: lipgloss.Color("#9d0006"), // Red
-		DashboardDesc:    lipgloss.Color("#7c6f64"), // gray
-	},
 	themeOneDark: {
 		Name:             "One Dark",
 		BorderColor:      lipgloss.Color("#5c6370"), // Comment
@@ -384,54 +308,6 @@ var themes = map[themeType]Theme{
 		DashboardValue:   lipgloss.Color("#2aa198"), // Cyan
 		DashboardWarning: lipgloss.Color("#dc322f"), // Red
 		DashboardDesc:    lipgloss.Color("#657b83"), // base00
-	},
-	themeSolarizedLight: {
-		Name:             "Solarized Light",
-		BorderColor:      lipgloss.Color("#93a1a1"), // base1
-		SelectedColor:    lipgloss.Color("#6c71c4"), // Violet
-		TextColor:        lipgloss.Color("#657b83"), // base00
-		SubtleColor:      lipgloss.Color("#93a1a1"), // base1
-		TitleColor:       lipgloss.Color("#b58900"), // Yellow
-		InstallColor:     lipgloss.Color("#268bd2"), // Blue
-		InstalledColor:   lipgloss.Color("#d33682"), // Magenta
-		UninstallColor:   lipgloss.Color("#dc322f"), // Red
-		UpdateColor:      lipgloss.Color("#859900"), // Green
-		CoreColor:        lipgloss.Color("#859900"), // Green
-		ExtraColor:       lipgloss.Color("#268bd2"), // Blue
-		MultilibColor:    lipgloss.Color("#cb4b16"), // Orange
-		AurColor:         lipgloss.Color("#6c71c4"), // Violet
-		SuccessColor:     lipgloss.Color("#859900"), // Green
-		WarningColor:     lipgloss.Color("#b58900"), // Yellow
-		ErrorColor:       lipgloss.Color("#dc322f"), // Red
-		HighlightColor:   lipgloss.Color("#b58900"), // Yellow
-		DashboardLabel:   lipgloss.Color("#657b83"), // base00
-		DashboardValue:   lipgloss.Color("#2aa198"), // Cyan
-		DashboardWarning: lipgloss.Color("#dc322f"), // Red
-		DashboardDesc:    lipgloss.Color("#839496"), // base0
-	},
-	themeTokyonightDay: {
-		Name:             "Tokyonight Day",
-		BorderColor:      lipgloss.Color("#9699a3"), // Comment
-		SelectedColor:    lipgloss.Color("#9854f1"), // Purple
-		TextColor:        lipgloss.Color("#3760bf"), // Foreground
-		SubtleColor:      lipgloss.Color("#9699a3"), // Comment
-		TitleColor:       lipgloss.Color("#8c6c3e"), // Yellow
-		InstallColor:     lipgloss.Color("#2e7de9"), // Blue
-		InstalledColor:   lipgloss.Color("#9854f1"), // Purple
-		UninstallColor:   lipgloss.Color("#f52a65"), // Red
-		UpdateColor:      lipgloss.Color("#587539"), // Green
-		CoreColor:        lipgloss.Color("#587539"), // Green
-		ExtraColor:       lipgloss.Color("#2e7de9"), // Blue
-		MultilibColor:    lipgloss.Color("#b15c00"), // Orange
-		AurColor:         lipgloss.Color("#9854f1"), // Purple
-		SuccessColor:     lipgloss.Color("#587539"), // Green
-		WarningColor:     lipgloss.Color("#8c6c3e"), // Yellow
-		ErrorColor:       lipgloss.Color("#f52a65"), // Red
-		HighlightColor:   lipgloss.Color("#8c6c3e"), // Yellow
-		DashboardLabel:   lipgloss.Color("#3760bf"), // Foreground
-		DashboardValue:   lipgloss.Color("#007197"), // Cyan
-		DashboardWarning: lipgloss.Color("#f52a65"), // Red
-		DashboardDesc:    lipgloss.Color("#848cb5"), // Subtle
 	},
 	themeTokyonightNight: {
 		Name:             "Tokyonight Night",
