@@ -17,13 +17,13 @@ Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) • Powered 
 
 ## Table of Contents
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Interface](#interface)
-- [How It Works](#how-it-works)
-- [License](#license)
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Interface](#-interface)
+- [How It Works](#-how-it-works)
+- [License](#-license)
 
 ## ✨ Features
 
