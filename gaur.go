@@ -93,30 +93,6 @@ type Theme struct {
 
 // Available themes
 var themes = map[themeType]Theme{
-	themeBasic: {
-		Name:             "Basic",
-		BorderColor:      lipgloss.Color("62"),
-		SelectedColor:    lipgloss.Color("170"),
-		TextColor:        lipgloss.Color("252"),
-		SubtleColor:      lipgloss.Color("241"),
-		TitleColor:       lipgloss.Color("229"),
-		InstallColor:     lipgloss.Color("39"),
-		InstalledColor:   lipgloss.Color("213"),
-		UninstallColor:   lipgloss.Color("196"),
-		UpdateColor:      lipgloss.Color("46"),
-		CoreColor:        lipgloss.Color("46"),
-		ExtraColor:       lipgloss.Color("39"),
-		MultilibColor:    lipgloss.Color("214"),
-		AurColor:         lipgloss.Color("201"),
-		SuccessColor:     lipgloss.Color("46"),
-		WarningColor:     lipgloss.Color("226"),
-		ErrorColor:       lipgloss.Color("196"),
-		HighlightColor:   lipgloss.Color("226"),
-		DashboardLabel:   lipgloss.Color("252"),
-		DashboardValue:   lipgloss.Color("39"),
-		DashboardWarning: lipgloss.Color("196"),
-		DashboardDesc:    lipgloss.Color("241"),
-	},
 	themeCatppuccinFrappe: {
 		Name:             "Catppuccin Frappe",
 		BorderColor:      lipgloss.Color("#737994"), // Overlay0
