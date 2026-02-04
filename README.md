@@ -179,19 +179,19 @@ gaur --list-themes
 
 #### Supported Themes
 
-| Theme                  | Screenshot                                                    |
-| ---------------------- | ------------------------------------------------------------- |
-| `catppuccin-frappe`    | [Catppuccin Frappé](https://catppuccin.com) theme             |
-| `catppuccin-macchiato` | [Catppuccin Macchiato](https://catppuccin.com) theme          |
-| `catppuccin-mocha`     | [Catppuccin Mocha](https://catppuccin.com) theme              |
-| `dracula`              | [Dracula](https://draculatheme.com) theme                     |
-| `gruvbox-dark`         | [Gruvbox](https://github.com/morhetz/gruvbox) dark            |
-| `monokai-pro`          | [Monokai Pro](https://monokai.pro) theme                      |
-| `onedark`              | [One Dark](https://github.com/atom/atom) theme                |
-| `rose-pine`            | [Rosé Pine](https://rosepinetheme.com) theme                  |
-| `solarized-dark`       | [Solarized](https://ethanschoonover.com/solarized) dark       |
-| `tokyonight-night`     | [Tokyo Night](https://github.com/folke/tokyonight.nvim) night |
-| `tokyonight-storm`     | [Tokyo Night](https://github.com/folke/tokyonight.nvim) storm |
+| Theme                  | Screenshot                                                     |
+| ---------------------- | -------------------------------------------------------------- |
+| `catppuccin-frappe`    | <img src="screenshots/catppuccin-frappe.png" width="320" />    |
+| `catppuccin-macchiato` | <img src="screenshots/catppuccin-macchiato.png" width="320" /> |
+| `catppuccin-mocha`     | <img src="screenshots/catppuccin-mocha.png" width="320" />     |
+| `dracula`              | <img src="screenshots/dracula.png" width="320" />              |
+| `gruvbox-dark`         | <img src="screenshots/gruvbox-dark.png" width="320" />         |
+| `monokai-pro`          | <img src="screenshots/monokai-pro.png" width="320" />          |
+| `onedark`              | <img src="screenshots/one-dark.png" width="320" />             |
+| `rose-pine`            | <img src="screenshots/rose-pine.png" width="320" />            |
+| `solarized-dark`       | <img src="screenshots/solarized-dark.png" width="320" />       |
+| `tokyonight-night`     | <img src="screenshots/tokyonight-night.png" width="320" />     |
+| `tokyonight-storm`     | <img src="screenshots/tokyonight-storm.png" width="320" />     |
 
 ## 🖼️ Interface
 
