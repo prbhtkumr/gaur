@@ -192,23 +192,21 @@ gaur --list-themes
 
 ```
 ╭──────────────────────────────────────────────────────────────╮
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Name         : firefox                                      │
-│  Version      : 133.0-1                                      │
-│  Repository   : extra                                        │
-│  Description  : Fast, Private & Safe Web Browser             │
-│  Installed    : Yes                                          │
-│  ...                                                         │
+│ Repository   : extra                                         │
+│ Name         : firefox                                       │
+│ Version      : 133.0-1                                       │
+│ Description  : Fast, Private & Safe Web Browser              │
+│ Architecture : x86_64                                        │
+│ URL          : https://www.mozilla.org/firefox               │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
-│  > extra/firefox 133.0-1 [installed]                         │
-│    extra/firefox-i18n-en-us 133.0-1                          │
-│    aur/firefox-bin 133.0-1                                   │
-│    aur/firefox-esr 128.5.0-1                                 │
+│  extra/firefox-i18n-an 147.0.2-1                             │
+│  extra/firefox-i18n-af 147.0.2-1                             │
+│  extra/firefoxpwa 2.18.0.1                                   │
+│> extra/firefox 147.0.2-1 [installed]                         │
 │                                                              │
-│  Search packages...                                          │
-│  Found 42 packages                                           │
+│Found 610 packages (492 from AUR)                             │
+│> firefox                                                     │
 ╰──────────────────────────────────────────────────────────────╯
        [/] search  [tab] mark  [i]nstall  i[n]fo  [r]emove  [u]pdate  [q]uit
 ```
