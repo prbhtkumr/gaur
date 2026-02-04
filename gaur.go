@@ -42,7 +42,21 @@ type themeType int
 
 const (
 	themeBasic themeType = iota
+	themeCatppuccinFrappe
+	themeCatppuccinLatte
+	themeCatppuccinMacchiato
 	themeCatppuccinMocha
+	themeDracula
+	themeGruvboxDark
+	themeGruvboxLight
+	themeOneDark
+	themeMonokaiPro
+	themeRosePine
+	themeSolarizedDark
+	themeSolarizedLight
+	themeTokyonightDay
+	themeTokyonightNight
+	themeTokyonightStorm
 )
 
 // Theme holds all color definitions for the UI
@@ -84,52 +98,388 @@ type Theme struct {
 // Available themes
 var themes = map[themeType]Theme{
 	themeBasic: {
-		Name:            "Basic",
-		BorderColor:     lipgloss.Color("62"),
-		SelectedColor:   lipgloss.Color("170"),
-		TextColor:       lipgloss.Color("252"),
-		SubtleColor:     lipgloss.Color("241"),
-		TitleColor:      lipgloss.Color("229"),
-		InstallColor:    lipgloss.Color("39"),
-		InstalledColor:  lipgloss.Color("213"),
-		UninstallColor:  lipgloss.Color("196"),
-		UpdateColor:     lipgloss.Color("46"),
-		CoreColor:       lipgloss.Color("46"),
-		ExtraColor:      lipgloss.Color("39"),
-		MultilibColor:   lipgloss.Color("214"),
-		AurColor:        lipgloss.Color("201"),
-		SuccessColor:    lipgloss.Color("46"),
-		WarningColor:    lipgloss.Color("226"),
-		ErrorColor:      lipgloss.Color("196"),
-		HighlightColor:  lipgloss.Color("226"),
-		DashboardLabel:  lipgloss.Color("252"),
-		DashboardValue:  lipgloss.Color("39"),
+		Name:             "Basic",
+		BorderColor:      lipgloss.Color("62"),
+		SelectedColor:    lipgloss.Color("170"),
+		TextColor:        lipgloss.Color("252"),
+		SubtleColor:      lipgloss.Color("241"),
+		TitleColor:       lipgloss.Color("229"),
+		InstallColor:     lipgloss.Color("39"),
+		InstalledColor:   lipgloss.Color("213"),
+		UninstallColor:   lipgloss.Color("196"),
+		UpdateColor:      lipgloss.Color("46"),
+		CoreColor:        lipgloss.Color("46"),
+		ExtraColor:       lipgloss.Color("39"),
+		MultilibColor:    lipgloss.Color("214"),
+		AurColor:         lipgloss.Color("201"),
+		SuccessColor:     lipgloss.Color("46"),
+		WarningColor:     lipgloss.Color("226"),
+		ErrorColor:       lipgloss.Color("196"),
+		HighlightColor:   lipgloss.Color("226"),
+		DashboardLabel:   lipgloss.Color("252"),
+		DashboardValue:   lipgloss.Color("39"),
 		DashboardWarning: lipgloss.Color("196"),
-		DashboardDesc:   lipgloss.Color("241"),
+		DashboardDesc:    lipgloss.Color("241"),
+	},
+	themeCatppuccinFrappe: {
+		Name:             "Catppuccin Frappe",
+		BorderColor:      lipgloss.Color("#737994"), // Overlay0
+		SelectedColor:    lipgloss.Color("#ca9ee6"), // Mauve
+		TextColor:        lipgloss.Color("#c6d0f5"), // Text
+		SubtleColor:      lipgloss.Color("#737994"), // Overlay0
+		TitleColor:       lipgloss.Color("#e5c890"), // Yellow
+		InstallColor:     lipgloss.Color("#8caaee"), // Blue
+		InstalledColor:   lipgloss.Color("#f4b8e4"), // Pink
+		UninstallColor:   lipgloss.Color("#e78284"), // Red
+		UpdateColor:      lipgloss.Color("#a6d189"), // Green
+		CoreColor:        lipgloss.Color("#a6d189"), // Green
+		ExtraColor:       lipgloss.Color("#8caaee"), // Blue
+		MultilibColor:    lipgloss.Color("#ef9f76"), // Peach
+		AurColor:         lipgloss.Color("#ca9ee6"), // Mauve
+		SuccessColor:     lipgloss.Color("#a6d189"), // Green
+		WarningColor:     lipgloss.Color("#e5c890"), // Yellow
+		ErrorColor:       lipgloss.Color("#e78284"), // Red
+		HighlightColor:   lipgloss.Color("#e5c890"), // Yellow
+		DashboardLabel:   lipgloss.Color("#c6d0f5"), // Text
+		DashboardValue:   lipgloss.Color("#99d1db"), // Sky
+		DashboardWarning: lipgloss.Color("#e78284"), // Red
+		DashboardDesc:    lipgloss.Color("#a5adce"), // Subtext0
+	},
+	themeCatppuccinLatte: {
+		Name:             "Catppuccin Latte",
+		BorderColor:      lipgloss.Color("#9ca0b0"), // Overlay0
+		SelectedColor:    lipgloss.Color("#8839ef"), // Mauve
+		TextColor:        lipgloss.Color("#4c4f69"), // Text
+		SubtleColor:      lipgloss.Color("#9ca0b0"), // Overlay0
+		TitleColor:       lipgloss.Color("#df8e1d"), // Yellow
+		InstallColor:     lipgloss.Color("#1e66f5"), // Blue
+		InstalledColor:   lipgloss.Color("#ea76cb"), // Pink
+		UninstallColor:   lipgloss.Color("#d20f39"), // Red
+		UpdateColor:      lipgloss.Color("#40a02b"), // Green
+		CoreColor:        lipgloss.Color("#40a02b"), // Green
+		ExtraColor:       lipgloss.Color("#1e66f5"), // Blue
+		MultilibColor:    lipgloss.Color("#fe640b"), // Peach
+		AurColor:         lipgloss.Color("#8839ef"), // Mauve
+		SuccessColor:     lipgloss.Color("#40a02b"), // Green
+		WarningColor:     lipgloss.Color("#df8e1d"), // Yellow
+		ErrorColor:       lipgloss.Color("#d20f39"), // Red
+		HighlightColor:   lipgloss.Color("#df8e1d"), // Yellow
+		DashboardLabel:   lipgloss.Color("#4c4f69"), // Text
+		DashboardValue:   lipgloss.Color("#04a5e5"), // Sky
+		DashboardWarning: lipgloss.Color("#d20f39"), // Red
+		DashboardDesc:    lipgloss.Color("#6c6f85"), // Subtext0
+	},
+	themeCatppuccinMacchiato: {
+		Name:             "Catppuccin Macchiato",
+		BorderColor:      lipgloss.Color("#6e738d"), // Overlay0
+		SelectedColor:    lipgloss.Color("#c6a0f6"), // Mauve
+		TextColor:        lipgloss.Color("#cad3f5"), // Text
+		SubtleColor:      lipgloss.Color("#6e738d"), // Overlay0
+		TitleColor:       lipgloss.Color("#eed49f"), // Yellow
+		InstallColor:     lipgloss.Color("#8aadf4"), // Blue
+		InstalledColor:   lipgloss.Color("#f5bde6"), // Pink
+		UninstallColor:   lipgloss.Color("#ed8796"), // Red
+		UpdateColor:      lipgloss.Color("#a6da95"), // Green
+		CoreColor:        lipgloss.Color("#a6da95"), // Green
+		ExtraColor:       lipgloss.Color("#8aadf4"), // Blue
+		MultilibColor:    lipgloss.Color("#f5a97f"), // Peach
+		AurColor:         lipgloss.Color("#c6a0f6"), // Mauve
+		SuccessColor:     lipgloss.Color("#a6da95"), // Green
+		WarningColor:     lipgloss.Color("#eed49f"), // Yellow
+		ErrorColor:       lipgloss.Color("#ed8796"), // Red
+		HighlightColor:   lipgloss.Color("#eed49f"), // Yellow
+		DashboardLabel:   lipgloss.Color("#cad3f5"), // Text
+		DashboardValue:   lipgloss.Color("#91d7e3"), // Sky
+		DashboardWarning: lipgloss.Color("#ed8796"), // Red
+		DashboardDesc:    lipgloss.Color("#a5adcb"), // Subtext0
 	},
 	themeCatppuccinMocha: {
-		Name:            "Catppuccin Mocha",
-		BorderColor:     lipgloss.Color("#6c7086"), // Overlay0
-		SelectedColor:   lipgloss.Color("#cba6f7"), // Mauve
-		TextColor:       lipgloss.Color("#cdd6f4"), // Text
-		SubtleColor:     lipgloss.Color("#6c7086"), // Overlay0
-		TitleColor:      lipgloss.Color("#f9e2af"), // Yellow
-		InstallColor:    lipgloss.Color("#89b4fa"), // Blue
-		InstalledColor:  lipgloss.Color("#f5c2e7"), // Pink
-		UninstallColor:  lipgloss.Color("#f38ba8"), // Red
-		UpdateColor:     lipgloss.Color("#a6e3a1"), // Green
-		CoreColor:       lipgloss.Color("#a6e3a1"), // Green
-		ExtraColor:      lipgloss.Color("#89b4fa"), // Blue
-		MultilibColor:   lipgloss.Color("#fab387"), // Peach
-		AurColor:        lipgloss.Color("#cba6f7"), // Mauve
-		SuccessColor:    lipgloss.Color("#a6e3a1"), // Green
-		WarningColor:    lipgloss.Color("#f9e2af"), // Yellow
-		ErrorColor:      lipgloss.Color("#f38ba8"), // Red
-		HighlightColor:  lipgloss.Color("#f9e2af"), // Yellow
-		DashboardLabel:  lipgloss.Color("#cdd6f4"), // Text
-		DashboardValue:  lipgloss.Color("#89dceb"), // Sky
+		Name:             "Catppuccin Mocha",
+		BorderColor:      lipgloss.Color("#6c7086"), // Overlay0
+		SelectedColor:    lipgloss.Color("#cba6f7"), // Mauve
+		TextColor:        lipgloss.Color("#cdd6f4"), // Text
+		SubtleColor:      lipgloss.Color("#6c7086"), // Overlay0
+		TitleColor:       lipgloss.Color("#f9e2af"), // Yellow
+		InstallColor:     lipgloss.Color("#89b4fa"), // Blue
+		InstalledColor:   lipgloss.Color("#f5c2e7"), // Pink
+		UninstallColor:   lipgloss.Color("#f38ba8"), // Red
+		UpdateColor:      lipgloss.Color("#a6e3a1"), // Green
+		CoreColor:        lipgloss.Color("#a6e3a1"), // Green
+		ExtraColor:       lipgloss.Color("#89b4fa"), // Blue
+		MultilibColor:    lipgloss.Color("#fab387"), // Peach
+		AurColor:         lipgloss.Color("#cba6f7"), // Mauve
+		SuccessColor:     lipgloss.Color("#a6e3a1"), // Green
+		WarningColor:     lipgloss.Color("#f9e2af"), // Yellow
+		ErrorColor:       lipgloss.Color("#f38ba8"), // Red
+		HighlightColor:   lipgloss.Color("#f9e2af"), // Yellow
+		DashboardLabel:   lipgloss.Color("#cdd6f4"), // Text
+		DashboardValue:   lipgloss.Color("#89dceb"), // Sky
 		DashboardWarning: lipgloss.Color("#f38ba8"), // Red
-		DashboardDesc:   lipgloss.Color("#a6adc8"), // Subtext0
+		DashboardDesc:    lipgloss.Color("#a6adc8"), // Subtext0
+	},
+	themeDracula: {
+		Name:             "Dracula",
+		BorderColor:      lipgloss.Color("#6272a4"), // Comment
+		SelectedColor:    lipgloss.Color("#bd93f9"), // Purple
+		TextColor:        lipgloss.Color("#f8f8f2"), // Foreground
+		SubtleColor:      lipgloss.Color("#6272a4"), // Comment
+		TitleColor:       lipgloss.Color("#f1fa8c"), // Yellow
+		InstallColor:     lipgloss.Color("#8be9fd"), // Cyan
+		InstalledColor:   lipgloss.Color("#ff79c6"), // Pink
+		UninstallColor:   lipgloss.Color("#ff5555"), // Red
+		UpdateColor:      lipgloss.Color("#50fa7b"), // Green
+		CoreColor:        lipgloss.Color("#50fa7b"), // Green
+		ExtraColor:       lipgloss.Color("#8be9fd"), // Cyan
+		MultilibColor:    lipgloss.Color("#ffb86c"), // Orange
+		AurColor:         lipgloss.Color("#bd93f9"), // Purple
+		SuccessColor:     lipgloss.Color("#50fa7b"), // Green
+		WarningColor:     lipgloss.Color("#f1fa8c"), // Yellow
+		ErrorColor:       lipgloss.Color("#ff5555"), // Red
+		HighlightColor:   lipgloss.Color("#f1fa8c"), // Yellow
+		DashboardLabel:   lipgloss.Color("#f8f8f2"), // Foreground
+		DashboardValue:   lipgloss.Color("#8be9fd"), // Cyan
+		DashboardWarning: lipgloss.Color("#ff5555"), // Red
+		DashboardDesc:    lipgloss.Color("#6272a4"), // Comment
+	},
+	themeGruvboxDark: {
+		Name:             "Gruvbox Dark",
+		BorderColor:      lipgloss.Color("#665c54"), // bg3
+		SelectedColor:    lipgloss.Color("#d3869b"), // Purple
+		TextColor:        lipgloss.Color("#ebdbb2"), // fg
+		SubtleColor:      lipgloss.Color("#665c54"), // bg3
+		TitleColor:       lipgloss.Color("#fabd2f"), // Yellow
+		InstallColor:     lipgloss.Color("#83a598"), // Blue
+		InstalledColor:   lipgloss.Color("#d3869b"), // Purple
+		UninstallColor:   lipgloss.Color("#fb4934"), // Red
+		UpdateColor:      lipgloss.Color("#b8bb26"), // Green
+		CoreColor:        lipgloss.Color("#b8bb26"), // Green
+		ExtraColor:       lipgloss.Color("#83a598"), // Blue
+		MultilibColor:    lipgloss.Color("#fe8019"), // Orange
+		AurColor:         lipgloss.Color("#d3869b"), // Purple
+		SuccessColor:     lipgloss.Color("#b8bb26"), // Green
+		WarningColor:     lipgloss.Color("#fabd2f"), // Yellow
+		ErrorColor:       lipgloss.Color("#fb4934"), // Red
+		HighlightColor:   lipgloss.Color("#fabd2f"), // Yellow
+		DashboardLabel:   lipgloss.Color("#ebdbb2"), // fg
+		DashboardValue:   lipgloss.Color("#8ec07c"), // Aqua
+		DashboardWarning: lipgloss.Color("#fb4934"), // Red
+		DashboardDesc:    lipgloss.Color("#a89984"), // gray
+	},
+	themeGruvboxLight: {
+		Name:             "Gruvbox Light",
+		BorderColor:      lipgloss.Color("#bdae93"), // bg3
+		SelectedColor:    lipgloss.Color("#8f3f71"), // Purple
+		TextColor:        lipgloss.Color("#3c3836"), // fg
+		SubtleColor:      lipgloss.Color("#bdae93"), // bg3
+		TitleColor:       lipgloss.Color("#b57614"), // Yellow
+		InstallColor:     lipgloss.Color("#076678"), // Blue
+		InstalledColor:   lipgloss.Color("#8f3f71"), // Purple
+		UninstallColor:   lipgloss.Color("#9d0006"), // Red
+		UpdateColor:      lipgloss.Color("#79740e"), // Green
+		CoreColor:        lipgloss.Color("#79740e"), // Green
+		ExtraColor:       lipgloss.Color("#076678"), // Blue
+		MultilibColor:    lipgloss.Color("#af3a03"), // Orange
+		AurColor:         lipgloss.Color("#8f3f71"), // Purple
+		SuccessColor:     lipgloss.Color("#79740e"), // Green
+		WarningColor:     lipgloss.Color("#b57614"), // Yellow
+		ErrorColor:       lipgloss.Color("#9d0006"), // Red
+		HighlightColor:   lipgloss.Color("#b57614"), // Yellow
+		DashboardLabel:   lipgloss.Color("#3c3836"), // fg
+		DashboardValue:   lipgloss.Color("#427b58"), // Aqua
+		DashboardWarning: lipgloss.Color("#9d0006"), // Red
+		DashboardDesc:    lipgloss.Color("#7c6f64"), // gray
+	},
+	themeOneDark: {
+		Name:             "One Dark",
+		BorderColor:      lipgloss.Color("#5c6370"), // Comment
+		SelectedColor:    lipgloss.Color("#c678dd"), // Purple
+		TextColor:        lipgloss.Color("#abb2bf"), // Foreground
+		SubtleColor:      lipgloss.Color("#5c6370"), // Comment
+		TitleColor:       lipgloss.Color("#e5c07b"), // Yellow
+		InstallColor:     lipgloss.Color("#61afef"), // Blue
+		InstalledColor:   lipgloss.Color("#c678dd"), // Purple
+		UninstallColor:   lipgloss.Color("#e06c75"), // Red
+		UpdateColor:      lipgloss.Color("#98c379"), // Green
+		CoreColor:        lipgloss.Color("#98c379"), // Green
+		ExtraColor:       lipgloss.Color("#61afef"), // Blue
+		MultilibColor:    lipgloss.Color("#d19a66"), // Orange
+		AurColor:         lipgloss.Color("#c678dd"), // Purple
+		SuccessColor:     lipgloss.Color("#98c379"), // Green
+		WarningColor:     lipgloss.Color("#e5c07b"), // Yellow
+		ErrorColor:       lipgloss.Color("#e06c75"), // Red
+		HighlightColor:   lipgloss.Color("#e5c07b"), // Yellow
+		DashboardLabel:   lipgloss.Color("#abb2bf"), // Foreground
+		DashboardValue:   lipgloss.Color("#56b6c2"), // Cyan
+		DashboardWarning: lipgloss.Color("#e06c75"), // Red
+		DashboardDesc:    lipgloss.Color("#5c6370"), // Comment
+	},
+	themeMonokaiPro: {
+		Name:             "Monokai Pro",
+		BorderColor:      lipgloss.Color("#727072"), // Comment
+		SelectedColor:    lipgloss.Color("#ab9df2"), // Purple
+		TextColor:        lipgloss.Color("#fcfcfa"), // Foreground
+		SubtleColor:      lipgloss.Color("#727072"), // Comment
+		TitleColor:       lipgloss.Color("#ffd866"), // Yellow
+		InstallColor:     lipgloss.Color("#78dce8"), // Blue
+		InstalledColor:   lipgloss.Color("#ff6188"), // Pink
+		UninstallColor:   lipgloss.Color("#ff6188"), // Red/Pink
+		UpdateColor:      lipgloss.Color("#a9dc76"), // Green
+		CoreColor:        lipgloss.Color("#a9dc76"), // Green
+		ExtraColor:       lipgloss.Color("#78dce8"), // Blue
+		MultilibColor:    lipgloss.Color("#fc9867"), // Orange
+		AurColor:         lipgloss.Color("#ab9df2"), // Purple
+		SuccessColor:     lipgloss.Color("#a9dc76"), // Green
+		WarningColor:     lipgloss.Color("#ffd866"), // Yellow
+		ErrorColor:       lipgloss.Color("#ff6188"), // Red/Pink
+		HighlightColor:   lipgloss.Color("#ffd866"), // Yellow
+		DashboardLabel:   lipgloss.Color("#fcfcfa"), // Foreground
+		DashboardValue:   lipgloss.Color("#78dce8"), // Blue
+		DashboardWarning: lipgloss.Color("#ff6188"), // Red/Pink
+		DashboardDesc:    lipgloss.Color("#727072"), // Comment
+	},
+	themeRosePine: {
+		Name:             "Rose Pine",
+		BorderColor:      lipgloss.Color("#6e6a86"), // Muted
+		SelectedColor:    lipgloss.Color("#c4a7e7"), // Iris
+		TextColor:        lipgloss.Color("#e0def4"), // Text
+		SubtleColor:      lipgloss.Color("#6e6a86"), // Muted
+		TitleColor:       lipgloss.Color("#f6c177"), // Gold
+		InstallColor:     lipgloss.Color("#31748f"), // Pine
+		InstalledColor:   lipgloss.Color("#ebbcba"), // Rose
+		UninstallColor:   lipgloss.Color("#eb6f92"), // Love
+		UpdateColor:      lipgloss.Color("#9ccfd8"), // Foam
+		CoreColor:        lipgloss.Color("#9ccfd8"), // Foam
+		ExtraColor:       lipgloss.Color("#31748f"), // Pine
+		MultilibColor:    lipgloss.Color("#f6c177"), // Gold
+		AurColor:         lipgloss.Color("#c4a7e7"), // Iris
+		SuccessColor:     lipgloss.Color("#9ccfd8"), // Foam
+		WarningColor:     lipgloss.Color("#f6c177"), // Gold
+		ErrorColor:       lipgloss.Color("#eb6f92"), // Love
+		HighlightColor:   lipgloss.Color("#f6c177"), // Gold
+		DashboardLabel:   lipgloss.Color("#e0def4"), // Text
+		DashboardValue:   lipgloss.Color("#31748f"), // Pine
+		DashboardWarning: lipgloss.Color("#eb6f92"), // Love
+		DashboardDesc:    lipgloss.Color("#908caa"), // Subtle
+	},
+	themeSolarizedDark: {
+		Name:             "Solarized Dark",
+		BorderColor:      lipgloss.Color("#586e75"), // base01
+		SelectedColor:    lipgloss.Color("#6c71c4"), // Violet
+		TextColor:        lipgloss.Color("#839496"), // base0
+		SubtleColor:      lipgloss.Color("#586e75"), // base01
+		TitleColor:       lipgloss.Color("#b58900"), // Yellow
+		InstallColor:     lipgloss.Color("#268bd2"), // Blue
+		InstalledColor:   lipgloss.Color("#d33682"), // Magenta
+		UninstallColor:   lipgloss.Color("#dc322f"), // Red
+		UpdateColor:      lipgloss.Color("#859900"), // Green
+		CoreColor:        lipgloss.Color("#859900"), // Green
+		ExtraColor:       lipgloss.Color("#268bd2"), // Blue
+		MultilibColor:    lipgloss.Color("#cb4b16"), // Orange
+		AurColor:         lipgloss.Color("#6c71c4"), // Violet
+		SuccessColor:     lipgloss.Color("#859900"), // Green
+		WarningColor:     lipgloss.Color("#b58900"), // Yellow
+		ErrorColor:       lipgloss.Color("#dc322f"), // Red
+		HighlightColor:   lipgloss.Color("#b58900"), // Yellow
+		DashboardLabel:   lipgloss.Color("#839496"), // base0
+		DashboardValue:   lipgloss.Color("#2aa198"), // Cyan
+		DashboardWarning: lipgloss.Color("#dc322f"), // Red
+		DashboardDesc:    lipgloss.Color("#657b83"), // base00
+	},
+	themeSolarizedLight: {
+		Name:             "Solarized Light",
+		BorderColor:      lipgloss.Color("#93a1a1"), // base1
+		SelectedColor:    lipgloss.Color("#6c71c4"), // Violet
+		TextColor:        lipgloss.Color("#657b83"), // base00
+		SubtleColor:      lipgloss.Color("#93a1a1"), // base1
+		TitleColor:       lipgloss.Color("#b58900"), // Yellow
+		InstallColor:     lipgloss.Color("#268bd2"), // Blue
+		InstalledColor:   lipgloss.Color("#d33682"), // Magenta
+		UninstallColor:   lipgloss.Color("#dc322f"), // Red
+		UpdateColor:      lipgloss.Color("#859900"), // Green
+		CoreColor:        lipgloss.Color("#859900"), // Green
+		ExtraColor:       lipgloss.Color("#268bd2"), // Blue
+		MultilibColor:    lipgloss.Color("#cb4b16"), // Orange
+		AurColor:         lipgloss.Color("#6c71c4"), // Violet
+		SuccessColor:     lipgloss.Color("#859900"), // Green
+		WarningColor:     lipgloss.Color("#b58900"), // Yellow
+		ErrorColor:       lipgloss.Color("#dc322f"), // Red
+		HighlightColor:   lipgloss.Color("#b58900"), // Yellow
+		DashboardLabel:   lipgloss.Color("#657b83"), // base00
+		DashboardValue:   lipgloss.Color("#2aa198"), // Cyan
+		DashboardWarning: lipgloss.Color("#dc322f"), // Red
+		DashboardDesc:    lipgloss.Color("#839496"), // base0
+	},
+	themeTokyonightDay: {
+		Name:             "Tokyonight Day",
+		BorderColor:      lipgloss.Color("#9699a3"), // Comment
+		SelectedColor:    lipgloss.Color("#9854f1"), // Purple
+		TextColor:        lipgloss.Color("#3760bf"), // Foreground
+		SubtleColor:      lipgloss.Color("#9699a3"), // Comment
+		TitleColor:       lipgloss.Color("#8c6c3e"), // Yellow
+		InstallColor:     lipgloss.Color("#2e7de9"), // Blue
+		InstalledColor:   lipgloss.Color("#9854f1"), // Purple
+		UninstallColor:   lipgloss.Color("#f52a65"), // Red
+		UpdateColor:      lipgloss.Color("#587539"), // Green
+		CoreColor:        lipgloss.Color("#587539"), // Green
+		ExtraColor:       lipgloss.Color("#2e7de9"), // Blue
+		MultilibColor:    lipgloss.Color("#b15c00"), // Orange
+		AurColor:         lipgloss.Color("#9854f1"), // Purple
+		SuccessColor:     lipgloss.Color("#587539"), // Green
+		WarningColor:     lipgloss.Color("#8c6c3e"), // Yellow
+		ErrorColor:       lipgloss.Color("#f52a65"), // Red
+		HighlightColor:   lipgloss.Color("#8c6c3e"), // Yellow
+		DashboardLabel:   lipgloss.Color("#3760bf"), // Foreground
+		DashboardValue:   lipgloss.Color("#007197"), // Cyan
+		DashboardWarning: lipgloss.Color("#f52a65"), // Red
+		DashboardDesc:    lipgloss.Color("#848cb5"), // Subtle
+	},
+	themeTokyonightNight: {
+		Name:             "Tokyonight Night",
+		BorderColor:      lipgloss.Color("#565f89"), // Comment
+		SelectedColor:    lipgloss.Color("#bb9af7"), // Purple
+		TextColor:        lipgloss.Color("#c0caf5"), // Foreground
+		SubtleColor:      lipgloss.Color("#565f89"), // Comment
+		TitleColor:       lipgloss.Color("#e0af68"), // Yellow
+		InstallColor:     lipgloss.Color("#7aa2f7"), // Blue
+		InstalledColor:   lipgloss.Color("#bb9af7"), // Purple
+		UninstallColor:   lipgloss.Color("#f7768e"), // Red
+		UpdateColor:      lipgloss.Color("#9ece6a"), // Green
+		CoreColor:        lipgloss.Color("#9ece6a"), // Green
+		ExtraColor:       lipgloss.Color("#7aa2f7"), // Blue
+		MultilibColor:    lipgloss.Color("#ff9e64"), // Orange
+		AurColor:         lipgloss.Color("#bb9af7"), // Purple
+		SuccessColor:     lipgloss.Color("#9ece6a"), // Green
+		WarningColor:     lipgloss.Color("#e0af68"), // Yellow
+		ErrorColor:       lipgloss.Color("#f7768e"), // Red
+		HighlightColor:   lipgloss.Color("#e0af68"), // Yellow
+		DashboardLabel:   lipgloss.Color("#c0caf5"), // Foreground
+		DashboardValue:   lipgloss.Color("#7dcfff"), // Cyan
+		DashboardWarning: lipgloss.Color("#f7768e"), // Red
+		DashboardDesc:    lipgloss.Color("#a9b1d6"), // Subtle
+	},
+	themeTokyonightStorm: {
+		Name:             "Tokyonight Storm",
+		BorderColor:      lipgloss.Color("#565f89"), // Comment
+		SelectedColor:    lipgloss.Color("#bb9af7"), // Purple
+		TextColor:        lipgloss.Color("#c0caf5"), // Foreground
+		SubtleColor:      lipgloss.Color("#565f89"), // Comment
+		TitleColor:       lipgloss.Color("#e0af68"), // Yellow
+		InstallColor:     lipgloss.Color("#7aa2f7"), // Blue
+		InstalledColor:   lipgloss.Color("#bb9af7"), // Purple
+		UninstallColor:   lipgloss.Color("#f7768e"), // Red
+		UpdateColor:      lipgloss.Color("#9ece6a"), // Green
+		CoreColor:        lipgloss.Color("#9ece6a"), // Green
+		ExtraColor:       lipgloss.Color("#7aa2f7"), // Blue
+		MultilibColor:    lipgloss.Color("#ff9e64"), // Orange
+		AurColor:         lipgloss.Color("#bb9af7"), // Purple
+		SuccessColor:     lipgloss.Color("#9ece6a"), // Green
+		WarningColor:     lipgloss.Color("#e0af68"), // Yellow
+		ErrorColor:       lipgloss.Color("#f7768e"), // Red
+		HighlightColor:   lipgloss.Color("#e0af68"), // Yellow
+		DashboardLabel:   lipgloss.Color("#c0caf5"), // Foreground
+		DashboardValue:   lipgloss.Color("#7dcfff"), // Cyan
+		DashboardWarning: lipgloss.Color("#f7768e"), // Red
+		DashboardDesc:    lipgloss.Color("#a9b1d6"), // Subtle
 	},
 }
 
@@ -4029,7 +4379,7 @@ func (m model) renderDashboard(helpText string, contentWidth, contentHeight int)
 }
 
 func main() {
-	themeFlag := flag.String("theme", "", "Color theme to use (basic, catppuccin-mocha)")
+	themeFlag := flag.String("theme", "", "Color theme (use --list-themes to see options)")
 	listThemesFlag := flag.Bool("list-themes", false, "List available themes and exit")
 	flag.Parse()
 
