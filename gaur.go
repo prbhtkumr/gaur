@@ -117,6 +117,30 @@ var themes = map[themeType]Theme{
 		DashboardWarning: lipgloss.Color("196"),
 		DashboardDesc:    lipgloss.Color("241"),
 	},
+	themeCatppuccinFrappe: {
+		Name:             "Catppuccin Frappe",
+		BorderColor:      lipgloss.Color("#737994"), // Overlay0
+		SelectedColor:    lipgloss.Color("#ca9ee6"), // Mauve
+		TextColor:        lipgloss.Color("#c6d0f5"), // Text
+		SubtleColor:      lipgloss.Color("#737994"), // Overlay0
+		TitleColor:       lipgloss.Color("#e5c890"), // Yellow
+		InstallColor:     lipgloss.Color("#8caaee"), // Blue
+		InstalledColor:   lipgloss.Color("#f4b8e4"), // Pink
+		UninstallColor:   lipgloss.Color("#e78284"), // Red
+		UpdateColor:      lipgloss.Color("#a6d189"), // Green
+		CoreColor:        lipgloss.Color("#a6d189"), // Green
+		ExtraColor:       lipgloss.Color("#8caaee"), // Blue
+		MultilibColor:    lipgloss.Color("#ef9f76"), // Peach
+		AurColor:         lipgloss.Color("#ca9ee6"), // Mauve
+		SuccessColor:     lipgloss.Color("#a6d189"), // Green
+		WarningColor:     lipgloss.Color("#e5c890"), // Yellow
+		ErrorColor:       lipgloss.Color("#e78284"), // Red
+		HighlightColor:   lipgloss.Color("#e5c890"), // Yellow
+		DashboardLabel:   lipgloss.Color("#c6d0f5"), // Text
+		DashboardValue:   lipgloss.Color("#99d1db"), // Sky
+		DashboardWarning: lipgloss.Color("#e78284"), // Red
+		DashboardDesc:    lipgloss.Color("#a5adce"), // Subtext0
+	},
 	themeCatppuccinMacchiato: {
 		Name:             "Catppuccin Macchiato",
 		BorderColor:      lipgloss.Color("#6e738d"), // Overlay0

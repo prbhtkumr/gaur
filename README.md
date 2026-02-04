@@ -182,6 +182,7 @@ gaur --list-themes
 | Theme                  | Description                                                   |
 | ---------------------- | ------------------------------------------------------------- |
 | `basic`                | Original color scheme                                         |
+| `catppuccin-frappe`    | [Catppuccin Frappé](https://catppuccin.com) theme             |
 | `catppuccin-macchiato` | [Catppuccin Macchiato](https://catppuccin.com) theme          |
 | `catppuccin-mocha`     | [Catppuccin Mocha](https://catppuccin.com) theme              |
 | `dracula`              | [Dracula](https://draculatheme.com) theme                     |
