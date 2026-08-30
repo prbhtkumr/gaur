@@ -335,3 +335,46 @@ func TestNilLoggerSafety(t *testing.T) {
 		t.Error("GetLogFilePath should return empty string when logger is nil")
 	}
 }
+
+func TestLogDirectoryValidation(t *testing.T) {
+	// Test that relative paths are rejected
+	relativePaths := []string{
+		"logs",
+		"./logs",
+		"../logs",
+		"../../etc/cron.d",
+	}
+	
+	for _, p := range relativePaths {
+		t.Run("RelativePath_"+p, func(t *testing.T) {
+			err := InitLogger(LogLevelInfo, p)
+			if err == nil {
+				t.Errorf("InitLogger should reject relative path: %s", p)
+			}
+			if appLogger != nil {
+				CloseLogger()
+			}
+		})
+	}
+
+	// Test that absolute paths with traversal components are properly cleaned
+	tmpDir, err := os.MkdirTemp("", "gaur-logger-test-traversal-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	traversalPath := filepath.Join(tmpDir, "nested", "..", "safe_logs")
+	err = InitLogger(LogLevelInfo, traversalPath)
+	if err != nil {
+		t.Fatalf("InitLogger should accept absolute path with traversal: %v", err)
+	}
+	defer CloseLogger()
+
+	logPath := GetLogFilePath()
+	expectedDir := filepath.Join(tmpDir, "safe_logs")
+	
+	if !strings.HasPrefix(logPath, expectedDir) {
+		t.Errorf("Log path was not properly cleaned. Expected prefix %s, got %s", expectedDir, logPath)
+	}
+}
