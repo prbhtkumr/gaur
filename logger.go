@@ -113,7 +113,7 @@ func InitLogger(level LogLevel, logDir string) error {
 	}
 
 	// Ensure directory exists with restrictive permissions
-	if err := os.MkdirAll(logDir, 0700); err != nil { // #nosec G301 - 0700 is intentionally restrictive
+	if err := os.MkdirAll(logDir, 0700); err != nil { // #nosec G301,G703 - 0700 is intentionally restrictive, logDir is validated above
 		return fmt.Errorf("failed to create log directory: %w", err)
 	}
 
