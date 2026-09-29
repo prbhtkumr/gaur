@@ -1,329 +1,249 @@
 <div align="center">
 
-<img src="gaur.png" alt="gaur" width="800" />
+<img src="gaur.png" alt="gaur" width="700" />
 
 # gaur
 
-**A beautiful, interactive TUI for Arch Linux package management**
+**Arch Linux package management that never leaves the terminal.**
 
-Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) • Powered by [paru](https://github.com/Morganamilo/paru) or [yay](https://github.com/Jguer/yay)
+Search, inspect, install, update, remove and clean your system from one keyboard-driven
+interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 
-**[Documentation: gaur.prbhtkumr.xyz](https://gaur.prbhtkumr.xyz)**
+[![CI](https://github.com/prbhtkumr/gaur/actions/workflows/go-security.yml/badge.svg)](https://github.com/prbhtkumr/gaur/actions/workflows/go-security.yml)
+[![License](https://img.shields.io/github/license/prbhtkumr/gaur)](LICENSE)
+[![Go](https://img.shields.io/github/go-mod/go-version/prbhtkumr/gaur)](go.mod)
+[![AUR](https://img.shields.io/aur/version/gaur-bin?label=AUR)](https://aur.archlinux.org/packages/gaur-bin/)
 
-> ⚠️ **Disclaimer:** This project is mostly vibecoded and continues to be developed through vibecoding.  
+**[Documentation](https://gaur.prbhtkumr.xyz)** ·
+**[Themes](https://gaur.prbhtkumr.xyz/themes)** ·
+**[Install](#quick-start)** ·
+**[Report an issue](https://github.com/prbhtkumr/gaur/issues)**
+
+> ⚠️ **Disclaimer:** This project is mostly vibecoded and continues to be developed through vibecoding.
 > Do report rough edges, and expect an occasional "it works on my machine" moment (trying my best to eliminate those).
 
 </div>
 
 ---
 
-## Table of Contents
+## Preview
 
-- [Features](#-features)
-- [Requirements](#-requirements)
-- [Interface](#-interface)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Usage](#-usage)
-- [How It Works](#-how-it-works)
-- [License](#-license)
+<p align="center">
+  <img src="screenshots/catppuccin-mocha.png" width="720" alt="gaur in catppuccin-mocha" />
+</p>
 
-## ✨ Features
+<p align="center"><em>Catppuccin Mocha, one of eleven built-in themes. See the rest at <a href="https://gaur.prbhtkumr.xyz/themes">gaur.prbhtkumr.xyz/themes</a>.</em></p>
 
-### 📦 Package Management
+---
 
-- **Fuzzy Search** — Lightning-fast fuzzy matching powered by `fzf` with match highlighting
-- **Dynamic Helper Support** — Seamlessly switch between `paru` and `yay` via configuration
-- **Repository Filtering** — Filter by source with prefixes: `c:` (core), `e:` (extra), `m:` (multilib), `a:` (aur)
-- **Batch Operations** — Mark multiple packages with `Tab` and install/remove them all at once
-- **Selective Updates** — Carefully manage your system by selecting specific packages to update rather than full updates
-- **Interactive Hand-off** — Correctly handles terminal prompts for password entry and conflict resolution
-- **Real-time Package Details** — View detailed package information with debounced loading
+## Features
 
-### 📊 System Dashboard
+**Search & install**
+- Fuzzy ranking powered by `fzf`, with match highlighting
+- Repo-scoped queries — `c:`, `e:`, `m:`, `a:` — and they combine: `ae:firefox`
+- Mark anything with `Tab`, ship it all in one command
+- A live details pane: repository, version, license, upstream URL
 
-- **Package Statistics** — Total, explicit, foreign (AUR), and orphan package counts
-- **Disk Space Analysis** — Capacity, usage breakdown (packages, cache, other, free) with visual proportional bars
-- **Repository Distribution** — Breakdown of packages by repository (core, extra, multilib, AUR)
-- **XDG Compliance** — Automatically respects `$XDG_CACHE_HOME` for all cache operations
-- **Top Packages** — See your largest installed packages at a glance
-- **Top Cache Hogs** — Identifies the largest packages taking up space across both pacman and helper caches
-- **Cache Management** — Clean package caches via an interactive menu, choose keep policies, or selectively delete packages from cache
-- **Orphan Removal** — Identify and remove orphaned packages
+**Maintenance**
+- Dashboard with package counts, disk usage bars and repository distribution
+- Full system update, or a hand-picked subset via selective update
+- Cache cleaner with keep policies, plus per-package selective cleaning
+- Orphan detection and one-key removal
 
-### 🎨 Interface
+**Interface**
+- Eleven themes built in, custom TOML themes, live preview while you scroll
+- Mode-specific coloring, centered dialogs, full mouse wheel support
+- Settings menu (`,`) — swap theme, AUR helper and border without restarting
 
-- **11 Built-in Themes** — Catppuccin, Dracula, Gruvbox, One Dark, Monokai Pro, Rose Pine, Solarized, Tokyonight, and more
-- **Custom TOML Themes** — Create your own themes in `$XDG_CONFIG_HOME/gaur/themes/`
-- **Theme Export** — Use `--export-themes` to customize default themes
-- **Mouse Support** — Full mouse wheel scrolling throughout the interface
-- **Mode-specific Theming** — Each mode (Install, Dash, Remove, Update) has its own color scheme
-- **In-App Settings Menu** — Press `,` to instantly change themes, borders, and helpers without restarting
-- **Live Theme Preview** — See theme changes instantly as you scroll through options
-- **Selection Panel** — Dedicated panel for managing marked packages
-- **Centered Dialogs** — All confirmation and error boxes are perfectly centered line-by-line
-- **Automatic Refresh** — The entire UI refreshes automatically after any system change to ensure data integrity
+> **Security:** every command is built as an argument array, never a shell string. Package
+> names are checked against a strict allowlist, config values are clamped instead of
+> trusted, and CI runs dedicated command-injection, privilege-escalation and TUI-spoofing
+> tests alongside gosec, CodeQL and govulncheck.
 
-## 📋 Requirements
+---
 
-- Arch Linux (or Arch-based distribution)
-- [paru](https://github.com/Morganamilo/paru) or [yay](https://github.com/Jguer/yay) — AUR helper
-- [fzf](https://github.com/junegunn/fzf) — Fuzzy finder (for search)
-- [paccache](https://man.archlinux.org/man/paccache.8) — Cache management (from `pacman-contrib`)
-- Go 1.21+ (for building from source)
+## Requirements
 
-## 🖼️ Interface
+- Arch Linux or an Arch-based distribution
+- An AUR helper — [paru](https://github.com/Morganamilo/paru) or [yay](https://github.com/Jguer/yay)
+- [fzf](https://github.com/junegunn/fzf) for fuzzy ranking
+- [paccache](https://man.archlinux.org/man/paccache.8) from `pacman-contrib`
+- Go **1.24+** — only if you build from source
 
-```
-╭──────────────────────────────────────────────────────────────────────────╭──────────────────╮
-│ Repository   : extra                                                     | Selected (2) [*] │
-│ Name         : firefox                                                   |  firefox         │
-│ Version      : 133.0-1                                                   |  firefoxpwa      |
-│ Description  : Fast, Private & Safe Web Browser                          ╰──────────────────│
-│ Architecture : x86_64                                                                       │
-│ URL          : https://www.mozilla.org/firefox                                              │
-│                                                                                             │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  extra/firefox-i18n-an 147.0.2-1                                                            │
-│  extra/firefox-i18n-af 147.0.2-1                                                            │
-│ *extra/firefoxpwa 2.18.0.1                                                                  │
-│>*extra/firefox 147.0.2-1 [installed]                                                        │
-│                                                                                             │
-│Found 610 packages (492 from AUR)                                                            │
-│> firefox                                                                                    │
-╰─────────────────────────────────────────────────────────────────────────────────────────────╯
-      [/] search  [tab] mark  [i]nstall  [d]ash  [r]emove  [u]pdate  [,] settings  [q]uit
-```
+---
 
-## 🚀 Installation
-
-### From AUR (Recommended)
+## Quick start
 
 ```bash
-paru -S gaur-bin
-# or
-yay -S gaur-bin
+paru -S gaur-bin     # or: yay -S gaur-bin
+gaur
 ```
 
-### From Source
+From source:
 
 ```bash
 git clone https://github.com/prbhtkumr/gaur.git
 cd gaur
 go build -o gaur .
-sudo mv gaur /usr/local/bin/
+sudo install -Dm755 gaur /usr/local/bin/gaur
 ```
 
-### Using go install
+Or straight into your `GOBIN`:
 
 ```bash
 go install github.com/prbhtkumr/gaur@latest
 ```
 
-## ⚙️ Configuration
+Once it is running:
 
-gaur creates a configuration file at `~/.config/gaur/config.toml` on first run. You can also configure most settings directly in the app using the **Settings Menu** (`,`).
+```bash
+gaur                # default mode
+gaur -d             # open on the dashboard
+gaur -i             # open on install
+gaur --theme dracula
+```
+
+---
+
+## Controls
+
+| Key | Action |
+|-----|--------|
+| `i` · `d` · `r` · `u` | Switch mode: **install**, **dashboard**, **remove**, **update** (`Alt+2` · `Alt+1` · `Alt+4` · `Alt+3`) |
+| `/` | Focus the search box |
+| `↑` `↓` · `j` `k` | Move one item · `PgUp` `PgDn` jump ten |
+| `Tab` | Mark or unmark the selected package |
+| `Enter` | Run the operation on the marked set |
+| `*` | Focus the selection panel |
+| `Esc` | Leave the search box · clear marks |
+| `s` | Selective update (update mode) |
+| `m` | Mirror list editor (update mode) |
+| `,` | Settings |
+| `q` · `Ctrl+C` | Quit |
+
+**On the dashboard:** `t` `e` `f` `o` jump straight into remove mode filtered to all /
+explicit / foreign / orphaned · `c` opens the cache menu · `R` removes every orphan ·
+`Ctrl+R` reloads the stats.
+
+**In dialogs:** `Enter` or `y` confirms, `Esc` or `n` cancels, `↑` `↓` scrolls the list.
+
+**Mouse:** the wheel scrolls lists, split panes and dialogs — left pane scrolls the list,
+right pane scrolls the details.
+
+---
+
+## Search filters
+
+| Mode | Prefix | Matches |
+|------|--------|---------|
+| install | `c:` | core repository |
+| install | `e:` | extra repository |
+| install | `m:` | multilib repository |
+| install | `a:` | AUR only |
+| remove | `t:` | all installed packages |
+| remove | `e:` / `l:` | explicitly installed |
+| remove | `f:` / `a:` | foreign (AUR) packages |
+| remove | `o:` | orphaned |
+
+Prefixes combine: `ae:firefox` searches AUR and Extra, `of:google` finds orphaned AUR
+packages matching "google".
+
+---
+
+## Configuration
+
+gaur writes `~/.config/gaur/config.toml` on first run. Most of it can also be edited live
+from the settings menu (`,`).
 
 ```toml
 [startup]
-# Start in: "dashboard", "dash", "install", "remove", "update"
-default_mode = "install"
+default_mode = "install"        # dashboard | install | remove | update
 
 [ui]
-# Color theme (use --list-themes to see options)
-theme = "catppuccin-mocha"
-# Border style: "rounded", "normal", "thick", "double"
-border_type = "rounded"
+theme = "catppuccin-mocha"      # gaur --list-themes
+border_type = "rounded"         # rounded | normal | thick | double
 
 [commands]
-# AUR helper: "paru" (default) or "yay"
-aur_helper = "paru"
-# Cache management tool
-cache_tool = "paccache"
-# Custom flags for install/remove
-install_flags = ""
+aur_helper = "paru"             # paru | yay
+install_flags = ""              # extra flags for installs
 remove_flags = "-Rns"
+cache_tool = "paccache"
 
 [advanced]
-# Debounce delay for package details (ms)
-debounce_ms = 150
-# Custom cache directory (optional, must be absolute path)
-cache_dir = ""
+debounce_ms = 150               # package details delay
+cache_dir = ""                  # absolute path, empty = default
 ```
 
-## 📖 Usage
+Full reference in the **[configuration docs](https://gaur.prbhtkumr.xyz/docs/configuration)**.
+
+---
+
+## Themes
+
+Eleven themes ship baked into the binary: **Catppuccin Mocha / Frappe / Macchiato**,
+**Dracula**, **Gruvbox Dark**, **Monokai Pro**, **One Dark**, **Rose Pine**,
+**Solarized Dark**, and **Tokyonight Night / Storm**.
 
 ```bash
-gaur              # Start with default mode
-gaur -i           # Start in install mode
-gaur -d           # Start in dashboard mode
-gaur --theme dracula  # Use Dracula theme
+gaur --list-themes          # print them all
+gaur --theme dracula        # use one
+gaur --export-themes        # copy defaults out so you can edit them
 ```
 
-### Keybindings
+Press `,` in the app to cycle themes with a live preview.
 
-#### Global
+<details>
+<summary><b>Write your own theme</b></summary>
 
-| Key | Alt Key | Action |
-|-----|---------|--------|
-| `i` | `Alt+2` | Switch to **Install** mode |
-| `d` | `Alt+1` | Switch to **Dashboard** mode |
-| `r` | `Alt+4` | Switch to **Remove** mode |
-| `u` | `Alt+3` | Switch to **Update** mode |
-| `,` | | Open **Settings** menu |
-| `q` | | Quit |
-| `Ctrl+C` | | Force quit |
-
-#### Navigation
-
-| Key | Action |
-|-----|--------|
-| `/` | Focus search input |
-| `↑` / `k` | Move selection up |
-| `↓` / `j` | Move selection down |
-| `PgUp` | Jump 10 items up |
-| `PgDown` | Jump 10 items down |
-| `Esc` | Defocus input / Clear selections |
-
-#### Package Operations
-
-| Key | Action |
-|-----|--------|
-| `Tab` | Mark/unmark package for batch operation |
-| `Enter` | Install/remove selected or marked packages |
-| `*` | Toggle selection panel focus |
-
-#### Update Mode
-
-| Key | Action |
-|-----|--------|
-| `Enter` / `y` / `a` | Proceed with a full system update |
-| `s` | Switch to **Selective Update** mode |
-
-#### Dashboard
-
-| Key | Action |
-|-----|--------|
-| `t` | Jump to Remove mode → All packages |
-| `e` | Jump to Remove mode → Explicit packages |
-| `f` | Jump to Remove mode → Foreign (AUR) packages |
-| `o` | Jump to Remove mode → Orphan packages |
-| `c` | Open Cache Cleaning menu |
-| `R` | Remove all orphan packages |
-| `Ctrl+R` | Refresh dashboard data |
-
-#### Confirmation Dialogs
-
-| Key | Action |
-|-----|--------|
-| `y` / `Enter` | Confirm operation |
-| `n` / `Esc` | Cancel operation |
-| `↑` / `↓` | Scroll package list |
-
-### Mouse Support
-
-gaur has full mouse wheel support:
-- Scroll to navigate package lists
-- In split views, scroll left side for list, right side for details
-- Works in confirmation dialogs too
-
-### Search Filters
-
-#### Install Mode
-
-Prefix your search with repository filters:
-
-| Prefix | Repository |
-|--------|------------|
-| `c:` | Core |
-| `e:` | Extra |
-| `m:` | Multilib |
-| `a:` | AUR |
-
-Combine filters: `ae:firefox` searches AUR and Extra for "firefox"
-
-#### Remove Mode
-
-Filter installed packages by type:
-
-| Prefix | Filter |
-|--------|--------|
-| `t:` | Total (all packages) |
-| `e:` / `l:` | Explicitly installed |
-| `f:` / `a:` | Foreign (AUR) packages |
-| `o:` | Orphan packages |
-
-Combined: `of:google` searches for orphaned AUR packages matching "google".
-
-### Themes
-
-gaur ships with 11 color themes. Use the `--theme` flag or press `,` for in-app settings:
+Themes are plain TOML files in `$XDG_CONFIG_HOME/gaur/themes/`
+(typically `~/.config/gaur/themes/`).
 
 ```bash
-gaur --theme dracula
-gaur --list-themes    # See all options
+gaur --export-themes                       # start from the defaults
+$EDITOR ~/.config/gaur/themes/my_theme.toml # edit
+gaur --theme my-theme                      # or pick it from settings
 ```
-
-#### Custom Themes
-
-gaur supports custom themes via TOML files. Theme files are stored in `$XDG_CONFIG_HOME/gaur/themes/` (typically `~/.config/gaur/themes/`).
-
-**Export default themes for customization:**
-
-```bash
-gaur --export-themes
-```
-
-This copies all embedded default themes to your themes directory, allowing you to customize them.
-
-**Create a custom theme:**
-
-1. Create a new TOML file: `~/.config/gaur/themes/my_theme.toml`
-2. Add your color definitions (see format below)
-3. Select it in settings or via `--theme my-theme`
-
-**Theme file format:**
 
 ```toml
-# Base colors
+# base
 border = "#6c7086"
 selected = "#cba6f7"
 text = "#cdd6f4"
 subtle = "#6c7086"
 title = "#f9e2af"
 
-# UI elements
+# ui elements
 scrollbar_track = "#181825"
 scrollbar_thumb = "#6c7086"
 selection_bg = "#313244"
 dim_text = "#6c7086"
 
-# Mode colors
+# mode colors
 install = "#89b4fa"
 dashboard = "#f5c2e7"
 remove = "#f38ba8"
 update = "#a6e3a1"
 cache = "#cba6f7"
 
-# Source colors
+# source colors
 core = "#a6e3a1"
 extra = "#89b4fa"
 multilib = "#fab387"
 aur = "#cba6f7"
 
-# Status colors
+# status colors
 success = "#a6e3a1"
 warning = "#f9e2af"
 error = "#f38ba8"
 highlight = "#f9e2af"
 
-# Dashboard colors
+# dashboard colors
 dashboard_label = "#cdd6f4"
 dashboard_value = "#89dceb"
 dashboard_warning = "#f38ba8"
 dashboard_desc = "#a6adc8"
 
-# Dialog colors
+# dialog colors
 dialog_border = "#cba6f7"
 confirm_install = "#89b4fa"
 confirm_remove = "#fab387"
@@ -332,27 +252,41 @@ confirm_nuke = "#f38ba8"
 confirm_selective = "#cba6f7"
 ```
 
-**Theme naming:**
+Filenames become display names: `my_theme.toml` shows up as **My Theme** — underscores and
+hyphens turn into spaces and title-case.
 
-- Filename `my_theme.toml` becomes "My Theme" in the UI
-- Underscores and hyphens are converted to spaces and title-cased
+</details>
 
-## 🔧 How It Works
+---
 
-1. **Package Database** — Loads repository packages from local pacman cache on startup
-2. **AUR Search** — Queries AUR via your configured helper (gated: minimum 2 characters, no repeated queries, one request in flight at a time)
-3. **Fuzzy Matching** — Uses `fzf --filter` for fast, relevance-ranked fuzzy matching
-4. **Interactive Operations** — Hands off to the AUR helper in the terminal for install/remove/update with full interactivity (password prompts, conflict resolution, etc.)
-5. **Unified Refresh** — Re-scans the system after any change to update dashboard stats and lists instantly.
+## How it works
 
-## 📄 License
+1. **Local first** — repository packages are read once with `pacman -Sl` and held in
+   memory. Typing never shells out to pacman.
+2. **Ranked by fzf** — each keystroke pipes the combined repo + AUR list through
+   `fzf --filter` and maps the indices back.
+3. **AUR queries are gated, not debounced** — two characters minimum, no repeat of the
+   same query, one request in flight, stale responses dropped.
+4. **Hands off the terminal** — installs, removals and updates run through
+   `tea.ExecProcess`, so sudo prompts, conflict resolution and license prompts behave
+   exactly as they do outside gaur.
+5. **Refreshes itself** — after any change the dashboard, both package lists and the
+   update count are rebuilt from the system rather than patched up.
 
-GPLv3 License — See [LICENSE](LICENSE) for details.
+The long version lives in the **[internals docs](https://gaur.prbhtkumr.xyz/docs/internals)**.
+
+---
+
+## License
+
+GPL-3.0 — see [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
 
-**[Report Bug](https://github.com/prbhtkumr/gaur/issues)** · **[Request Feature](https://github.com/prbhtkumr/gaur/issues)**
+**[Documentation](https://gaur.prbhtkumr.xyz)** ·
+**[Report a bug](https://github.com/prbhtkumr/gaur/issues)** ·
+**[Request a feature](https://github.com/prbhtkumr/gaur/issues)**
 
 </div>
