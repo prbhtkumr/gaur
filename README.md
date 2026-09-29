@@ -340,7 +340,7 @@ confirm_selective = "#cba6f7"
 ## 🔧 How It Works
 
 1. **Package Database** — Loads repository packages from local pacman cache on startup
-2. **AUR Search** — Queries AUR via your configured helper (debounced)
+2. **AUR Search** — Queries AUR via your configured helper (gated: minimum 2 characters, no repeated queries, one request in flight at a time)
 3. **Fuzzy Matching** — Uses `fzf --filter` for fast, relevance-ranked fuzzy matching
 4. **Interactive Operations** — Hands off to the AUR helper in the terminal for install/remove/update with full interactivity (password prompts, conflict resolution, etc.)
 5. **Unified Refresh** — Re-scans the system after any change to update dashboard stats and lists instantly.

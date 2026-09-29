@@ -37,7 +37,7 @@ gaur doesn't replace your package manager. It wraps it.
 ### search pipeline
 
 1. **Local query:** Searches the pacman sync database for official packages
-2. **AUR query:** Queries AUR through your configured helper (debounced to avoid hammering)
+2. **AUR query:** Queries AUR through your configured helper, gated rather than debounced: minimum 2 characters, never re-queries the same string, and only one request in flight at a time (keystrokes arriving mid-flight just update the status line, and the query sitting in the box fires once the response lands)
 3. **Fuzzy filter:** Results pipe through `fzf --filter` for relevance-ranked matching
 4. **Merge:** Official and AUR results are combined and deduplicated
 
