@@ -124,5 +124,5 @@ gaur shells out to these tools:
 
 - **Debouncing:** Package detail fetches are debounced (default 150ms) to reduce system calls
 - **Caching:** Package details are cached in memory to avoid repeat lookups
-- **Lazy loading:** AUR search only triggers after the local search completes
+- **Non-blocking AUR:** The AUR query is issued in the same update tick as local filtering and runs asynchronously. Local results render immediately and AUR results merge in when they arrive, so the list never waits on the network
 - **Batch operations:** Multiple packages are passed to a single command, not one-by-one
