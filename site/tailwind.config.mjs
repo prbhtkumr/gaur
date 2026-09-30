@@ -1,44 +1,50 @@
+/** `rgb(var(--c-*) / <alpha-value>)` keeps Tailwind's opacity modifiers working
+    against the theme custom properties emitted by scripts/build-themes.mjs. */
+const themed = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
 	theme: {
 		extend: {
 			colors: {
-				// Catppuccin Mocha Palette
+				// Palette names, driven by gaur's own theme TOMLs
+				mauve: themed('mauve'),
+				pink: themed('pink'),
+				blue: themed('blue'),
+				yellow: themed('yellow'),
+				green: themed('green'),
+				peach: themed('peach'),
+				sapphire: themed('sapphire'),
+				text: themed('text'),
+				subtext0: themed('muted'),
+				overlay2: themed('overlay2'),
+				surface0: themed('surface0'),
+				surface1: themed('surface1'),
+				surface2: themed('surface2'),
+				base: themed('base'),
+				mantle: themed('mantle'),
+				crust: themed('crust'),
+
+				// Semantic aliases
+				primary: themed('mauve'),
+				background: themed('base'),
+				surface: themed('mantle'),
+				muted: themed('muted'),
+				accent: themed('green'),
+				highlight: themed('highlight'),
+
+				// Not present in the theme TOMLs; never referenced by a class
 				rosewater: '#f5e0dc',
 				flamingo: '#f2cdcd',
-				pink: '#f5c2e7',
-				mauve: '#cba6f7',
 				red: '#f38ba8',
 				maroon: '#eba0ac',
-				peach: '#fab387',
-				yellow: '#f9e2af',
-				green: '#a6e3a1',
 				teal: '#94e2d5',
 				sky: '#89dceb',
-				sapphire: '#74c7ec',
-				blue: '#89b4fa',
 				lavender: '#b4befe',
-				text: '#cdd6f4',
 				subtext1: '#bac2de',
-				subtext0: '#a6adc8',
-				overlay2: '#949cbb',
 				overlay1: '#7f849c',
 				overlay0: '#6c7086',
-				surface2: '#585b70',
-				surface1: '#45475a',
-				surface0: '#313244',
-				base: '#1e1e2e',
-				mantle: '#181825',
-				crust: '#11111b',
-
-				// Semantic Aliases
-				primary: '#cba6f7',
-				background: '#1e1e2e',
-				surface: '#181825',
-				muted: '#a6adc8',
-				accent: '#a6e3a1',
-				highlight: '#74c7ec',
 			},
 			fontFamily: {
 				mono: [
@@ -62,7 +68,7 @@ export default {
 				gaur: '8px',
 			},
 			boxShadow: {
-				glow: '0 0 15px rgba(116, 199, 236, 0.2)',
+				glow: '0 0 15px rgba(var(--c-highlight) / 0.2)',
 			}
 		},
 	},

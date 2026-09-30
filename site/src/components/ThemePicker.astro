@@ -1,0 +1,110 @@
+---
+import { themes, DEFAULT_THEME } from '../lib/themes';
+---
+
+<div class="relative" data-theme-picker>
+	<button
+		type="button"
+		class="flex items-center gap-1 md:gap-2 hover:text-primary transition-colors"
+		aria-haspopup="true"
+		aria-expanded="false"
+		aria-controls="theme-menu"
+		aria-label="Themes"
+	>
+		<span>themes</span>
+		<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-70 transition-transform" data-theme-chevron aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+	</button>
+
+	<ul
+		id="theme-menu"
+		role="menu"
+		aria-label="Themes"
+		hidden
+		class="absolute right-0 top-full z-50 mt-3 w-56 max-h-[22rem] overflow-y-auto rounded-gaur p-1.5 bg-background/95 border border-muted/20 backdrop-blur-sm shadow-lg"
+	>
+		{themes.map((theme) => (
+			<li role="none">
+				<button
+					type="button"
+					role="menuitemradio"
+					aria-checked={theme.id === DEFAULT_THEME ? 'true' : 'false'}
+					data-theme-id={theme.id}
+					class="flex w-full items-center gap-3 rounded-gaur px-2.5 py-2 text-left text-xs font-medium text-text/80 transition-colors hover:bg-white/[0.08] hover:text-text"
+				>
+					<span class="flex shrink-0 gap-0.5" aria-hidden="true">
+						<i class="h-3 w-3 rounded-[3px]" style={`background:${theme.dot.bg}`}></i>
+						<i class="h-3 w-3 rounded-[3px]" style={`background:${theme.dot.accent}`}></i>
+						<i class="h-3 w-3 rounded-[3px]" style={`background:${theme.dot.fg}`}></i>
+					</span>
+					<span class="flex-1 truncate">{theme.label}</span>
+				</button>
+			</li>
+		))}
+	</ul>
+</div>
+
+<script>
+	import { currentTheme, setTheme, onThemeChange } from '../lib/theme';
+
+	const scope = document.querySelector<HTMLElement>('[data-theme-picker]');
+
+	if (scope) {
+		const trigger = scope.querySelector<HTMLButtonElement>('button');
+		const menu = scope.querySelector<HTMLUListElement>('#theme-menu');
+		const chevron = scope.querySelector<SVGSVGElement>('[data-theme-chevron]');
+		const options = Array.from(scope.querySelectorAll<HTMLButtonElement>('[data-theme-id]'));
+
+		const paint = (id: string) => {
+			options.forEach((o) => o.setAttribute('aria-checked', String(o.dataset.themeId === id)));
+		};
+
+		const setOpen = (open: boolean) => {
+			if (!menu || !trigger) return;
+			menu.hidden = !open;
+			trigger.setAttribute('aria-expanded', String(open));
+			chevron?.style.setProperty('transform', open ? 'rotate(180deg)' : '');
+			if (open) options.find((o) => o.getAttribute('aria-checked') === 'true')?.focus();
+		};
+
+		paint(currentTheme());
+		onThemeChange(paint);
+
+		trigger?.addEventListener('click', () => setOpen(menu?.hidden ?? true));
+		trigger?.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				setOpen(true);
+			}
+		});
+
+		options.forEach((option, i) => {
+			option.addEventListener('click', () => {
+				setTheme(option.dataset.themeId ?? '');
+				setOpen(false);
+				trigger?.focus();
+			});
+			option.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape') {
+					setOpen(false);
+					trigger?.focus();
+				}
+				if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+					e.preventDefault();
+					const step = e.key === 'ArrowDown' ? 1 : -1;
+					options[(i + step + options.length) % options.length].focus();
+				}
+			});
+		});
+
+		document.addEventListener('click', (e) => {
+			if (!scope.contains(e.target as Node)) setOpen(false);
+		});
+	}
+</script>
+
+<style>
+	#theme-menu [role='menuitemradio'][aria-checked='true'] {
+		background-color: rgb(var(--c-mauve) / 0.14);
+		color: rgb(var(--c-mauve));
+	}
+</style>

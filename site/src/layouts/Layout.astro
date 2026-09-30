@@ -1,5 +1,7 @@
 ---
 import Footer from '../components/Footer.astro';
+import ThemePicker from '../components/ThemePicker.astro';
+import { themeCss } from '../lib/themeStyles';
 
 interface Props {
 	title: string;
@@ -25,6 +27,13 @@ const ogImageURL = new URL('/og.png', Astro.site);
 <html lang="en" class="bg-background text-text font-mono selection:bg-primary/30 selection:text-primary">
 	<head>
 		<meta charset="UTF-8" />
+		<style is:inline set:html={themeCss}></style>
+		<script is:inline>
+			try {
+				var t = localStorage.getItem('gaur-theme');
+				if (t) document.documentElement.setAttribute('data-theme', t);
+			} catch (e) {}
+		</script>
 		<meta name="description" content={description} />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -58,7 +67,7 @@ const ogImageURL = new URL('/og.png', Astro.site);
 					<span class="text-primary font-bold text-xl tracking-tight transition-all">[gaur]</span>
 				</a>
 				<div class="flex items-center gap-4 md:gap-8 text-[11px] md:text-sm font-semibold tracking-tight uppercase md:normal-case">
-					<a href="/themes" class="hover:text-primary transition-colors">themes</a>
+					<ThemePicker />
 					<a href="/docs" class="hover:text-primary transition-colors">docs</a>
 					<a href="https://github.com/prbhtkumr/gaur" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors flex items-center gap-1 md:gap-2">
 						github
@@ -76,7 +85,7 @@ const ogImageURL = new URL('/og.png', Astro.site);
 
 <style is:global>
 	:root {
-		--primary: #cba6f7;
+		--primary: rgb(var(--c-mauve));
 	}
 	
 	/* Smooth scrolling for docs */
@@ -90,20 +99,20 @@ const ogImageURL = new URL('/og.png', Astro.site);
 		height: 8px;
 	}
 	::-webkit-scrollbar-track {
-		background: #181825;
+		background: rgb(var(--c-mantle));
 	}
 	::-webkit-scrollbar-thumb {
-		background: #313244;
+		background: rgb(var(--c-surface0));
 		border-radius: 0px;
 	}
 	::-webkit-scrollbar-thumb:hover {
-		background: #45475a;
+		background: rgb(var(--c-surface1));
 	}
 
 	/* Selection styling */
 	::selection {
-		background-color: rgba(203, 166, 247, 0.3);
-		color: #cba6f7;
+		background-color: rgb(var(--c-mauve) / 0.3);
+		color: rgb(var(--c-mauve));
 	}
 
 	/* 2.1 — keyboard focus must be visible on every interactive element */
@@ -119,9 +128,9 @@ const ogImageURL = new URL('/og.png', Astro.site);
 		top: 0;
 		z-index: 100;
 		padding: 0.5rem 1rem;
-		background: #11111b;
+		background: rgb(var(--c-crust));
 		color: var(--primary);
-		border: 1px solid rgba(203, 166, 247, 0.5);
+		border: 1px solid rgb(var(--c-mauve) / 0.5);
 		border-radius: 8px;
 		font-weight: 700;
 		font-size: 0.875rem;
