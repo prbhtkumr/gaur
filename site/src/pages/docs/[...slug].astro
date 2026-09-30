@@ -100,8 +100,15 @@ const editURL = `https://github.com/prbhtkumr/gaur/edit/main/site/src/content/do
 		@apply relative mb-8;
 	}
 
-	.content .code-block pre {
-		@apply bg-mantle border border-muted/10 p-6 rounded-gaur overflow-x-auto shadow-inner;
+	.content pre {
+		@apply border border-muted/10 p-6 rounded-gaur overflow-x-auto shadow-inner;
+		/* Shiki writes an inline background-color; it has to lose to the themed one. */
+		background-color: rgb(var(--c-mantle)) !important;
+	}
+
+	/* github-dark's comment grey (#6A737D) is only 3.05:1 against the block. */
+	.content pre span[style*="#6A737D"] {
+		color: #9198a1 !important;
 	}
 
 	.content .code-block .code-copy-btn {
