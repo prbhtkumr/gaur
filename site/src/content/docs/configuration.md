@@ -154,7 +154,8 @@ See what's available:
 gaur --list-themes
 ```
 
-Browse the [Theme Gallery](/themes) to preview each one.
+Preview them live with the theme picker in this site's header — it repaints the page
+from the same palettes.
 
 ## file locations
 

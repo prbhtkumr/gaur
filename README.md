@@ -15,7 +15,7 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 [![AUR](https://img.shields.io/aur/version/gaur-bin?label=AUR)](https://aur.archlinux.org/packages/gaur-bin/)
 
 **[Documentation](https://gaur.prbhtkumr.xyz)** ·
-**[Themes](https://gaur.prbhtkumr.xyz/themes)** ·
+**[Themes](https://gaur.prbhtkumr.xyz/docs/configuration#themes)** ·
 **[Install](#quick-start)** ·
 **[Report an issue](https://github.com/prbhtkumr/gaur/issues)**
 
@@ -32,7 +32,7 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
   <img src="screenshots/catppuccin-mocha.png" width="720" alt="gaur in catppuccin-mocha" />
 </p>
 
-<p align="center"><em>Catppuccin Mocha, one of eleven built-in themes. See the rest at <a href="https://gaur.prbhtkumr.xyz/themes">gaur.prbhtkumr.xyz/themes</a>.</em></p>
+<p align="center"><em>Catppuccin Mocha, one of eleven built-in themes. See the rest in the theme picker at <a href="https://gaur.prbhtkumr.xyz">gaur.prbhtkumr.xyz</a>.</em></p>
 
 ---
 
