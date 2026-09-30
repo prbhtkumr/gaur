@@ -7,21 +7,26 @@ interface Props {
 }
 
 const { entries, currentSlug } = Astro.props;
+
+const row =
+	'relative flex items-center rounded-gaur px-3 py-2 text-sm font-medium transition-all duration-150';
+const idle = 'text-text/70 hover:text-text hover:bg-white/[0.06] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+const active = 'text-primary bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]';
 ---
 
 <div>
-	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">guides</h3>
-	<ul class="space-y-3">
+	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-3 pl-3">guides</h3>
+	<ul class="space-y-1">
 		{entries.map((entry) => (
 			<li>
 				<a
 					href={`/docs/${entry.slug}`}
-					class:list={[
-						'text-sm font-medium transition-colors hover:text-primary',
-						currentSlug === entry.slug ? 'text-primary' : 'text-text/70',
-					]}
+					class:list={[row, currentSlug === entry.slug ? active : idle]}
 					aria-current={currentSlug === entry.slug ? 'page' : undefined}
 				>
+					{currentSlug === entry.slug && (
+						<span class="absolute left-0 top-1/2 h-3.5 w-0.5 -translate-y-1/2 rounded-full bg-primary" aria-hidden="true"></span>
+					)}
 					{entry.data.title}
 				</a>
 			</li>
@@ -29,14 +34,14 @@ const { entries, currentSlug } = Astro.props;
 	</ul>
 </div>
 
-<div class="pt-8 border-t border-muted/10">
-	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">links</h3>
-	<ul class="space-y-3">
+<div class="pt-6 border-t border-white/[0.07]">
+	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-3 pl-3">links</h3>
+	<ul class="space-y-1">
 		<li>
-			<a href="https://github.com/prbhtkumr/gaur/issues" class="text-sm text-text/70 hover:text-primary transition-colors">file an issue</a>
+			<a href="https://github.com/prbhtkumr/gaur/issues" class:list={[row, idle]}>file an issue</a>
 		</li>
 		<li>
-			<a href="https://github.com/prbhtkumr/gaur" class="text-sm text-text/70 hover:text-primary transition-colors">source code</a>
+			<a href="https://github.com/prbhtkumr/gaur" class:list={[row, idle]}>source code</a>
 		</li>
 	</ul>
 </div>

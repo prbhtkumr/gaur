@@ -12,19 +12,21 @@ interface Props {
 const { currentSlug } = Astro.props;
 ---
 
-<!-- Mobile: disclosure at the top of the docs column (below md) -->
-<details class="md:hidden w-full order-first border-b border-muted/10 bg-crust/40">
-	<summary class="cursor-pointer px-6 py-4 text-xs font-bold text-muted uppercase tracking-widest select-none">
+<!-- Mobile: frosted disclosure at the top of the docs column (below md) -->
+<details class="glass rounded-gaur disclosure md:hidden w-full order-first">
+	<summary class="cursor-pointer px-5 py-4 text-xs font-bold text-muted uppercase tracking-widest select-none">
 		guides
 	</summary>
-	<nav aria-label="Documentation" class="px-6 pb-6 pt-2 space-y-8">
+	<nav aria-label="Documentation" class="px-4 pb-5 pt-1 space-y-6">
 		<DocsNavList entries={docsEntries} currentSlug={currentSlug} />
 	</nav>
 </details>
 
-<!-- Desktop: persistent sidebar -->
-<aside class="w-64 flex-shrink-0 border-r border-muted/10 hidden md:block">
-	<nav aria-label="Documentation" class="sticky top-24 p-8 space-y-8">
-		<DocsNavList entries={docsEntries} currentSlug={currentSlug} />
+<!-- Desktop: frosted rail -->
+<aside class="w-64 flex-shrink-0 hidden md:block">
+	<nav aria-label="Documentation" class="sticky top-24 p-4">
+		<div class="glass rounded-gaur p-4 space-y-6">
+			<DocsNavList entries={docsEntries} currentSlug={currentSlug} />
+		</div>
 	</nav>
 </aside>
