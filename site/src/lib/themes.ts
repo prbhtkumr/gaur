@@ -14,7 +14,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#292c3c",
 			"fg": "#d4dcf8",
-			"accent": "#cea5e8"
+			"accent": "#cba1e7"
 		}
 	},
 	{
@@ -41,7 +41,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#282a36",
 			"fg": "#f8f8f2",
-			"accent": "#c5a1fa"
+			"accent": "#ff81c9"
 		}
 	},
 	{
@@ -50,7 +50,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#282828",
 			"fg": "#ebdbb2",
-			"accent": "#dc9eae"
+			"accent": "#fe8928"
 		}
 	},
 	{
@@ -59,7 +59,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#2d2a2e",
 			"fg": "#fcfcfa",
-			"accent": "#b5a8f3"
+			"accent": "#ff89a6"
 		}
 	},
 	{
@@ -68,7 +68,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#21252b",
 			"fg": "#cacfd7",
-			"accent": "#d296e4"
+			"accent": "#61afef"
 		}
 	},
 	{
@@ -77,7 +77,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#191724",
 			"fg": "#e0def4",
-			"accent": "#c4a7e7"
+			"accent": "#eb6f92"
 		}
 	},
 	{
@@ -86,7 +86,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#002b36",
 			"fg": "#c5cdce",
-			"accent": "#a6aadb"
+			"accent": "#68afe0"
 		}
 	},
 	{
@@ -95,7 +95,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#16161e",
 			"fg": "#c0caf5",
-			"accent": "#bb9af7"
+			"accent": "#7aa2f7"
 		}
 	},
 	{
@@ -104,7 +104,7 @@ export const themes: SiteTheme[] = [
 		"dot": {
 			"bg": "#1f2335",
 			"fg": "#c7d0f6",
-			"accent": "#bb9bf7"
+			"accent": "#7ea4f7"
 		}
 	}
 ]

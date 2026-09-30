@@ -55,7 +55,51 @@ const ensure = (rawFg, rawBg, constraints) => {
 	return { color: rd(mix(fg, WHITE, hi)), lift: hi };
 };
 
-const derive = (t) => {
+/* Site accent, per theme.
+   Catppuccin's `selected` is mauve, which is exactly right for the three
+   Catppuccin palettes — but every other theme ships a purple selection too,
+   so routing the site accent through `selected` painted gruvbox, solarized
+   and one-dark the same lavender as mocha. Each theme instead names the
+   TOML colour that carries its own identity. */
+const ACCENT_SRC = {
+	'catppuccin-mocha': 'selected', // #cba6f7 mauve
+	'catppuccin-frappe': 'selected', // #ca9ee6 mauve
+	'catppuccin-macchiato': 'selected', // #c6a0f6 mauve
+	dracula: 'dashboard', // #ff79c6
+	'gruvbox-dark': 'multilib', // #fe8019
+	'monokai-pro': 'dashboard', // #ff6188
+	'one-dark': 'accent', // #61afef
+	'rose-pine': 'remove', // #eb6f92
+	'solarized-dark': 'accent', // #268bd2
+	'tokyonight-night': 'accent', // #7aa2f7
+	'tokyonight-storm': 'accent', // #7aa2f7
+};
+
+// The accent tints its own background (the picker's checked row), so that
+// shell moves with the colour under test. Solve for a fixed point instead of
+// checking once against a shell built from the raw, unlifted value — otherwise
+// each lift quietly invalidates the shell that justified it.
+// Returns the lift needed, 0 if none, or null if it is unreachable.
+const ensureTint = (rawFg, bg, alpha, target) => {
+	const ok = (k) => {
+		const c = rd(mix(rawFg, WHITE, k));
+		// The tint is a live composite in the DOM, not a stored channel value,
+		// so it is judged unrounded — rounding it here reads a hair optimistic.
+		return contrast(c, over(c, alpha, bg)) >= target;
+	};
+	if (ok(0)) return 0;
+	if (!ok(1)) return null;
+	let lo = 0;
+	let hi = 1;
+	for (let i = 0; i < 40; i++) {
+		const mid = (lo + hi) / 2;
+		if (ok(mid)) hi = mid;
+		else lo = mid;
+	}
+	return hi;
+};
+
+const derive = (t, id) => {
 	const bg = t.scrollbar_track;
 	const rawText = t.text;
 	const base = rd(mix(bg, WHITE, 0.03));
@@ -78,11 +122,37 @@ const derive = (t) => {
 	const row = rd(mix(base, surface1, 0.2));
 	const card = rd(mix(base, mantle, 0.5));
 
+	const sources = {
+		text: rawText,
+		muted: mutedRaw,
+		overlay2: overlayRaw,
+		mauve: t.selected,
+		primary: t[ACCENT_SRC[id] ?? 'selected'],
+		green: t.success,
+		highlight: t.dashboard_value,
+		pink: t.dashboard,
+		blue: t.install,
+		yellow: t.warning,
+		peach: t.multilib,
+		sapphire: t.accent,
+	};
+
+	// The active docs row sits on white/7 over the frosted rail; the accent's
+	// own tinted row is handled separately by ensureTint below.
+	const railRow = rd(over(WHITE, 0.07, rd(over(mantle, 0.55, base))));
+
 	const rules = {
 		text: { shells: [base, mantle, crust, surface0, row], needs: [[1, 7], [0.9, 4.5], [0.7, 4.5]] },
 		muted: { shells: [base, mantle, crust, card], needs: [[1, 4.8], [0.8, 4.5]] },
 		overlay2: { shells: [base, row, surface0, crust], needs: [[1, 4.5]] },
 		mauve: { shells: [base, mantle, crust, card], needs: [[1, 5], [0.8, 4.5]] },
+		// `primary` only ever paints full-opacity text (the alpha variants are
+		// borders, underlines and the caret), so the threshold is the plain
+		// text one — checked against every surface listed above as well.
+		primary: {
+			shells: [base, mantle, crust, card, railRow],
+			needs: [[1, 4.5]],
+		},
 		green: { shells: [crust, base, row], needs: [[1, 7], [0.9, 4.5]] },
 		highlight: { shells: [base, mantle, card, surface0], needs: [[1, 4.5]] },
 		pink: { shells: [surface0, base, row], needs: [[1, 4.5]] },
@@ -93,19 +163,7 @@ const derive = (t) => {
 	};
 
 	const fixes = {};
-	const sources = {
-		text: rawText,
-		muted: mutedRaw,
-		overlay2: overlayRaw,
-		mauve: t.selected,
-		green: t.success,
-		highlight: t.dashboard_value,
-		pink: t.dashboard,
-		blue: t.install,
-		yellow: t.warning,
-		peach: t.multilib,
-		sapphire: t.accent,
-	};
+	const lifts = {};
 
 	const palette = {
 		base,
@@ -126,9 +184,22 @@ const derive = (t) => {
 			}
 			if (r.lift > best.lift) best = r;
 		}
+		lifts[key] = best.lift;
 		if (best.lift > 0) fixes[key] = best.lift;
 		palette[key] = best.color;
 	}
+
+	// Fold the accent's self-tint constraint back in. Every shell in the rule
+	// above only gets easier as the accent lightens, so the larger lift wins.
+	const tintLift = ensureTint(sources.primary, base, 0.14, 4.5);
+	if (tintLift === null) {
+		fixes.primary = 1;
+	} else if (tintLift > lifts.primary) {
+		palette.primary = rd(mix(sources.primary, WHITE, tintLift));
+		lifts.primary = tintLift;
+		if (tintLift > 0) fixes.primary = tintLift;
+	}
+
 	return { palette, fixes };
 };
 
@@ -136,7 +207,6 @@ const ALIASES = {
 	background: 'base',
 	surface: 'mantle',
 	subtext0: 'muted',
-	primary: 'mauve',
 };
 
 const files = fs.readdirSync(themesDir).filter((f) => f.endsWith('.toml')).sort();
@@ -146,7 +216,7 @@ const themes = files.map((f) => {
 	for (const key of ['scrollbar_track', 'text', 'selected', 'success', 'dashboard_value', 'dashboard', 'install', 'warning', 'multilib', 'accent']) {
 		if (!toml[key]) throw new Error(`${f}: missing "${key}"`);
 	}
-	const { palette, fixes } = derive(toml);
+	const { palette, fixes } = derive(toml, id);
 	return {
 		id,
 		label: f.replace(/\.toml$/, '').replace(/[_-]/g, ' '),
@@ -198,7 +268,7 @@ const ts = [
 			themes.map((t) => ({
 				id: t.id,
 				label: t.label,
-				dot: { bg: hex(t.palette.mantle), fg: hex(t.palette.text), accent: hex(t.palette.mauve) },
+				dot: { bg: hex(t.palette.mantle), fg: hex(t.palette.text), accent: hex(t.palette.primary) },
 			})),
 			null,
 			'\t',

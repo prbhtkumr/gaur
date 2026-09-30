@@ -24,7 +24,7 @@ const ogImageURL = new URL('/og.png', Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" class="bg-background text-text font-mono selection:bg-primary/30 selection:text-primary">
+<html lang="en" class="bg-background text-text font-mono selection:bg-primary/30">
 	<head>
 		<meta charset="UTF-8" />
 		<style is:inline set:html={themeCss}></style>
@@ -85,7 +85,7 @@ const ogImageURL = new URL('/og.png', Astro.site);
 
 <style is:global>
 	:root {
-		--primary: rgb(var(--c-mauve));
+		--primary: rgb(var(--c-primary));
 	}
 	
 	/* Smooth scrolling for docs */
@@ -111,8 +111,8 @@ const ogImageURL = new URL('/og.png', Astro.site);
 
 	/* Selection styling */
 	::selection {
-		background-color: rgb(var(--c-mauve) / 0.3);
-		color: rgb(var(--c-mauve));
+		background-color: rgb(var(--c-primary) / 0.3);
+		color: rgb(var(--c-text));
 	}
 
 	/* Frosted panel — the docs sidebar is the only surface that gets this. */
@@ -161,7 +161,7 @@ const ogImageURL = new URL('/og.png', Astro.site);
 		padding: 0.5rem 1rem;
 		background: rgb(var(--c-crust));
 		color: var(--primary);
-		border: 1px solid rgb(var(--c-mauve) / 0.5);
+		border: 1px solid rgb(var(--c-primary) / 0.5);
 		border-radius: 8px;
 		font-weight: 700;
 		font-size: 0.875rem;

@@ -26,8 +26,9 @@ export default {
 				mantle: themed('mantle'),
 				crust: themed('crust'),
 
-				// Semantic aliases
-				primary: themed('mauve'),
+				// Semantic aliases — `primary` is the per-theme site accent
+				// resolved by scripts/build-themes.mjs
+				primary: themed('primary'),
 				background: themed('base'),
 				surface: themed('mantle'),
 				muted: themed('muted'),
