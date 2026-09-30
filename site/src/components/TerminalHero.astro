@@ -62,7 +62,7 @@ function highlightMatch(name: string, query: string) {
     <div class="absolute -inset-0.5 bg-sapphire/10 rounded-xl blur opacity-10 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
     
     <!-- Main Terminal Window -->
-    <div class="relative bg-base border border-surface1/60 rounded-xl overflow-hidden shadow-2xl min-h-[540px] md:h-[540px] flex flex-col">
+    <div class="relative bg-base border border-surface1/60 rounded-xl overflow-hidden shadow-2xl min-h-[540px] md:min-h-0 md:h-[clamp(360px,calc(100vh_-_440px),540px)] flex flex-col">
       
       <!-- TUI Content Area -->
       <div class="grow flex flex-col gap-0 overflow-hidden relative text-text">

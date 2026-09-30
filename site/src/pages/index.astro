@@ -14,10 +14,12 @@ import Footer from '../components/Footer.astro';
 
 	<div class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-proximity scroll-smooth" id="main-snap-container">
 		<!-- Hero Section -->
-		<section class="min-h-full flex flex-col overflow-hidden snap-start relative">
+		<section class="min-h-full flex flex-col justify-center overflow-hidden snap-start relative">
 			<!-- Shared left rail: same max-w + padding as TerminalHero, so headline,
-			     tagline, install bar and terminal all share one left edge. -->
-			<div class="flex-grow flex flex-col justify-center w-full max-w-4xl mx-auto px-4 py-10">
+			     tagline, install bar and terminal all share one left edge.
+			     The whole group is centred as one unit by the section, so the
+			     tagline-to-CTA gap stays fixed instead of absorbing leftover height. -->
+			<div class="w-full max-w-4xl mx-auto px-4 pt-10 pb-4">
 				<h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-5 flex items-center gap-3">
 					<span class="text-green font-normal" aria-hidden="true">$</span>
 					<span class="text-primary crt-glow">gaur</span>
