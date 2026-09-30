@@ -43,10 +43,18 @@ export default {
 			fontFamily: {
 				mono: [
 					'"CaskaydiaCove Nerd Font"',
-					'"Caskaydia Cove Nerd Font"',
+					'"CaskaydiaCove Nerd Font Mono"',
 					'"CaskaydiaCove NF"',
+					'"JetBrains Mono"',
 					'"Cascadia Code"',
-					'monospace'
+					'"Fira Code"',
+					'"DejaVu Sans Mono"',
+					'"Liberation Mono"',
+					'menlo',
+					'monaco',
+					'consolas',
+					'"Courier New"',
+					'monospace',
 				],
 			},
 
