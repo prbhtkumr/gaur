@@ -2,28 +2,21 @@
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import DocsSidebar from '../../components/DocsSidebar.astro';
+import { sortDocs } from '../../lib/docs';
 
-const docsEntries = await getCollection('docs');
-
-// Sort them so Installation is first, then Usage, etc.
-const order = ['installation', 'usage', 'configuration', 'internals'];
-docsEntries.sort((a, b) => {
-	const aIndex = order.indexOf(a.slug);
-	const bIndex = order.indexOf(b.slug);
-	if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-	if (aIndex !== -1) return -1;
-	if (bIndex !== -1) return 1;
-	return a.data.title.localeCompare(b.data.title);
-});
+const docsEntries = sortDocs(await getCollection('docs'));
 ---
 
-<Layout title="gaur docs - get started">
-	<div class="flex max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
+<Layout
+	title="gaur docs - get started"
+	description="Get started with gaur - install, configure, and master the terminal-native package manager for Arch Linux."
+>
+	<div class="flex flex-wrap max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
 		<!-- Sidebar -->
-		<DocsSidebar currentSlug="index" />
+		<DocsSidebar />
 
 		<!-- Main Content Section -->
-		<article class="flex-grow p-8 md:p-12 lg:p-16 overflow-hidden">
+		<article class="flex-1 min-w-0 p-8 md:p-12 lg:p-16 overflow-hidden">
 			<div class="max-w-4xl mx-auto">
 				<header class="mb-16">
 					<h1 class="text-4xl md:text-6xl font-extrabold text-primary mb-6 tracking-tight">docs</h1>
@@ -52,7 +45,7 @@ docsEntries.sort((a, b) => {
 				<h3 class="text-xl font-bold text-highlight mb-4">quick start</h3>
 				<p class="text-text/80 mb-6">grab gaur from the aur and you're ready to go. one command, zero fuss.</p>
 				<div class="flex flex-wrap gap-4 mb-2">
-					<button class="docs-qs-tab active text-[10px] font-bold text-mauve tracking-widest uppercase transition-all hover:text-mauve" data-cmd="paru -S gaur-bin">
+					<button class="docs-qs-tab text-[10px] font-bold text-mauve tracking-widest uppercase transition-all hover:text-mauve" data-cmd="paru -S gaur-bin">
 						[ paru ]
 					</button>
 					<button class="docs-qs-tab text-[10px] font-bold text-subtext0 tracking-widest uppercase transition-all hover:text-mauve" data-cmd="yay -S gaur-bin">
@@ -78,34 +71,28 @@ docsEntries.sort((a, b) => {
 </Layout>
 
 <script>
-	document.querySelectorAll('.docs-qs-tab').forEach(btn => {
-		btn.addEventListener('click', (e) => {
-			const t = e.currentTarget as HTMLButtonElement;
-			document.querySelectorAll('.docs-qs-tab').forEach(b => {
-				b.classList.remove('active', 'text-mauve');
+	import { attachCopy } from '../../lib/clipboard';
+
+	document.querySelectorAll<HTMLButtonElement>('.docs-qs-tab').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			document.querySelectorAll<HTMLButtonElement>('.docs-qs-tab').forEach((b) => {
+				b.classList.remove('text-mauve');
 				b.classList.add('text-subtext0');
 			});
-			t.classList.add('active', 'text-mauve');
-			t.classList.remove('text-subtext0');
+			btn.classList.add('text-mauve');
+			btn.classList.remove('text-subtext0');
 			const cmdEl = document.getElementById('docs-qs-cmd');
-			if (cmdEl && t.dataset.cmd) cmdEl.textContent = t.dataset.cmd;
+			if (cmdEl && btn.dataset.cmd) cmdEl.textContent = btn.dataset.cmd;
 		});
 	});
 
 	const copyBtn = document.getElementById('docs-qs-copy');
-	copyBtn?.addEventListener('click', () => {
-		const cmd = document.getElementById('docs-qs-cmd')?.textContent;
-		if (cmd) {
-			navigator.clipboard.writeText(cmd);
-			const ot = copyBtn.textContent;
-			copyBtn.textContent = 'DONE';
-			copyBtn.classList.replace('text-mauve', 'text-green');
-			copyBtn.classList.replace('border-mauve', 'border-green');
-			setTimeout(() => {
-				copyBtn.textContent = ot;
-				copyBtn.classList.replace('text-green', 'text-mauve');
-				copyBtn.classList.replace('border-green', 'border-mauve');
-			}, 2000);
-		}
-	});
+	if (copyBtn instanceof HTMLButtonElement) {
+		attachCopy(copyBtn, () => document.getElementById('docs-qs-cmd')?.textContent, {
+			pairs: [
+				['text-green', 'text-mauve'],
+				['border-green', 'border-mauve'],
+			],
+		});
+	}
 </script>

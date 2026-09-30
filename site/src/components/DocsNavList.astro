@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	entries: CollectionEntry<'docs'>[];
+	currentSlug?: string;
+}
+
+const { entries, currentSlug } = Astro.props;
+---
+
+<div>
+	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">guides</h3>
+	<ul class="space-y-3">
+		{entries.map((entry) => (
+			<li>
+				<a
+					href={`/docs/${entry.slug}`}
+					class:list={[
+						'text-sm font-medium transition-colors hover:text-primary',
+						currentSlug === entry.slug ? 'text-primary' : 'text-text/70',
+					]}
+					aria-current={currentSlug === entry.slug ? 'page' : undefined}
+				>
+					{entry.data.title}
+				</a>
+			</li>
+		))}
+	</ul>
+</div>
+
+<div class="pt-8 border-t border-muted/10">
+	<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">links</h3>
+	<ul class="space-y-3">
+		<li>
+			<a href="https://github.com/prbhtkumr/gaur/issues" class="text-sm text-text/70 hover:text-primary transition-colors">file an issue</a>
+		</li>
+		<li>
+			<a href="https://github.com/prbhtkumr/gaur" class="text-sm text-text/70 hover:text-primary transition-colors">source code</a>
+		</li>
+	</ul>
+</div>

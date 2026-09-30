@@ -1,53 +1,30 @@
 ---
 import { getCollection } from 'astro:content';
+import { sortDocs } from '../lib/docs';
+import DocsNavList from './DocsNavList.astro';
 
-const docsEntries = await getCollection('docs');
+const docsEntries = sortDocs(await getCollection('docs'));
 
-// Sort them so Installation is first, then Usage, etc.
-const order = ['installation', 'usage', 'configuration', 'internals'];
-docsEntries.sort((a, b) => {
-	const aIndex = order.indexOf(a.slug);
-	const bIndex = order.indexOf(b.slug);
-	if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-	if (aIndex !== -1) return -1;
-	if (bIndex !== -1) return 1;
-	return a.data.title.localeCompare(b.data.title);
-});
+interface Props {
+	currentSlug?: string;
+}
 
 const { currentSlug } = Astro.props;
 ---
 
+<!-- Mobile: disclosure at the top of the docs column (below md) -->
+<details class="md:hidden w-full order-first border-b border-muted/10 bg-crust/40">
+	<summary class="cursor-pointer px-6 py-4 text-xs font-bold text-muted uppercase tracking-widest select-none">
+		guides
+	</summary>
+	<nav aria-label="Documentation" class="px-6 pb-6 pt-2 space-y-8">
+		<DocsNavList entries={docsEntries} currentSlug={currentSlug} />
+	</nav>
+</details>
+
+<!-- Desktop: persistent sidebar -->
 <aside class="w-64 flex-shrink-0 border-r border-muted/10 hidden md:block">
-	<nav class="sticky top-24 p-8 space-y-8">
-		<div>
-			<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">guides</h3>
-			<ul class="space-y-3">
-				{docsEntries.map(entry => (
-					<li>
-						<a 
-							href={`/docs/${entry.slug === 'index' ? '' : entry.slug}`} 
-							class:list={[
-								"text-sm font-medium transition-colors hover:text-primary",
-								(currentSlug === entry.slug || (currentSlug === undefined && entry.slug === 'index')) ? "text-primary" : "text-text/70"
-							]}
-						>
-							{entry.data.title}
-						</a>
-					</li>
-				))}
-			</ul>
-		</div>
-		
-		<div class="pt-8 border-t border-muted/10">
-			<h3 class="text-xs font-bold text-muted uppercase tracking-widest mb-4">links</h3>
-			<ul class="space-y-3">
-				<li>
-					<a href="https://github.com/prbhtkumr/gaur/issues" class="text-sm text-text/70 hover:text-primary transition-colors">file an issue</a>
-				</li>
-				<li>
-					<a href="https://github.com/prbhtkumr/gaur" class="text-sm text-text/70 hover:text-primary transition-colors">source code</a>
-				</li>
-			</ul>
-		</div>
+	<nav aria-label="Documentation" class="sticky top-24 p-8 space-y-8">
+		<DocsNavList entries={docsEntries} currentSlug={currentSlug} />
 	</nav>
 </aside>
