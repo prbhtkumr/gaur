@@ -3,8 +3,6 @@ title: "internals"
 description: "Architecture, search pipeline, and security model, checked against the source"
 ---
 
-# internals
-
 The technical breakdown: what runs, in what order, and what the code actually does. Every claim here is checked against the source, not against intent.
 
 ## architecture

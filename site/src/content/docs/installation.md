@@ -3,8 +3,6 @@ title: "installation"
 description: "Get gaur running on your Arch system"
 ---
 
-# installation
-
 gaur runs on Arch Linux and its derivatives: Manjaro, EndeavourOS, CachyOS, you name it.  
 Here's how to get it.
 

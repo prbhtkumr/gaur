@@ -3,8 +3,6 @@ title: "configuration"
 description: "Customize gaur to fit your workflow"
 ---
 
-# configuration
-
 gaur works great out of the box, but you can tweak everything. Change settings on the fly or edit the config file directly.
 
 ## in-app settings

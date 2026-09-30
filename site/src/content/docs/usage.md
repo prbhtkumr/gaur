@@ -3,8 +3,6 @@ title: "usage"
 description: "Master the keyboard shortcuts and workflows"
 ---
 
-# usage
-
 gaur is built for speed. Everything happens through the keyboard, with optional mouse support. Learn these shortcuts and you'll fly through package management.
 
 ## command line options
