@@ -1,52 +1,82 @@
 ---
+import Footer from '../components/Footer.astro';
+
 interface Props {
 	title: string;
+	description?: string;
 	hideFooter?: boolean;
 }
 
-const { title, hideFooter = false } = Astro.props;
+const DEFAULT_DESCRIPTION =
+	'gaur - The terminal-native package manager for Arch Linux. Fast, visual, and keyboard-driven.';
+
+const {
+	title,
+	description = DEFAULT_DESCRIPTION,
+	hideFooter = false,
+} = Astro.props;
+
+// 3.2 — canonical + social card URLs, resolved against the configured site
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = new URL('/og.png', Astro.site);
 ---
 
 <!doctype html>
 <html lang="en" class="bg-background text-text font-mono selection:bg-primary/30 selection:text-primary">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="gaur - The terminal-native package manager for Arch Linux. Fast, visual, and keyboard-driven." />
+		<meta name="description" content={description} />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#1e1e2e" />
+		<link rel="canonical" href={canonicalURL} />
 		<title>{title}</title>
+
+		<!-- 3.3 — Open Graph / Twitter link preview -->
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="gaur" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:image" content={ogImageURL} />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="gaur - the terminal-native package manager for Arch Linux" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImageURL} />
+		<meta name="twitter:image:alt" content="gaur - the terminal-native package manager for Arch Linux" />
 	</head>
 	<body class="min-h-screen flex flex-col">
-		<nav class="h-16 flex items-center justify-between px-4 md:px-8 border-b border-muted/20 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
-			<a href="/" class="flex items-center gap-2 hover:opacity-90 transition-opacity group">
-				<span class="text-primary font-bold text-xl tracking-tight drop-shadow-[0_0_8px_rgba(203,166,247,0.4)] transition-all">[gaur]</span>
-			</a>
-			<div class="flex items-center gap-4 md:gap-8 text-[11px] md:text-sm font-semibold tracking-tight uppercase md:normal-case">
-				<a href="/themes" class="hover:text-primary transition-colors">themes</a>
-				<a href="/docs" class="hover:text-primary transition-colors">docs</a>
-				<a href="https://github.com/prbhtkumr/gaur" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors flex items-center gap-1 md:gap-2">
-					github
-					<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link md:w-4 md:h-4"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+		<a href="#main" class="skip-link">skip to content</a>
+		<nav aria-label="Main" class="h-16 border-b border-muted/20 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
+			<div class="h-full w-full max-w-4xl mx-auto px-4 flex items-center justify-between">
+				<a href="/" class="flex items-center gap-2 hover:opacity-90 transition-opacity group">
+					<span class="text-primary font-bold text-xl tracking-tight transition-all">[gaur]</span>
 				</a>
+				<div class="flex items-center gap-4 md:gap-8 text-[11px] md:text-sm font-semibold tracking-tight uppercase md:normal-case">
+					<a href="/themes" class="hover:text-primary transition-colors">themes</a>
+					<a href="/docs" class="hover:text-primary transition-colors">docs</a>
+					<a href="https://github.com/prbhtkumr/gaur" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors flex items-center gap-1 md:gap-2">
+						github
+						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link md:w-4 md:h-4"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+					</a>
+				</div>
 			</div>
 		</nav>
-		<main class="flex-grow">
+		<main id="main" class="flex-grow">
 			<slot />
 		</main>
-		{!hideFooter && (
-		<footer class="py-12 text-center text-muted/50 text-xs border-t border-muted/10">
-			<p>© {new Date().getFullYear()} gaur. open source under gplv3.</p>
-			<p class="mt-2">crafted with astro + tailwind. made for arch users, by arch users.</p>
-		</footer>
-		)}
+		{!hideFooter && <Footer />}
 	</body>
 </html>
 
 <style is:global>
 	:root {
 		--primary: #cba6f7;
-		--primary-glow: rgba(203, 166, 247, 0.4);
 	}
 	
 	/* Smooth scrolling for docs */
@@ -70,14 +100,83 @@ const { title, hideFooter = false } = Astro.props;
 		background: #45475a;
 	}
 
-	/* ASCII-like text animations */
-	.text-glow {
-		text-shadow: 0 0 8px var(--primary);
-	}
-
 	/* Selection styling */
 	::selection {
 		background-color: rgba(203, 166, 247, 0.3);
 		color: #cba6f7;
+	}
+
+	/* 2.1 — keyboard focus must be visible on every interactive element */
+	:focus-visible {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+	}
+
+	/* 2.6 — skip link: off-screen until focused, then pinned top-left */
+	.skip-link {
+		position: absolute;
+		left: -9999px;
+		top: 0;
+		z-index: 100;
+		padding: 0.5rem 1rem;
+		background: #11111b;
+		color: var(--primary);
+		border: 1px solid rgba(203, 166, 247, 0.5);
+		border-radius: 8px;
+		font-weight: 700;
+		font-size: 0.875rem;
+	}
+	.skip-link:focus {
+		left: 1rem;
+		top: 1rem;
+	}
+
+	/* 2.2 — honour reduced-motion: no smooth scroll, no snap, no looping animation */
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
+		#main-snap-container {
+			scroll-snap-type: none !important;
+		}
+	}
+
+	/* 5.2 — dynamic viewport height: falls back to the Tailwind 100vh rule in
+	   engines that do not understand dvh. */
+	#main-snap-container {
+		height: calc(100dvh - 4rem);
+	}
+
+	/* 5.2 — print: unclip the snap container so every section is emitted, and
+	   keep the dark theme readable on paper. */
+	@media print {
+		html {
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+			scroll-behavior: auto;
+		}
+		#main-snap-container {
+			height: auto !important;
+			overflow: visible !important;
+			scroll-snap-type: none !important;
+		}
+		#main-snap-container > section {
+			min-height: 0 !important;
+			scroll-snap-align: none !important;
+			break-inside: avoid;
+			overflow: visible !important;
+		}
+		.threshold-indicator,
+		#scroll-progress,
+		nav[aria-label="Main"] {
+			display: none !important;
+		}
 	}
 </style>

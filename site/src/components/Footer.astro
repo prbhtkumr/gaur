@@ -1,0 +1,20 @@
+---
+interface Props {
+	/** Home-page variant: smaller type, no rule (it sits inside a panel). */
+	compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+---
+
+<footer
+	class:list={[
+		'text-center text-muted/80',
+		compact ? 'text-[10px] font-mono tracking-tight' : 'py-12 text-xs border-t border-muted/10',
+	]}
+>
+	<p>© {new Date().getFullYear()} gaur. open source under gplv3.</p>
+	<p class:list={[compact ? 'mt-1' : 'mt-2']}>
+		crafted with astro + tailwind. made for arch users, by arch users.
+	</p>
+</footer>
