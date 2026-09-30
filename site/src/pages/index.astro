@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import TerminalHero from '../components/TerminalHero.astro';
+import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="gaur - terminal-native arch linux package manager" hideFooter={true}>
@@ -11,18 +12,20 @@ import TerminalHero from '../components/TerminalHero.astro';
 		</div>
 	</div>
 
-	<div class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-mandatory scroll-smooth" id="main-snap-container">
+	<div class="snap-container h-[calc(100vh-4rem)] overflow-y-auto snap-y snap-proximity scroll-smooth" id="main-snap-container">
 		<!-- Hero Section -->
-		<section class="min-h-full flex flex-col pt-12 pb-8 text-center overflow-hidden snap-start relative">
-			<div class="flex-grow flex flex-col justify-center px-4">
-				<h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-4 flex items-center justify-center gap-4">
-					<span class="text-green drop-shadow-[0_0_8px_rgba(166,227,161,0.5)]">></span>
-					<span class="text-primary drop-shadow-[0_0_15px_rgba(203,166,247,0.4)]">[gaur]</span>
-					<span class="w-4 h-12 md:w-6 md:h-20 bg-primary/80 animate-pulse"></span>
+		<section class="min-h-full flex flex-col overflow-hidden snap-start relative">
+			<!-- Shared left rail: same max-w + padding as TerminalHero, so headline,
+			     tagline, install bar and terminal all share one left edge. -->
+			<div class="flex-grow flex flex-col justify-center w-full max-w-4xl mx-auto px-4 py-10">
+				<h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-5 flex items-center gap-3">
+					<span class="text-green font-normal" aria-hidden="true">$</span>
+					<span class="text-primary crt-glow">gaur</span>
+					<span class="w-3 h-8 md:w-3.5 md:h-10 bg-primary/70 animate-pulse" aria-hidden="true"></span>
 				</h1>
-			<p class="text-lg md:text-xl text-muted max-w-2xl mx-auto mb-4 leading-relaxed">
-				your arch packages deserve better than raw pacman output. search, install, update, and clean up, all from one keyboard-driven interface.
-			</p>
+				<p class="text-lg md:text-xl text-muted max-w-2xl leading-relaxed">
+					your arch packages deserve better than raw pacman output. search, install, update, and clean up, all from one keyboard-driven interface.
+				</p>
 			</div>
 
 			<div class="flex-shrink-0">
@@ -35,7 +38,7 @@ import TerminalHero from '../components/TerminalHero.astro';
 
 		<!-- About / Philosophy Section -->
 		<section class="min-h-full flex flex-col px-4 border-t border-muted/10 snap-start relative">
-			<div class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center py-8">
+			<div class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center py-8 print:py-0">
 				<div class="space-y-8">
 				<div>
 					<h2 class="text-3xl font-bold text-primary mb-4 tracking-tight">why gaur?</h2>
@@ -66,8 +69,8 @@ import TerminalHero from '../components/TerminalHero.astro';
 			</div>
 
 			<!-- Sticky Footer Area -->
-			<div class="w-full pb-8 text-center flex-shrink-0">
-				<div class="opacity-20 mb-6 flex justify-center">
+			<div class="w-full pb-8 text-center flex-shrink-0 print:pb-0">
+				<div class="opacity-20 mb-6 flex justify-center print:mb-2">
 					<pre class="text-[10px] md:text-xs leading-none text-left">
 	  ::::::::      :::     :::    ::: :::::::::
     :+:    :+:   :+: :+:   :+:    :+: :+:    :+:
@@ -79,10 +82,7 @@ import TerminalHero from '../components/TerminalHero.astro';
 					</pre>
 				</div>
 
-				<div class="text-muted/40 text-[10px] font-mono tracking-tight">
-					<p>© {new Date().getFullYear()} gaur. open source under gplv3.</p>
-					<p class="mt-1">crafted with astro + tailwind. made for arch users, by arch users.</p>
-				</div>
+				<Footer compact />
 			</div>
 
 			<!-- Threshold Indicator -->
@@ -94,11 +94,14 @@ import TerminalHero from '../components/TerminalHero.astro';
 <script>
 	const container = document.getElementById('main-snap-container');
 	const progress = document.getElementById('scroll-progress');
-	const indicators = document.querySelectorAll('.threshold-indicator');
 	const sections = container?.querySelectorAll('section');
 
 	if (container && progress && sections) {
-		container.addEventListener('scroll', () => {
+		// 4.2 — coalesce scroll events into at most one layout pass per frame
+		let ticking = false;
+
+		const update = () => {
+			ticking = false;
 			const scrollPercent = (container.scrollTop / (container.scrollHeight - container.clientHeight)) * 100;
 			progress.style.height = `${scrollPercent}%`;
 
@@ -121,6 +124,23 @@ import TerminalHero from '../components/TerminalHero.astro';
 					}
 				}
 			});
+		};
+
+		container.addEventListener('scroll', () => {
+			if (ticking) return;
+			ticking = true;
+			requestAnimationFrame(update);
 		});
 	}
 </script>
+
+<style>
+	/* CRT phosphor bloom: tight core, quick falloff, wide faint spill.
+	   Stays subtle — a haze at a single wide radius reads as smudge, not glow. */
+	.crt-glow {
+		text-shadow:
+			0 0 4px rgba(203, 166, 247, 0.45),
+			0 0 12px rgba(203, 166, 247, 0.22),
+			0 0 28px rgba(203, 166, 247, 0.1);
+	}
+</style>

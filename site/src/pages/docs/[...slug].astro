@@ -1,32 +1,72 @@
 ---
 import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
 import Layout from '../../layouts/Layout.astro';
 import DocsSidebar from '../../components/DocsSidebar.astro';
 
 export async function getStaticPaths() {
 	const docsEntries = await getCollection('docs');
-	return docsEntries.map(entry => ({
-		params: { slug: entry.slug }, props: { entry },
+	return docsEntries.map((entry: CollectionEntry<'docs'>) => ({
+		params: { slug: entry.slug },
+		props: { entry },
 	}));
 }
 
+interface Props {
+	entry: CollectionEntry<'docs'>;
+}
+
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content, headings } = await entry.render();
+
+// 5.4 — table of contents, built from the article's own h2/h3
+const toc: MarkdownHeading[] = headings.filter((h: MarkdownHeading) => h.depth === 2 || h.depth === 3);
+
+// 5.5 — edit link back to the markdown source
+const editURL = `https://github.com/prbhtkumr/gaur/edit/main/site/src/content/docs/${entry.slug}.md`;
 ---
 
-<Layout title={`gaur docs - ${entry.data.title}`}>
-	<div class="flex max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
+<Layout title={`gaur docs - ${entry.data.title}`} description={entry.data.description}>
+	<div class="flex flex-wrap max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
 		<!-- Sidebar -->
 		<DocsSidebar currentSlug={entry.slug} />
 
 		<!-- Main Content Section -->
-		<article class="flex-grow p-8 md:p-12 lg:p-16 overflow-hidden prose-gaur">
+		<article class="flex-1 min-w-0 p-8 md:p-12 lg:p-16 overflow-hidden">
 			<div class="max-w-3xl mx-auto">
-				<header class="mb-12 border-b border-muted/10 pb-8">
+				<header class="mb-10 border-b border-muted/10 pb-8">
+					<nav aria-label="Breadcrumb" class="mb-5 text-xs text-muted">
+						<ol class="flex flex-wrap items-center gap-2">
+							<li><a href="/docs/" class="hover:text-primary transition-colors">docs</a></li>
+							<li aria-hidden="true" class="text-muted/80">/</li>
+							<li aria-current="page" class="text-text">{entry.data.title}</li>
+						</ol>
+					</nav>
 					<h1 class="text-4xl md:text-5xl font-extrabold text-primary mb-4 tracking-tight">{entry.data.title}</h1>
 					<p class="text-lg text-muted/80 italic">{entry.data.description}</p>
+					<a
+						href={editURL}
+						class="mt-4 inline-flex items-center gap-1.5 text-xs text-muted hover:text-primary transition-colors"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+						edit this page
+					</a>
 				</header>
-				
+
+				{toc.length > 0 && (
+					<nav aria-label="Table of contents" class="mb-10 rounded-gaur border border-muted/20 bg-surface/50 p-5">
+						<p class="text-[10px] font-bold text-muted uppercase tracking-widest mb-3">on this page</p>
+						<ul class="space-y-1.5 sm:columns-2 sm:gap-6">
+							{toc.map((h) => (
+								<li class:list={['break-inside-avoid', h.depth === 3 && 'ml-5']}>
+									<a href={`#${h.slug}`} class="text-sm text-text/70 hover:text-primary transition-colors">{h.text}</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				)}
+
 				<div class="content">
 					<Content />
 				</div>
@@ -56,16 +96,16 @@ const { Content } = await entry.render();
 		@apply bg-surface0 text-pink px-1.5 py-0.5 rounded-sm font-bold text-sm;
 	}
 	
-	.content pre {
-		@apply bg-mantle border border-muted/10 p-6 rounded-gaur mb-8 overflow-x-auto shadow-inner relative;
+	.content .code-block {
+		@apply relative mb-8;
 	}
 
-	.content pre .code-copy-btn {
-		@apply absolute top-2 right-2 px-2 py-1 text-[10px] font-bold border border-mauve/40 text-mauve/60 hover:text-mauve hover:border-mauve hover:bg-mauve/10 transition-all rounded-gaur uppercase tracking-widest opacity-0;
+	.content .code-block pre {
+		@apply bg-mantle border border-muted/10 p-6 rounded-gaur overflow-x-auto shadow-inner;
 	}
 
-	.content pre:hover .code-copy-btn {
-		@apply opacity-100;
+	.content .code-block .code-copy-btn {
+		@apply absolute top-2 right-2 px-2 py-1 text-[10px] font-bold border border-mauve/70 text-mauve/80 hover:text-mauve hover:border-mauve hover:bg-mauve/10 transition-all rounded-gaur uppercase tracking-widest opacity-70 hover:opacity-100 focus-visible:opacity-100;
 	}
 	
 	.content pre code { 
@@ -83,26 +123,30 @@ const { Content } = await entry.render();
 </style>
 
 <script>
+	import { attachCopy } from '../../lib/clipboard';
+
 	document.querySelectorAll('.content pre code').forEach((codeEl) => {
 		const pre = codeEl.parentElement;
-		if (!pre || pre.querySelector('.code-copy-btn')) return;
+		if (!pre || pre.parentElement?.classList.contains('code-block')) return;
+
+		// Lift the button out of the horizontally-scrolling <pre> so it can't
+		// scroll out of view, and give it its own positioning context.
+		const wrap = document.createElement('div');
+		wrap.className = 'code-block';
+		pre.parentNode?.insertBefore(wrap, pre);
+		wrap.appendChild(pre);
 
 		const btn = document.createElement('button');
+		btn.type = 'button';
 		btn.className = 'code-copy-btn';
 		btn.textContent = 'COPY';
-		btn.addEventListener('click', () => {
-			const text = codeEl.textContent || '';
-			navigator.clipboard.writeText(text);
-			btn.textContent = 'DONE';
-			btn.classList.replace('text-mauve/60', 'text-green');
-			btn.classList.replace('border-mauve/40', 'border-green');
-			setTimeout(() => {
-				btn.textContent = 'COPY';
-				btn.classList.replace('text-green', 'text-mauve/60');
-				btn.classList.replace('border-green', 'border-mauve/40');
-			}, 2000);
+		wrap.appendChild(btn);
+
+		attachCopy(btn, () => codeEl.textContent, {
+			pairs: [
+				['text-green', 'text-mauve/80'],
+				['border-green', 'border-mauve/70'],
+			],
 		});
-		pre.style.position = 'relative';
-		pre.appendChild(btn);
 	});
 </script>

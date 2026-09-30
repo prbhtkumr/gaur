@@ -1,6 +1,62 @@
 ---
+import { allPackages } from '../lib/packages';
+
+// 5.3 — the same state `renderStaticState()` produces, but emitted server-side so
+// the terminal paints complete before (or without) JavaScript.
+const STATIC_QUERY = 'firefox';
+const staticPkgs = allPackages.filter((p) => p.name.includes(STATIC_QUERY)).slice(0, 12);
+const staticFocus = staticPkgs[0];
+const staticCounts: Record<string, number> = {};
+staticPkgs.forEach((p) => {
+	staticCounts[p.source] = (staticCounts[p.source] || 0) + 1;
+});
+const staticSummary = ['core', 'extra', 'multilib', 'aur']
+	.filter((s) => staticCounts[s])
+	.map((s) => {
+		const cls = s === 'aur' ? 'text-pink' : s === 'core' ? 'text-green' : s === 'multilib' ? 'text-yellow' : 'text-blue';
+		return `<span>${staticCounts[s]} <span class="${cls}">${s}</span></span>`;
+	})
+	.join('<span>, </span>');
+
+function highlightMatch(name: string, query: string) {
+	const nq = query.toLowerCase().replace(/\s+/g, '');
+	let qi = 0;
+	let out = '';
+	for (const ch of name) {
+		if (qi < nq.length && ch.toLowerCase() === nq[qi]) {
+			out += `<span class="text-yellow font-bold">${ch}</span>`;
+			qi++;
+		} else {
+			out += ch;
+		}
+	}
+	return out;
+}
 ---
 <div class="w-full max-w-4xl mx-auto px-4 mt-6 mb-4 font-mono text-[11px] md:text-xs">
+  <!-- 5.1 — Install Command Bar: above the terminal so it lands above the fold -->
+  <div class="mb-5 max-w-2xl">
+    <div class="flex flex-wrap gap-4 mb-2 justify-start">
+        <button class="tab-btn text-[10px] font-bold text-mauve tracking-widest uppercase transition-all hover:text-mauve" data-cmd="paru -S gaur-bin">
+            [ paru ]
+        </button>
+        <button class="tab-btn text-[10px] font-bold text-subtext0 tracking-widest uppercase transition-all hover:text-mauve" data-cmd="yay -S gaur-bin">
+            [ yay ]
+        </button>
+        <button class="tab-btn text-[10px] font-bold text-subtext0 tracking-widest uppercase transition-all hover:text-mauve" data-cmd="go install github.com/prbhtkumr/gaur@latest">
+            [ go ]
+        </button>
+    </div>
+    <div class="bg-crust border border-surface0 rounded-gaur p-3 md:p-4 flex flex-col md:flex-row items-center justify-between group shadow-xl gap-4">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <span class="text-green font-bold">$</span>
+            <code id="install-cmd" class="text-green/90 text-[11px] break-all">paru -S gaur-bin</code>
+        </div>
+        <button id="copy-btn" class="w-full md:w-auto px-6 py-2 md:py-1 text-[10px] font-bold border border-mauve text-mauve hover:bg-mauve/10 transition-all rounded-gaur uppercase tracking-widest">
+            COPY
+        </button>
+    </div>
+  </div>
   <div id="terminal-container" class="relative group">
     <!-- Elevated Border Shadow Effect (ROUNDED) -->
     <div class="absolute -inset-0.5 bg-sapphire/10 rounded-xl blur opacity-10 group-hover:opacity-30 transition duration-1000 group-hover:duration-200"></div>
@@ -25,12 +81,12 @@
           </div>
 
           <div id="details-scroller" class="h-full p-4 overflow-y-auto overflow-x-hidden">
-            <div id="details-pane" class="opacity-0 transition-opacity duration-300 text-left">
+            <div id="details-pane" class="opacity-100 transition-opacity duration-300 text-left">
               <div class="grid grid-cols-[80px_10px_1fr] md:grid-cols-[110px_10px_1fr] gap-x-0 gap-y-0.5">
-                <span class="text-text">Repository</span> <span class="text-text/60">:</span> <span id="detail-repo" class="text-blue"></span>
-                <span class="text-text">Name</span> <span class="text-text/60">:</span> <span id="detail-name" class="font-bold"></span>
-                <span class="text-text">Version</span> <span class="text-text/60">:</span> <span id="detail-version" class="text-text"></span>
-                <span class="text-text">Description</span> <span class="text-text/60">:</span> <span id="detail-desc" class="text-text/90"></span>
+                <span class="text-text">Repository</span> <span class="text-text/60">:</span> <span id="detail-repo" class="text-blue">{staticFocus.source}</span>
+                <span class="text-text">Name</span> <span class="text-text/60">:</span> <span id="detail-name" class="font-bold">{staticFocus.name}</span>
+                <span class="text-text">Version</span> <span class="text-text/60">:</span> <span id="detail-version" class="text-text">{staticFocus.version}</span>
+                <span class="text-text">Description</span> <span class="text-text/60">:</span> <span id="detail-desc" class="text-text/90">{staticFocus.desc}</span>
                 <span class="text-text">Architecture</span> <span class="text-text/60">:</span> <span class="text-text">x86_64</span>
                 <span class="text-text">URL</span> <span class="text-text/60">:</span> <span class="text-text underline decoration-text/30 truncate">https://www.mozilla.org/firefox/</span>
                 <span class="text-text">Licenses</span> <span class="text-text/60">:</span> <span class="text-text">MPL-2.0</span>
@@ -46,7 +102,15 @@
         <div class="mx-3 h-1/2 border border-blue/30 rounded-gaur flex flex-col justify-end relative mt-3 mb-2 overflow-hidden">
           <!-- Scrolling List -->
           <div id="package-list" class="flex flex-col-reverse gap-0.5 mb-2 overflow-y-auto overflow-x-hidden w-full relative">
-            <!-- Populated by JS -->
+            {staticPkgs.map((pkg, i) => (
+              <div id={`pkg-${i}`} class:list={['pkg-item flex items-center px-3 py-0 transition-all duration-150 w-full font-medium', i === 0 && 'bg-surface1/20']}>
+                <span class="indicator text-pink font-bold w-4 flex-shrink-0">{i === 0 ? '>' : ''}</span>
+                <span class={pkg.source === 'aur' ? 'text-pink' : 'text-blue'}>{pkg.source}</span>
+                <span class="text-overlay2">/</span>
+                <span class="text-text" set:html={highlightMatch(pkg.name, STATIC_QUERY)} />
+                <span class="text-overlay2 ml-auto">{pkg.version}</span>
+              </div>
+            ))}
             <div class="absolute right-1 top-0 bottom-0 w-1 bg-surface1/10 rounded-full hidden md:block">
                 <div class="h-24 w-full bg-surface2/30 rounded-full"></div>
             </div>
@@ -58,11 +122,11 @@
               <div class="flex items-center justify-between pt-2 pl-3 pr-3">
                 <div class="flex items-center gap-2">
                     <span class="text-text font-bold">&gt;</span>
-                    <span id="typing-input" class="text-text font-bold min-w-[1px]"></span>
+                    <span id="typing-input" class="text-text font-bold min-w-[1px]">{STATIC_QUERY}</span>
                     <span id="cursor" class="w-2 h-4 bg-text/80"></span>
                 </div>
                 <!-- Filter Hinting -->
-                <div id="filter-hints" class="text-[10px] text-surface2 flex gap-2 md:gap-3">
+                <div id="filter-hints" class="text-[10px] text-overlay2 flex gap-2 md:gap-3">
                     <span data-filter="c:">c:</span>
                     <span data-filter="e:">e:</span>
                     <span data-filter="m:">m:</span>
@@ -71,14 +135,12 @@
               </div>
               
               <!-- Search Status -->
-              <div id="search-status" class="text-[10px] text-subtext0 pb-2 pl-3 pr-3 opacity-0 transition-opacity flex flex-wrap items-center justify-between gap-x-4">
+              <div id="search-status" class="text-[10px] text-subtext0 pb-2 pl-3 pr-3 opacity-100 transition-opacity flex flex-wrap items-center justify-between gap-x-4">
                 <div class="flex items-center gap-2">
                   <span id="search-indicator" class="text-blue min-w-[1ch]"></span>
-                  <span id="search-text" class="italic"></span>
+                  <span id="search-text" class="italic">AUR search complete. Found {staticPkgs.length} matches.</span>
                 </div>
-                <div id="repo-summary" class="flex gap-2 text-[9px] md:text-[10px]">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="repo-summary" class="flex gap-2 text-[9px] md:text-[10px]" set:html={staticSummary} />
               </div>
           </div>
         </div>
@@ -100,54 +162,12 @@
     </div>
   </div>
 
-  <!-- Install Command Bar (ROUNDED) -->
-  <div class="mt-4 max-w-2xl mx-auto">
-    <div class="flex flex-wrap gap-4 px-4 mb-2 justify-center md:justify-start">
-        <button class="tab-btn active text-[10px] font-bold text-mauve tracking-widest uppercase transition-all hover:text-mauve" data-cmd="paru -S gaur-bin">
-            [ paru ]
-        </button>
-        <button class="tab-btn text-[10px] font-bold text-subtext0 tracking-widest uppercase transition-all hover:text-mauve" data-cmd="yay -S gaur-bin">
-            [ yay ]
-        </button>
-        <button class="tab-btn text-[10px] font-bold text-subtext0 tracking-widest uppercase transition-all hover:text-mauve" data-cmd="go install github.com/prbhtkumr/gaur@latest">
-            [ go ]
-        </button>
-    </div>
-    <div class="bg-crust border border-surface0 rounded-gaur p-3 md:p-4 flex flex-col md:flex-row items-center justify-between group shadow-xl gap-4">
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <span class="text-green font-bold">$</span>
-            <code id="install-cmd" class="text-green/90 text-[11px] break-all">paru -S gaur-bin</code>
-        </div>
-        <button id="copy-btn" class="w-full md:w-auto px-6 py-2 md:py-1 text-[10px] font-bold border border-mauve text-mauve hover:bg-mauve/10 transition-all rounded-gaur uppercase tracking-widest">
-            COPY
-        </button>
-    </div>
-  </div>
 </div>
 
 <script>
-  const allPackages = [
-    { source: 'extra', name: 'firefox', version: '133.0.3-1', desc: 'Fast, Private & Safe Web Browser' },
-    { source: 'extra', name: 'firefox-i18n-af', version: '133.0.3-1', desc: 'Afrikaans language pack for Firefox' },
-    { source: 'extra', name: 'firefox-i18n-ar', version: '133.0.3-1', desc: 'Arabic language pack for Firefox' },
-    { source: 'extra', name: 'firefox-i18n-be', version: '133.0.3-1', desc: 'Belarusian language pack for Firefox' },
-    { source: 'extra', name: 'firefox-developer-edition', version: '134.0b1-1', desc: 'Developer Edition of Firefox' },
-    { source: 'extra', name: 'firefox-nightly-bin', version: '135.0a1-1', desc: 'Nightly build of Firefox' },
-    { source: 'aur', name: 'firefoxpwa', version: '2.18.2-1', desc: 'A system to use Firefox as a PWA' },
-    { source: 'aur', name: 'zen-browser-bin', version: '1.0.0-a.42-1', desc: 'Experience tranquility while browsing the web without losing speed. Firefox based browser with vertical tabs.' },
-    { source: 'aur', name: 'zen-browser-avx2-bin', version: '1.0.0-a.42-1', desc: 'Zen Browser (AVX2 optimized) - precompiled binaries' },
-    { source: 'aur', name: 'zen-browser-patched-bin', version: '1.0.0-1', desc: 'Patched version of zen browser' },
-    { source: 'aur', name: 'zenity-git', version: '3.99-1', desc: 'Display GTK+ dialogs' },
-    { source: 'aur', name: 'zengarden', version: '0.1-1', desc: 'Zen garden theme' },
-    { source: 'core', name: 'linux', version: '6.12.1.arch1-1', desc: 'The Linux kernel and modules' },
-    { source: 'core', name: 'linux-headers', version: '6.12.1.arch1-1', desc: 'Headers and scripts for building modules for the Mainline kernel' },
-    { source: 'core', name: 'linux-lts', version: '6.6.63-1', desc: 'The Linux-LTS kernel and modules' },
-    { source: 'extra', name: 'linux-firmware', version: '20241118.9d3568b-1', desc: 'Firmware files for Linux' },
-    { source: 'aur', name: 'linux-zen', version: '6.12.1.zen1-1', desc: 'The Linux-ZEN kernel and modules' },
-    { source: 'aur', name: 'linux-mainline', version: '6.13rc1-1', desc: 'The Mainline Linux kernel and modules' },
-    { source: 'multilib', name: 'flash-lib32', version: '32.0-1', desc: 'Flash library' },
-    { source: 'core', name: 'filesystem', version: '2024.11.22-1', desc: 'Base Arch Linux files' }
-  ];
+  import { attachCopy } from '../lib/clipboard';
+  import { allPackages } from '../lib/packages';
+
 
   const wait = (ms: number) => new Promise(res => setTimeout(res, ms));
 
@@ -175,7 +195,7 @@
 
     // Initial state
     updateList("");
-    statusEl.classList.add('opacity-100');
+    statusEl.classList.replace('opacity-0', 'opacity-100');
     searchTextEl.textContent = "Loaded 14285 packages";
     await wait(1000);
 
@@ -314,13 +334,13 @@
       hints.forEach(hint => {
           const filter = (hint as HTMLElement).dataset.filter;
           if (filter && q.includes(filter)) {
-              hint.classList.remove('text-surface2');
+              hint.classList.remove('text-overlay2');
               if (filter === 'c:') hint.classList.add('text-green', 'font-bold');
               if (filter === 'e:') hint.classList.add('text-blue', 'font-bold');
               if (filter === 'm:') hint.classList.add('text-yellow', 'font-bold');
               if (filter === 'a:') hint.classList.add('text-pink', 'font-bold');
           } else {
-              hint.classList.add('text-surface2');
+              hint.classList.add('text-overlay2');
               hint.classList.remove('text-green', 'text-blue', 'text-yellow', 'text-pink', 'font-bold');
           }
       });
@@ -375,9 +395,9 @@
       div.innerHTML = `
         <span class="indicator text-pink font-bold w-4 flex-shrink-0">${isMarked ? '*' : ''}</span>
         <span class="${sourceColorClass}">${pkg.source}</span>
-        <span class="text-overlay1">/</span>
+        <span class="text-overlay2">/</span>
         <span class="text-text">${getHighlightedName(pkg.name, actualQuery)}</span>
-        <span class="text-overlay1/50 ml-auto">${pkg.version}</span>
+        <span class="text-overlay2 ml-auto">${pkg.version}</span>
       `;
       div.id = `pkg-${idx}`;
       listEl.appendChild(div);
@@ -529,10 +549,10 @@
     btn.addEventListener('click', (e) => {
         const t = e.currentTarget as HTMLButtonElement;
         document.querySelectorAll('.tab-btn').forEach(b => {
-            b.classList.remove('active', 'text-mauve');
+            b.classList.remove('text-mauve');
             b.classList.add('text-subtext0');
         });
-        t.classList.add('active', 'text-mauve');
+        t.classList.add('text-mauve');
         t.classList.remove('text-subtext0');
         const cmdEl = document.getElementById('install-cmd');
         if (cmdEl && t.dataset.cmd) cmdEl.textContent = t.dataset.cmd;
@@ -540,25 +560,46 @@
   });
 
   const copyBtn = document.getElementById('copy-btn');
-  copyBtn?.addEventListener('click', () => {
-      const cmd = document.getElementById('install-cmd')?.textContent;
-      if (cmd) {
-          navigator.clipboard.writeText(cmd);
-          const ot = copyBtn.textContent;
-          copyBtn.textContent = 'DONE';
-          copyBtn.classList.replace('text-mauve', 'text-green');
-          copyBtn.classList.replace('border-mauve', 'border-green');
-          setTimeout(() => {
-              copyBtn.textContent = ot;
-              copyBtn.classList.replace('text-green', 'text-mauve');
-              copyBtn.classList.replace('border-green', 'border-mauve');
-          }, 2000);
-      }
-  });
+  if (copyBtn instanceof HTMLButtonElement) {
+    attachCopy(copyBtn, () => document.getElementById('install-cmd')?.textContent, {
+      pairs: [
+        ['text-green', 'text-mauve'],
+        ['border-green', 'border-mauve'],
+      ],
+    });
+  }
 
+  // 2.2 — reduced motion: skip the typing demo and render one representative
+  // frame instead, so the panes are never blank and nothing moves.
+  function renderStaticState() {
+    const inputEl = document.getElementById('typing-input');
+    const statusEl = document.getElementById('search-status');
+    if (!inputEl || !statusEl) return;
+
+    marked.clear();
+    isSelectionMode = false;
+    currentFocusIdx = -1;
+    selectionFocusedIdx = -1;
+    updateSelectionPane();
+
+    inputEl.textContent = 'firefox';
+    updateFilterHints('firefox');
+    const count = updateList('firefox');
+    statusEl.classList.replace('opacity-0', 'opacity-100');
+    updateSearchStatus('firefox', count);
+
+    const filtered = getFilteredPackages();
+    if (filtered.length > 0) void focusPackage(0);
+  }
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) { runAnimation(); observer.unobserve(entry.target); }
+      if (entry.isIntersecting) {
+        if (reducedMotion.matches) renderStaticState();
+        else void runAnimation();
+        observer.unobserve(entry.target);
+      }
     });
   }, { threshold: 0.5 });
 
