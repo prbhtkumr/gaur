@@ -21,7 +21,6 @@ func TestNoHardcodedAURHelpers(t *testing.T) {
 		"dashboard_test.go": true,
 		"cache_logic_test.go": true,
 		"types.go": true, // Struct definitions
-		"gaur.png": true, // Binary
 	}
 
 	// Patterns that look like hardcoded helper usage in commands

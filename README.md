@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="gaur.png" alt="gaur" width="700" />
-
 # gaur
 
 **Arch Linux package management that never leaves the terminal.**
