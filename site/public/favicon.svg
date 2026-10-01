@@ -1,6 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" rx="7" fill="#11111b"/>
-  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="#cba6f7" stroke-opacity="0.35"/>
-  <path d="M8.5 9.5 16.5 16 8.5 22.5" fill="none" stroke="#a6e3a1" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="19.5" y="9.5" width="4" height="13" rx="1" fill="#cba6f7"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="gaur">
+  <defs>
+    <radialGradient id="bloom" cx="50%" cy="50%" r="58%">
+      <stop offset="0" stop-color="#cba6f7" stop-opacity=".34"/>
+      <stop offset=".6" stop-color="#cba6f7" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#cba6f7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cursor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b4befe"/>
+      <stop offset="1" stop-color="#cba6f7"/>
+    </linearGradient>
+    <clipPath id="tile">
+      <rect width="32" height="32" rx="7.5"/>
+    </clipPath>
+  </defs>
+
+  <!-- crust: catppuccin's deepest surface -->
+  <rect width="32" height="32" rx="7.5" fill="#11111b"/>
+
+  <!-- CRT phosphor bloom behind the mark -->
+  <g clip-path="url(#tile)">
+    <rect width="32" height="32" fill="url(#bloom)"/>
+  </g>
+
+  <!-- bracket chrome: the [gaur] mark, dimmed to subtext0 -->
+  <g fill="none" stroke="#a6adc8" stroke-width="2.4">
+    <path d="M12.2 9.4H9.4v13.2h2.8"/>
+    <path d="M19.8 9.4h2.8v13.2h-2.8"/>
+  </g>
+
+  <!-- cursor: lavender into mauve -->
+  <rect x="13.4" y="11.4" width="5.2" height="9.2" rx="1.1" fill="url(#cursor)"/>
+
+  <!-- hairline so the tile still reads against a dark tab bar -->
+  <rect x=".5" y=".5" width="31" height="31" rx="7" fill="none" stroke="#cba6f7" stroke-opacity=".26"/>
 </svg>
