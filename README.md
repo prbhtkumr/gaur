@@ -5,7 +5,7 @@
 **Arch Linux package management that never leaves the terminal.**
 
 Search, inspect, install, update, remove and clean your system from one keyboard-driven
-interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
+interface - a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 
 [![CI](https://github.com/prbhtkumr/gaur/actions/workflows/go-security.yml/badge.svg)](https://github.com/prbhtkumr/gaur/actions/workflows/go-security.yml)
 [![License](https://img.shields.io/github/license/prbhtkumr/gaur)](LICENSE)
@@ -38,7 +38,7 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 
 **Search & install**
 - Fuzzy ranking powered by `fzf`, with match highlighting
-- Repo-scoped queries — `c:`, `e:`, `m:`, `a:` — and they combine: `ae:firefox`
+- Repo-scoped queries - `c:`, `e:`, `m:`, `a:` - and they combine: `ae:firefox`
 - Mark anything with `Tab`, ship it all in one command
 - A live details pane: repository, version, license, upstream URL
 
@@ -51,7 +51,7 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 **Interface**
 - Eleven themes built in, custom TOML themes, live preview while you scroll
 - Mode-specific coloring, centered dialogs, full mouse wheel support
-- Settings menu (`,`) — swap theme, AUR helper and border without restarting
+- Settings menu (`,`) - swap theme, AUR helper and border without restarting
 
 > **Security:** every command is built as an argument array, never a shell string. Package
 > names are checked against a strict allowlist, config values are clamped instead of
@@ -63,10 +63,10 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 ## Requirements
 
 - Arch Linux or an Arch-based distribution
-- An AUR helper — [paru](https://github.com/Morganamilo/paru) or [yay](https://github.com/Jguer/yay)
+- An AUR helper - [paru](https://github.com/Morganamilo/paru) or [yay](https://github.com/Jguer/yay)
 - [fzf](https://github.com/junegunn/fzf) for fuzzy ranking
 - [paccache](https://man.archlinux.org/man/paccache.8) from `pacman-contrib`
-- Go **1.24+** — only if you build from source
+- Go **1.24+** - only if you build from source
 
 ---
 
@@ -125,7 +125,7 @@ explicit / foreign / orphaned · `c` opens the cache menu · `R` removes every o
 
 **In dialogs:** `Enter` or `y` confirms, `Esc` or `n` cancels, `↑` `↓` scrolls the list.
 
-**Mouse:** the wheel scrolls lists, split panes and dialogs — left pane scrolls the list,
+**Mouse:** the wheel scrolls lists, split panes and dialogs - left pane scrolls the list,
 right pane scrolls the details.
 
 ---
@@ -250,7 +250,7 @@ confirm_nuke = "#f38ba8"
 confirm_selective = "#cba6f7"
 ```
 
-Filenames become display names: `my_theme.toml` shows up as **My Theme** — underscores and
+Filenames become display names: `my_theme.toml` shows up as **My Theme** - underscores and
 hyphens turn into spaces and title-case.
 
 </details>
@@ -259,16 +259,16 @@ hyphens turn into spaces and title-case.
 
 ## How it works
 
-1. **Local first** — repository packages are read once with `pacman -Sl` and held in
+1. **Local first** - repository packages are read once with `pacman -Sl` and held in
    memory. Typing never shells out to pacman.
-2. **Ranked by fzf** — each keystroke pipes the combined repo + AUR list through
+2. **Ranked by fzf** - each keystroke pipes the combined repo + AUR list through
    `fzf --filter` and maps the indices back.
-3. **AUR queries are gated, not debounced** — two characters minimum, no repeat of the
+3. **AUR queries are gated, not debounced** - two characters minimum, no repeat of the
    same query, one request in flight, stale responses dropped.
-4. **Hands off the terminal** — installs, removals and updates run through
+4. **Hands off the terminal** - installs, removals and updates run through
    `tea.ExecProcess`, so sudo prompts, conflict resolution and license prompts behave
    exactly as they do outside gaur.
-5. **Refreshes itself** — after any change the dashboard, both package lists and the
+5. **Refreshes itself** - after any change the dashboard, both package lists and the
    update count are rebuilt from the system rather than patched up.
 
 The long version lives in the **[internals docs](https://gaur.prbhtkumr.xyz/docs/internals)**.
@@ -277,7 +277,7 @@ The long version lives in the **[internals docs](https://gaur.prbhtkumr.xyz/docs
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE).
+GPL-3.0 - see [LICENSE](LICENSE).
 
 ---
 
