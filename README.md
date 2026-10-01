@@ -29,7 +29,7 @@ interface — a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 ## Preview
 
 <p align="center">
-  <img src="screenshots/catppuccin-mocha.png" width="720" alt="gaur in catppuccin-mocha" />
+  <img src="screenshot.png" width="720" alt="gaur in catppuccin-mocha" />
 </p>
 
 <p align="center"><em>Catppuccin Mocha, one of eleven built-in themes. See the rest in the theme picker at <a href="https://gaur.prbhtkumr.xyz">gaur.prbhtkumr.xyz</a>.</em></p>
