@@ -1,5 +1,6 @@
 # Binaries
 gaur
+gaur-linux-x86_64
 *.test
 *.out
 bin/
