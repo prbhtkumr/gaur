@@ -17,8 +17,7 @@ interface - a TUI wrapped around `pacman`, your AUR helper, and `fzf`.
 **[Install](#quick-start)** ·
 **[Report an issue](https://github.com/prbhtkumr/gaur/issues)**
 
-> ⚠️ **Disclaimer:** This project is mostly vibecoded and continues to be developed through vibecoding.
-> Do report rough edges, and expect an occasional "it works on my machine" moment (trying my best to eliminate those).
+> ⚠️ Disclaimer: This project leverages AI-assisted development for its creation and ongoing maintenance. If you run into any bugs or rough edges, please report them!
 
 </div>
 
