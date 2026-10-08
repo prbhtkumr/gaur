@@ -290,7 +290,7 @@ jobs:
     name: CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [build, fmt-lint, security-tests, gosec, staticcheck, govulncheck, codeql, license-check]
+    needs: [build, fmt-lint, security-tests, gosec, staticcheck, govulncheck, codeql, dependency-review, license-check]
     steps:
       - name: Aggregate status
         run: |
