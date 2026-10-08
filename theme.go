@@ -293,9 +293,34 @@ func (tl *ThemeLoader) parseTheme(data []byte, filename string) (Theme, error) {
 	return theme, nil
 }
 
-func sanitizeColor(color string) string {
+func isValidColor(color string) bool {
 	color = strings.TrimSpace(color)
 	if color == "" {
+		return false
+	}
+	if strings.HasPrefix(color, "#") {
+		hex := color[1:]
+		if len(hex) != 3 && len(hex) != 6 {
+			return false
+		}
+		for _, r := range hex {
+			if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+				return false
+			}
+		}
+		return true
+	}
+	// Check ANSI 0-255
+	var val int
+	if n, err := fmt.Sscanf(color, "%d", &val); err == nil && n == 1 && fmt.Sprintf("%d", val) == color {
+		return val >= 0 && val <= 255
+	}
+	return false
+}
+
+func sanitizeColor(color string) string {
+	color = strings.TrimSpace(color)
+	if !isValidColor(color) {
 		return "#ffffff"
 	}
 	return color

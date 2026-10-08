@@ -183,11 +183,22 @@ func TestThemeColorValidation(t *testing.T) {
 
 	for _, tt := range colorFormats {
 		t.Run(tt.name, func(t *testing.T) {
-			sanitized := sanitizeColor(tt.color)
-
-			if tt.isValid || tt.color == "" {
-				_ = lipgloss.NewStyle().Foreground(lipgloss.Color(sanitized)).Render("test")
+			valid := isValidColor(tt.color)
+			if valid != tt.isValid {
+				t.Errorf("isValidColor(%q) = %v, expected %v", tt.color, valid, tt.isValid)
 			}
+
+			sanitized := sanitizeColor(tt.color)
+			if tt.isValid {
+				if sanitized != tt.color {
+					t.Errorf("sanitizeColor(%q) = %q, expected unchanged", tt.color, sanitized)
+				}
+			} else {
+				if sanitized != "#ffffff" {
+					t.Errorf("sanitizeColor(%q) = %q, expected fallback #ffffff", tt.color, sanitized)
+				}
+			}
+			_ = lipgloss.NewStyle().Foreground(lipgloss.Color(sanitized)).Render("test")
 		})
 	}
 }
