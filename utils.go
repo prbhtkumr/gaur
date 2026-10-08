@@ -549,10 +549,12 @@ func renderCenteredFooter(content string, width int) string {
 	return footer
 }
 
-// overlayOnBase renders an overlay centered on top of a base string.
+// overlayAt renders an overlay onto a base string at the given row and column.
+// If startRow is negative, the overlay is vertically centered.
+// If startCol is negative, the overlay is horizontally centered.
 // Both base and overlay should be rectangular strings (same width per line).
 // Returns the composited result maintaining the base's dimensions.
-func overlayOnBase(base, overlay string, baseWidth, baseHeight int) string {
+func overlayAt(base, overlay string, baseWidth, baseHeight, startRow, startCol int) string {
 	baseLines := strings.Split(base, "\n")
 	overlayLines := strings.Split(overlay, "\n")
 
@@ -562,16 +564,31 @@ func overlayOnBase(base, overlay string, baseWidth, baseHeight int) string {
 	}
 
 	overlayWidth := lipgloss.Width(overlayLines[0])
+	for _, ol := range overlayLines {
+		if w := lipgloss.Width(ol); w > overlayWidth {
+			overlayWidth = w
+		}
+	}
 
 	// Ensure base has enough lines
 	for len(baseLines) < baseHeight {
 		baseLines = append(baseLines, strings.Repeat(" ", baseWidth))
 	}
 
-	startY := (baseHeight - overlayHeight) / 2
-	startCol := (baseWidth - overlayWidth) / 2
-	if startCol < 0 {
-		startCol = 0
+	startY := startRow
+	if startY < 0 {
+		startY = (baseHeight - overlayHeight) / 2
+	}
+	if startY < 0 {
+		startY = 0
+	}
+
+	startX := startCol
+	if startX < 0 {
+		startX = (baseWidth - overlayWidth) / 2
+	}
+	if startX < 0 {
+		startX = 0
 	}
 
 	result := make([]string, len(baseLines))
@@ -588,21 +605,49 @@ func overlayOnBase(base, overlay string, baseWidth, baseHeight int) string {
 				bgLine += strings.Repeat(" ", baseWidth-bgWidth)
 			}
 
-			// Reconstruct the line using precise slicing
-			left := truncateWithAnsi(bgLine, startCol)
-			leftWidth := lipgloss.Width(left)
-			if leftWidth < startCol {
-				left += strings.Repeat(" ", startCol-leftWidth)
+			// Ensure overlay line is exactly overlayWidth chars wide
+			ovLine := overlayLines[y]
+			ow := lipgloss.Width(ovLine)
+			if ow < overlayWidth {
+				ovLine += strings.Repeat(" ", overlayWidth-ow)
+			} else if ow > overlayWidth {
+				ovLine = truncateWithAnsi(ovLine, overlayWidth)
 			}
 
-			right := substringAnsi(bgLine, startCol+overlayWidth)
-			right = truncateWithAnsi(right, baseWidth-(startCol+overlayWidth))
+			// Reconstruct the line using precise slicing
+			left := ""
+			if startX > 0 {
+				left = truncateWithAnsi(bgLine, startX)
+				leftWidth := lipgloss.Width(left)
+				if leftWidth < startX {
+					left += strings.Repeat(" ", startX-leftWidth)
+				}
+			}
 
-			result[targetY] = left + overlayLines[y] + right
+			right := ""
+			rightStart := startX + overlayWidth
+			rightPartWidth := baseWidth - rightStart
+			if rightPartWidth > 0 {
+				right = substringAnsi(bgLine, rightStart)
+				right = truncateWithAnsi(right, rightPartWidth)
+				rw := lipgloss.Width(right)
+				if rw < rightPartWidth {
+					right += strings.Repeat(" ", rightPartWidth-rw)
+				}
+			}
+
+			result[targetY] = left + ovLine + right
 		}
 	}
 
 	return strings.Join(result, "\n")
+}
+
+// overlayOnBase renders an overlay centered on top of a base string.
+// Both base and overlay should be rectangular strings (same width per line).
+// Returns the composited result maintaining the base's dimensions.
+func overlayOnBase(base, overlay string, baseWidth, baseHeight int) string {
+	return overlayAt(base, overlay, baseWidth, baseHeight, -1, -1)
 }
 
 // GetAURCacheDir resolves the AUR build/clone directory based on the helper or override.

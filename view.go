@@ -161,9 +161,6 @@ func (m *model) renderUpdateSelectiveView(helpText string, innerWidth, innerHeig
 		overlayHeight = 5
 	}
 
-	paddingX := (innerWidth - overlayWidth) / 2
-	paddingY := (innerHeight - overlayHeight) / 2
-
 	warningSymbol := styleWithForeground(colorRed).Render("⚠")
 	warningText := styleWithForeground(colorRed).Render(" Selective updates can break system dependencies")
 	warningBox := lipgloss.NewStyle().
@@ -195,73 +192,8 @@ func (m *model) renderUpdateSelectiveView(helpText string, innerWidth, innerHeig
 	paneContent = lipgloss.Place(overlayWidth, overlayHeight, lipgloss.Center, lipgloss.Center, paneContent)
 
 	bg := strings.TrimSuffix(m.renderSimpleUpdateView(helpText, innerWidth, innerHeight, activeColor), "\n")
-	bgLines := strings.Split(bg, "\n")
-	paneLines := strings.Split(paneContent, "\n")
-
-	// Ensure bgLines has exactly innerHeight lines
-	if len(bgLines) > innerHeight {
-		bgLines = bgLines[:innerHeight]
-	} else if len(bgLines) < innerHeight {
-		for len(bgLines) < innerHeight {
-			bgLines = append(bgLines, strings.Repeat(" ", innerWidth))
-		}
-	}
-
-	var output strings.Builder
-	for i, bgLine := range bgLines {
-		if i >= paddingY && i < paddingY+overlayHeight {
-			paneLineIdx := i - paddingY
-			if paneLineIdx < len(paneLines) {
-				paneLine := paneLines[paneLineIdx]
-
-				// Ensure paneLine is exactly overlayWidth wide
-				pw := lipgloss.Width(paneLine)
-				if pw < overlayWidth {
-					paneLine += strings.Repeat(" ", overlayWidth-pw)
-				} else if pw > overlayWidth {
-					paneLine = truncateWithAnsi(paneLine, overlayWidth)
-				}
-
-				// Get the background left and right parts
-				// We MUST ensure they are correctly sized to fill the remaining width
-				leftStr := ""
-				if paddingX > 0 {
-					leftStr = truncateWithAnsi(bgLine, paddingX)
-					// Ensure left part is exactly paddingX wide
-					lw := lipgloss.Width(leftStr)
-					if lw < paddingX {
-						leftStr += strings.Repeat(" ", paddingX-lw)
-					}
-				}
-
-				rightStr := ""
-				rightStart := paddingX + overlayWidth
-				rightPartWidth := innerWidth - rightStart
-				if rightPartWidth > 0 {
-					rightStr = substringAnsi(bgLine, rightStart)
-					rightStr = truncateWithAnsi(rightStr, rightPartWidth)
-					// Ensure right part is exactly rightPartWidth wide
-					rw := lipgloss.Width(rightStr)
-					if rw < rightPartWidth {
-						rightStr += strings.Repeat(" ", rightPartWidth-rw)
-					}
-				}
-
-				line := leftStr + paneLine + rightStr
-				output.WriteString(line)
-				if i < len(bgLines)-1 {
-					output.WriteString("\n")
-				}
-				continue
-			}
-		}
-		output.WriteString(bgLine)
-		if i < len(bgLines)-1 {
-			output.WriteString("\n")
-		}
-	}
-
-	return SafeJoinVertical(innerWidth, innerHeight, "", []string{output.String()}, "")
+	output := overlayOnBase(bg, paneContent, innerWidth, innerHeight)
+	return SafeJoinVertical(innerWidth, innerHeight, "", []string{output}, "")
 }
 
 // renderVerticalSplitLayout renders a side-by-side view (list on left, dash on right)
@@ -421,12 +353,9 @@ func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeCol
 		panelHeight := len(panelLines)
 		panelWidth := lipgloss.Width(panelLines[0])
 
-		bgLines := strings.Split(detailsBox, "\n")
-
 		// Overlay selectionPanel on bottom right of detailsBox
 		startRow := detailsInnerHeight - panelHeight
 		startCol := detailsInnerWidth + 2 - panelWidth
-
 		if startRow < 0 {
 			startRow = 0
 		}
@@ -434,30 +363,7 @@ func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeCol
 			startCol = 0
 		}
 
-		var result strings.Builder
-		for i, line := range bgLines {
-			if i >= startRow && i < startRow+panelHeight {
-				panelLineIdx := i - startRow
-
-				// Get background piece safely
-				leftStr := ""
-				if startCol > 0 {
-					leftStr = truncateWithAnsi(line, startCol)
-					// Ensure left part is exactly startCol wide
-					lw := lipgloss.Width(leftStr)
-					if lw < startCol {
-						leftStr += strings.Repeat(" ", startCol-lw)
-					}
-				}
-
-				line = leftStr + panelLines[panelLineIdx]
-			}
-			result.WriteString(line)
-			if i < len(bgLines)-1 {
-				result.WriteString("\n")
-			}
-		}
-		detailsBox = result.String()
+		detailsBox = overlayAt(detailsBox, selectionPanel, detailsWidth-2, detailsInnerHeight, startRow, startCol)
 	}
 
 	detailsPanel := borderStyle.
@@ -984,56 +890,15 @@ func (m *model) renderPackageListLayout(innerWidth, innerHeight int, activeColor
 func (m *model) overlaySelectionsPanel(content string, innerWidth int, headerHeight int) string {
 	panel := m.renderSelectionBox(32)
 	panelLines := strings.Split(panel, "\n")
-	panelHeight := len(panelLines)
 	panelWidth := lipgloss.Width(panelLines[0])
 
-	lines := strings.Split(content, "\n")
-
-	startRow := 0 // Anchor exactly on the top terminal border
 	startCol := innerWidth - panelWidth
 	if startCol < 0 {
 		startCol = 0
 	}
 
-	// Build new content with overlay
-	var result strings.Builder
-	for i, line := range lines {
-		if i >= startRow && i < startRow+panelHeight {
-			panelLineIdx := i - startRow
-
-			// Get background pieces safely
-			leftStr := ""
-			if startCol > 0 {
-				leftStr = truncateWithAnsi(line, startCol)
-				// Ensure left part is exactly startCol wide
-				lw := lipgloss.Width(leftStr)
-				if lw < startCol {
-					leftStr += strings.Repeat(" ", startCol-lw)
-				}
-			}
-
-			rightStr := ""
-			rightStart := startCol + panelWidth
-			rightPartWidth := innerWidth - rightStart
-			if rightPartWidth > 0 {
-				rightStr = substringAnsi(line, rightStart)
-				rightStr = truncateWithAnsi(rightStr, rightPartWidth)
-				// Ensure right part is exactly rightPartWidth wide
-				rw := lipgloss.Width(rightStr)
-				if rw < rightPartWidth {
-					rightStr += strings.Repeat(" ", rightPartWidth-rw)
-				}
-			}
-
-			line = leftStr + panelLines[panelLineIdx] + rightStr
-		}
-		result.WriteString(line)
-		if i < len(lines)-1 {
-			result.WriteString("\n")
-		}
-	}
-
-	return result.String()
+	lines := strings.Split(content, "\n")
+	return overlayAt(content, panel, innerWidth, len(lines), 0, startCol)
 }
 
 // renderConfirmationDialog renders a centered confirmation dialog for install/remove/update
