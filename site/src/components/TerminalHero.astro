@@ -81,7 +81,7 @@ function highlightMatch(name: string, query: string) {
           <div id="package-list" class="flex flex-col-reverse gap-0.5 mb-2 overflow-y-auto overflow-x-hidden w-full relative">
             {staticPkgs.map((pkg, i) => (
               <div id={`pkg-${i}`} class:list={['pkg-item flex items-center px-3 py-0 transition-all duration-150 w-full font-medium', i === 0 && 'bg-surface1/20']}>
-                <span class="indicator text-pink font-bold w-4 flex-shrink-0">{i === 0 ? '>' : ''}</span>
+                <span class="indicator text-pink font-bold w-4 shrink-0">{i === 0 ? '>' : ''}</span>
                 <span class={pkg.source === 'aur' ? 'text-pink' : 'text-blue'}>{pkg.source}</span>
                 <span class="text-overlay2">/</span>
                 <span class="text-text" set:html={highlightMatch(pkg.name, STATIC_QUERY)} />
@@ -397,7 +397,7 @@ function highlightMatch(name: string, query: string) {
       const sourceColorClass = pkg.source === 'aur' ? 'text-pink' : 'text-blue';
       const isMarked = marked.has(pkg.name);
       div.innerHTML = `
-        <span class="indicator text-pink font-bold w-4 flex-shrink-0">${isMarked ? '*' : ''}</span>
+        <span class="indicator text-pink font-bold w-4 shrink-0">${isMarked ? '*' : ''}</span>
         <span class="${sourceColorClass}">${pkg.source}</span>
         <span class="text-overlay2">/</span>
         <span class="text-text">${getHighlightedName(pkg.name, actualQuery)}</span>

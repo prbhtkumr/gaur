@@ -1,0 +1,11 @@
+/* Tailwind v4 is loaded through the @tailwindcss/vite plugin (see astro.config.mjs)
+   instead of the deprecated @astrojs/tailwind integration, which used to inject
+   `@tailwind base/components/utilities` into every page itself. Without this file
+   the site would render completely unstyled.
+
+   The existing JavaScript config stays — v4 supports it when loaded explicitly
+   with @config (it is no longer auto-detected in v4). It carries the custom
+   palette driven by scripts/build-themes.mjs, the mono font stack, rounded-gaur
+   and shadow-glow. */
+@config "../../tailwind.config.mjs";
+@import "tailwindcss";

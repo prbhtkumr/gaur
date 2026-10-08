@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import type { MarkdownHeading } from 'astro';
 import Layout from '../../layouts/Layout.astro';
@@ -8,7 +8,7 @@ import DocsSidebar from '../../components/DocsSidebar.astro';
 export async function getStaticPaths() {
 	const docsEntries = await getCollection('docs');
 	return docsEntries.map((entry: CollectionEntry<'docs'>) => ({
-		params: { slug: entry.slug },
+		params: { slug: entry.id },
 		props: { entry },
 	}));
 }
@@ -18,19 +18,19 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await entry.render();
+const { Content, headings } = await render(entry);
 
 // 5.4 — table of contents, built from the article's own h2/h3
 const toc: MarkdownHeading[] = headings.filter((h: MarkdownHeading) => h.depth === 2 || h.depth === 3);
 
 // 5.5 — edit link back to the markdown source
-const editURL = `https://github.com/prbhtkumr/gaur/edit/main/site/src/content/docs/${entry.slug}.md`;
+const editURL = `https://github.com/prbhtkumr/gaur/edit/main/site/src/content/docs/${entry.id}.md`;
 ---
 
 <Layout title={`gaur docs - ${entry.data.title}`} description={entry.data.description}>
 	<div class="flex flex-wrap max-w-7xl mx-auto min-h-[calc(100vh-4rem)]">
 		<!-- Sidebar -->
-		<DocsSidebar currentSlug={entry.slug} />
+		<DocsSidebar currentSlug={entry.id} />
 
 		<!-- Main Content Section -->
 		<article class="flex-1 min-w-0 p-8 md:p-12 lg:p-16 overflow-hidden">
@@ -76,6 +76,10 @@ const editURL = `https://github.com/prbhtkumr/gaur/edit/main/site/src/content/do
 </Layout>
 
 <style is:global>
+	/* Tailwind v4: this block is compiled separately from global.css, so the
+	   theme + JS config must be referenced explicitly for @apply to resolve. */
+	@reference "../../styles/global.css";
+
 	/* Custom Markdown Styling within .content */
 	.content {
 		@apply text-text leading-relaxed;

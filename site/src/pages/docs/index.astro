@@ -28,7 +28,7 @@ const docsEntries = sortDocs(await getCollection('docs'));
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{docsEntries.map(entry => (
 						<a
-							href={`/docs/${entry.slug}`}
+							href={`/docs/${entry.id}`}
 							class="group p-8 rounded-gaur border border-muted/20 bg-surface hover:border-primary/50 hover:shadow-glow transition-all duration-300"
 						>
 							<h2 class="text-2xl font-bold text-highlight group-hover:text-primary mb-3 transition-colors tracking-tight">
