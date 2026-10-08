@@ -111,7 +111,7 @@ func ValidateConfig(c *Config) {
 	def := DefaultConfig()
 
 	helper := strings.ToLower(strings.TrimSpace(c.Commands.AurHelper))
-	if helper == "" || (helper != "paru" && helper != "yay") {
+	if !IsSupportedAurHelper(helper) {
 		LogWarn("CONFIG", "Unsupported AUR helper '%s'. Resetting to 'paru'.", c.Commands.AurHelper)
 		c.Commands.AurHelper = "paru"
 	} else {

@@ -24,7 +24,7 @@ func (m *model) initSettings() {
 		{
 			Label:     "AUR Helper",
 			ConfigKey: "commands.aur_helper",
-			Options:   []string{"paru", "yay"},
+			Options:   GetSupportedAurHelpers(),
 		},
 		{
 			Label:     "Theme",

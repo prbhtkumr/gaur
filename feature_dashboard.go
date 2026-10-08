@@ -142,8 +142,9 @@ func getDashboardDataWithContext(ctx context.Context, c *Config, r ...CommandRun
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			// Many helpers support -Ps for stats
-			out, err := activeRunner.RunContext(ctx, c.Commands.AurHelper, "-Ps")
+			driver := GetAurDriver(c.Commands.AurHelper)
+			statsArgs := driver.StatsArgs()
+			out, err := activeRunner.RunContext(ctx, driver.Name(), statsArgs...)
 			if err == nil {
 				ts, tsb, miss, top := parseParuStats(string(out))
 				dataMu.Lock()
@@ -223,12 +224,9 @@ func getDashboardDataWithContext(ctx context.Context, c *Config, r ...CommandRun
 				addErr("AUR cache path", err)
 				return
 			}
-			// Base is parent of clone for paru, or the dir itself for yay?
-			// User logic: paru -> ~/.cache/paru/clone, yay -> ~/.cache/yay
-			aurBase := aurClonePath
-			if c.Commands.AurHelper == "paru" {
-				aurBase = filepath.Dir(aurClonePath)
-			}
+			driver := GetAurDriver(c.Commands.AurHelper)
+			cacheDir, _ := os.UserCacheDir()
+			aurBase := driver.ResolveBaseCacheDir(cacheDir, c.Advanced.CacheDir)
 
 			// Fetch installed list locally for this goroutine to avoid complex sync
 			installed := make(map[string]bool)

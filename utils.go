@@ -909,12 +909,8 @@ func GetAURCacheDir(c *Config) (string, error) {
 		return "", fmt.Errorf("failed to get user cache directory: %w", err)
 	}
 
-	if c.Commands.AurHelper == "yay" {
-		return filepath.Join(cacheDir, "yay"), nil
-	}
-
-	// Default to paru's clone path
-	return filepath.Join(cacheDir, "paru", "clone"), nil
+	driver := GetAurDriver(c.Commands.AurHelper)
+	return driver.ResolveCacheDir(cacheDir, c.Advanced.CacheDir), nil
 }
 
 // getKeyDisplay returns a string representing the primary key for a binding

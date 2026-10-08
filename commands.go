@@ -23,51 +23,14 @@ func debouncePackageDetails(m *model, pkgName string) tea.Cmd {
 
 // BuildAURCommand constructs the full command slice for the configured AUR helper.
 func BuildAURCommand(c *Config, action string, args ...string) []string {
-	helper := c.Commands.AurHelper
-	if helper == "" {
-		helper = "paru"
+	driver := GetAurDriver(c.Commands.AurHelper)
+	flags := ""
+	if action == "install" {
+		flags = c.Commands.InstallFlags
+	} else if action == "remove" {
+		flags = c.Commands.RemoveFlags
 	}
-
-	var cmd []string
-	switch action {
-	case "install":
-		cmd = []string{helper, "-S"}
-		if c.Commands.InstallFlags != "" {
-			cmd = append(cmd, TokenizeFlags(c.Commands.InstallFlags)...)
-		}
-	case "remove":
-		cmd = []string{helper}
-		if c.Commands.RemoveFlags != "" {
-			cmd = append(cmd, TokenizeFlags(c.Commands.RemoveFlags)...)
-		} else {
-			cmd = append(cmd, "-Rns")
-		}
-	case "update":
-		// User specified that update maps to -Qu
-		cmd = []string{helper, "-Qu"}
-	case "search":
-		cmd = []string{helper, "-Ss", "-a"}
-		var cleanArgs []string
-		for _, arg := range args {
-			trimmed := strings.TrimLeft(arg, "-")
-			if trimmed != "" {
-				cleanArgs = append(cleanArgs, trimmed)
-			}
-		}
-		return append(cmd, cleanArgs...)
-	case "dash":
-		cmd = []string{helper, "-Si"}
-	case "check-updates":
-		cmd = []string{helper, "-Qu"}
-	case "sync":
-		cmd = []string{helper, "-Sy"}
-	case "full-update":
-		cmd = []string{helper, "-Syu"}
-	default:
-		cmd = []string{helper}
-	}
-
-	return append(cmd, args...)
+	return driver.BuildCommand(action, flags, args...)
 }
 
 func getPackageDetails(m *model, pkg Package) tea.Cmd {
