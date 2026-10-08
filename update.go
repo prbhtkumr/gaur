@@ -109,38 +109,19 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.Runes[0] {
 			case '1':
 				if key.Matches(msg, m.keys.DashboardMode) {
-					m.mode = modeDashboard
-					m.loading = true
-					m.resetState()
-					return m, getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
+					return m, m.switchToMode(modeDashboard)
 				}
 			case '2':
 				if key.Matches(msg, m.keys.InstallMode) {
-					if m.mode != modeInstall {
-						m.mode = modeInstall
-						m.resetState()
-						m.textInput.Focus()
-					}
-					return m, nil
+					return m, m.switchToMode(modeInstall)
 				}
 			case '3':
 				if key.Matches(msg, m.keys.UpdateMode) {
-					m.mode = modeUpdate
-					m.resetState()
-					m.loading = true
-					m.pendingUpdates = nil
-					return m, syncRepositoriesInTerminal(m)
+					return m, m.switchToMode(modeUpdate)
 				}
 			case '4':
 				if key.Matches(msg, m.keys.RemoveMode) {
-					if m.mode != modeRemove {
-						m.mode = modeRemove
-						m.resetState()
-						m.loading = true
-						m.statusMessage = "Refreshing installed packages..."
-						return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
-					}
-					return m, nil
+					return m, m.switchToMode(modeRemove)
 				}
 			}
 		}
@@ -229,32 +210,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
 			}
 		case key.Matches(msg, m.keys.DashboardMode):
-			m.mode = modeDashboard
-			m.loading = true
-			m.resetState()
-			return m, getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
+			return m, m.switchToMode(modeDashboard)
 		case key.Matches(msg, m.keys.InstallMode):
-			if m.mode != modeInstall {
-				m.mode = modeInstall
-				m.resetState()
-				m.textInput.Focus()
-			}
-			return m, nil
+			return m, m.switchToMode(modeInstall)
 		case key.Matches(msg, m.keys.UpdateMode):
-			m.mode = modeUpdate
-			m.resetState()
-			m.loading = true
-			m.pendingUpdates = nil
-			return m, syncRepositoriesInTerminal(m)
+			return m, m.switchToMode(modeUpdate)
 		case key.Matches(msg, m.keys.RemoveMode):
-			if m.mode != modeRemove {
-				m.mode = modeRemove
-				m.resetState()
-				m.loading = true
-				m.statusMessage = "Refreshing installed packages..."
-				return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
-			}
-			return m, nil
+			return m, m.switchToMode(modeRemove)
 		case key.Matches(msg, m.keys.Selective):
 			if m.mode == modeUpdate {
 				m.mode = modeUpdateSelective

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestInitialModel(t *testing.T) {
@@ -224,5 +227,42 @@ func TestModelRunnerInjection(t *testing.T) {
 	out, err := m.getRunner().Run("test-cmd")
 	if err != nil || string(out) != "mock output" || !mockCalled {
 		t.Errorf("Injected mock was not executed correctly, got out: %s, err: %v, called: %v", out, err, mockCalled)
+	}
+}
+
+func TestSwitchToMode(t *testing.T) {
+	cfg := DefaultConfig()
+	mock := &MockCommandRunner{
+		RunContextFunc: func(ctx context.Context, name string, args ...string) ([]byte, error) {
+			return []byte(""), nil
+		},
+		InteractiveFunc: func(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
+			return func() tea.Msg { return onExit(nil) }
+		},
+	}
+	m := initialModel(modeInstall, cfg, nil, mock)
+
+	// Switch to Dashboard
+	cmd := m.switchToMode(modeDashboard)
+	if m.mode != modeDashboard || !m.loading || cmd == nil {
+		t.Errorf("switchToMode(modeDashboard) failed: mode=%v, loading=%v, cmd=%v", m.mode, m.loading, cmd)
+	}
+
+	// Switch to Remove
+	cmd = m.switchToMode(modeRemove)
+	if m.mode != modeRemove || !m.loading || m.statusMessage != "Refreshing installed packages..." || cmd == nil {
+		t.Errorf("switchToMode(modeRemove) failed: mode=%v, loading=%v, cmd=%v", m.mode, m.loading, cmd)
+	}
+
+	// Switch to Install
+	cmd = m.switchToMode(modeInstall)
+	if m.mode != modeInstall || !m.textInput.Focused() || cmd != nil {
+		t.Errorf("switchToMode(modeInstall) failed: mode=%v, focused=%v, cmd=%v", m.mode, m.textInput.Focused(), cmd)
+	}
+
+	// Switch to Update
+	cmd = m.switchToMode(modeUpdate)
+	if m.mode != modeUpdate || !m.loading || m.pendingUpdates != nil || cmd == nil {
+		t.Errorf("switchToMode(modeUpdate) failed: mode=%v, loading=%v, cmd=%v", m.mode, m.loading, cmd)
 	}
 }

@@ -273,3 +273,37 @@ func (m *model) updatePlaceholder() {
 	}
 	m.textInput.Placeholder = placeholder
 }
+
+// switchToMode transitions the model to the target view mode and returns any initialization command.
+func (m *model) switchToMode(target viewMode) tea.Cmd {
+	switch target {
+	case modeDashboard:
+		m.mode = modeDashboard
+		m.loading = true
+		m.resetState()
+		return getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
+	case modeInstall:
+		if m.mode != modeInstall {
+			m.mode = modeInstall
+			m.resetState()
+			m.textInput.Focus()
+		}
+		return nil
+	case modeUpdate:
+		m.mode = modeUpdate
+		m.resetState()
+		m.loading = true
+		m.pendingUpdates = nil
+		return syncRepositoriesInTerminal(m)
+	case modeRemove:
+		if m.mode != modeRemove {
+			m.mode = modeRemove
+			m.resetState()
+			m.loading = true
+			m.statusMessage = "Refreshing installed packages..."
+			return getInstalledPackagesWithContext(m.getContext(), m.getRunner())
+		}
+		return nil
+	}
+	return nil
+}
