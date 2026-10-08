@@ -212,4 +212,3 @@ func TestMockCommandRunnerRunWithStderrScan(t *testing.T) {
 		t.Errorf("expected scanned progress lines, got %v", scanned)
 	}
 }
-

@@ -644,4 +644,3 @@ func TestVersionVariable(t *testing.T) {
 		t.Error("Expected Version to have default non-empty value")
 	}
 }
-

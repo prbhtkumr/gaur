@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -566,5 +567,79 @@ func TestMirrorOverlayBlockedWhileLoading(t *testing.T) {
 
 	if resultModel.showMirrorOverlay {
 		t.Error("should not open mirror overlay while loading")
+	}
+}
+
+func TestExecuteMirrorUpdateStreamingProgress(t *testing.T) {
+	cfg := DefaultMirrorConfig()
+	cfg.Latest = 20
+
+	mock := &MockCommandRunner{
+		RunWithStderrScanFunc: func(name string, onLine func(string), args ...string) error {
+			if onLine != nil {
+				onLine("[1/20] testing https://mirror.example.org")
+				onLine("[2/20] testing https://mirror2.example.org")
+			}
+			return nil
+		},
+	}
+
+	cmd := executeMirrorUpdate(cfg, mock)
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd")
+	}
+
+	msg := cmd()
+	progressMsg, ok := msg.(mirrorProgressMsg)
+	if !ok {
+		t.Fatalf("expected mirrorProgressMsg, got %T: %+v", msg, msg)
+	}
+	if progressMsg.current != 1 || progressMsg.total != 20 {
+		t.Errorf("expected progress 1/20, got %d/%d", progressMsg.current, progressMsg.total)
+	}
+
+	// Read next progress message from the channel
+	cmdNext := waitForMirrorProgress(progressMsg.ch)
+	msg2 := cmdNext()
+	progressMsg2, ok := msg2.(mirrorProgressMsg)
+	if !ok {
+		t.Fatalf("expected second mirrorProgressMsg, got %T: %+v", msg2, msg2)
+	}
+	if progressMsg2.current != 2 || progressMsg2.total != 20 {
+		t.Errorf("expected progress 2/20, got %d/%d", progressMsg2.current, progressMsg2.total)
+	}
+
+	// Read final success message
+	cmdFinal := waitForMirrorProgress(progressMsg.ch)
+	msg3 := cmdFinal()
+	updateMsg, ok := msg3.(mirrorUpdateMsg)
+	if !ok || !updateMsg.success {
+		t.Fatalf("expected successful mirrorUpdateMsg, got %T: %+v", msg3, msg3)
+	}
+}
+
+func TestExecuteMirrorUpdateStreamingError(t *testing.T) {
+	cfg := DefaultMirrorConfig()
+	mock := &MockCommandRunner{
+		RunWithStderrScanFunc: func(name string, onLine func(string), args ...string) error {
+			return errors.New("simulated reflector exit failure")
+		},
+	}
+
+	cmd := executeMirrorUpdate(cfg, mock)
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd")
+	}
+
+	msg := cmd()
+	updateMsg, ok := msg.(mirrorUpdateMsg)
+	if !ok {
+		t.Fatalf("expected mirrorUpdateMsg, got %T: %+v", msg, msg)
+	}
+	if updateMsg.success {
+		t.Error("expected failed mirrorUpdateMsg, got success")
+	}
+	if updateMsg.err == nil || !strings.Contains(updateMsg.err.Error(), "simulated reflector exit failure") {
+		t.Errorf("expected simulated reflector error, got %v", updateMsg.err)
 	}
 }

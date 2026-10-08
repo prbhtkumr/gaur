@@ -58,4 +58,3 @@ func (m *MockCommandRunner) RunWithStderrScan(name string, onLine func(string), 
 	_, err := m.Run(name, args...)
 	return err
 }
-

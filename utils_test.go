@@ -466,5 +466,3 @@ func TestHighlightMatchesConsecutiveRuns(t *testing.T) {
 		t.Errorf("Width mismatch with source color: got %d, want %d", lipgloss.Width(resPkg), len(pkg.Source)+1+len(pkg.Name))
 	}
 }
-
-

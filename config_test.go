@@ -202,4 +202,3 @@ func TestLoadConfigMalformedTOML(t *testing.T) {
 		t.Errorf("Expected error when loading malformed TOML, got nil")
 	}
 }
-

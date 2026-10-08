@@ -48,6 +48,12 @@ func (m *mockRunner) RunWithInputContext(ctx context.Context, input string, name
 	return m.RunWithInput(input, name, args...)
 }
 
+func (m *mockRunner) RunWithStderrScan(name string, onLine func(string), args ...string) error {
+	m.capturedArgs = append([]string{name}, args...)
+	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
+	return nil
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // 1. COMMAND INJECTION TESTS
 // ══════════════════════════════════════════════════════════════════════════════
