@@ -153,4 +153,3 @@ func TestNarrowTerminalDialogWidthClamping(t *testing.T) {
 		}
 	}
 }
-
