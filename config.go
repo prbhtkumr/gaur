@@ -98,7 +98,7 @@ func LoadConfig() (Config, error) {
 	if err := toml.Unmarshal(data, &cfg); err != nil {
 		// Log to file if possible (logger may not be initialized yet)
 		LogError("CONFIG", "Failed to parse config file: %v", err)
-		return DefaultConfig(), nil
+		return DefaultConfig(), fmt.Errorf("failed to parse config file: %w", err)
 	}
 
 	ValidateConfig(&cfg)
@@ -204,8 +204,33 @@ func saveConfig(path string, cfg Config) error {
 	if err != nil {
 		return err
 	}
-	// Use 0600 for configuration files (user read/write only)
-	return os.WriteFile(path, data, 0600)
+
+	dir := filepath.Dir(path)
+	tmpFile, err := os.CreateTemp(dir, "config-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmpName := tmpFile.Name()
+	defer func() {
+		_ = os.Remove(tmpName)
+	}()
+
+	if err := tmpFile.Chmod(0600); err != nil {
+		_ = tmpFile.Close()
+		return err
+	}
+	if _, err := tmpFile.Write(data); err != nil {
+		_ = tmpFile.Close()
+		return err
+	}
+	if err := tmpFile.Sync(); err != nil {
+		_ = tmpFile.Close()
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, path)
 }
 
 // NewKeyMap creates a KeyMap from the configuration

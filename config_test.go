@@ -155,3 +155,51 @@ func TestValidateConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveConfigAtomicPermissions(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gaur-atomic-test-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	configPath := filepath.Join(tmpDir, "config.toml")
+	cfg := DefaultConfig()
+	if err := saveConfig(configPath, cfg); err != nil {
+		t.Fatalf("saveConfig failed: %v", err)
+	}
+
+	info, err := os.Stat(configPath)
+	if err != nil {
+		t.Fatalf("Stat failed: %v", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Errorf("Expected permissions 0600, got %o", info.Mode().Perm())
+	}
+}
+
+func TestLoadConfigMalformedTOML(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "gaur-bad-toml-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	origXDG := os.Getenv("XDG_CONFIG_HOME")
+	defer os.Setenv("XDG_CONFIG_HOME", origXDG)
+	os.Setenv("XDG_CONFIG_HOME", tmpDir)
+
+	gaurDir := filepath.Join(tmpDir, "gaur")
+	if err := os.MkdirAll(gaurDir, 0750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(gaurDir, "config.toml"), []byte("invalid toml [[[["), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = LoadConfig()
+	if err == nil {
+		t.Errorf("Expected error when loading malformed TOML, got nil")
+	}
+}
+
