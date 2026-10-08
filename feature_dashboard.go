@@ -562,20 +562,8 @@ func parsePaccacheDryRunDetailed(output string) (int, string) {
 
 // parsePaccacheDryRun extracts the "disk space saved" string from paccache -d output
 func parsePaccacheDryRun(output string) string {
-	if strings.Contains(output, "no candidate packages found") {
-		return "0 B"
-	}
-	// Format: ==> finished dry run: 78 candidates (disk space saved: 782.43 MiB)
-	parts := strings.Split(output, "disk space saved: ")
-	if len(parts) > 1 {
-		// Split by space or ")" to get the size part
-		resParts := strings.Fields(parts[1])
-		if len(resParts) >= 2 {
-			sizeStr := resParts[0] + " " + strings.TrimSuffix(resParts[1], ")")
-			return formatBytes(parseSizeToBytes(sizeStr))
-		}
-	}
-	return "0 B"
+	_, size := parsePaccacheDryRunDetailed(output)
+	return size
 }
 
 func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) string {

@@ -830,6 +830,42 @@ func (m *model) overlaySelectionsPanel(content string, innerWidth int, headerHei
 	return overlayAt(content, panel, innerWidth, len(lines), 0, startCol)
 }
 
+// resolvePackages resolves a list of package names into Package structs using getPackageByName with a fallback.
+func (m *model) resolvePackages(names []string) []Package {
+	packages := make([]Package, 0, len(names))
+	for _, name := range names {
+		if pkg := m.getPackageByName(name); pkg != nil {
+			packages = append(packages, *pkg)
+		} else {
+			packages = append(packages, Package{Name: name})
+		}
+	}
+	return packages
+}
+
+// renderCacheBreakdown formats the pacman and AUR helper cache freed breakdown lines.
+func (m *model) renderCacheBreakdown(contentWidth int, pacmanEst, aurEst string) []string {
+	if pacmanEst == "" {
+		pacmanEst = "calculating..."
+	}
+	if aurEst == "" {
+		aurEst = "calculating..."
+	}
+
+	valStyle := lipgloss.NewStyle().Foreground(currentTheme.TextColor)
+	pacmanLabel := sourceStyle("core").Render("  pacman:")
+	helperLabel := m.config.Commands.AurHelper + ":"
+	if len(helperLabel) < 7 {
+		helperLabel += strings.Repeat(" ", 7-len(helperLabel))
+	}
+	aurLabel := sourceStyle("aur").Render("  " + helperLabel)
+
+	return []string{
+		lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", pacmanLabel, valStyle.Render(pacmanEst))),
+		lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", aurLabel, valStyle.Render(aurEst))),
+	}
+}
+
 // renderConfirmationDialog renders a centered confirmation dialog for install/remove/update
 func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColor lipgloss.Color) string {
 	var title string
@@ -841,26 +877,11 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 	case confirmInstall:
 		title = "📦 Confirm Installation"
 		actionDesc = "installed"
-		for _, name := range m.confirmPackages {
-			pkg := m.getPackageByName(name)
-			if pkg != nil {
-				packages = append(packages, *pkg)
-			} else {
-				// Fallback if full package info is missing
-				packages = append(packages, Package{Name: name})
-			}
-		}
+		packages = m.resolvePackages(m.confirmPackages)
 	case confirmRemove:
 		title = "🗑 Confirm Removal"
 		actionDesc = "removed"
-		for _, name := range m.confirmPackages {
-			pkg := m.getPackageByName(name)
-			if pkg != nil {
-				packages = append(packages, *pkg)
-			} else {
-				packages = append(packages, Package{Name: name})
-			}
-		}
+		packages = m.resolvePackages(m.confirmPackages)
 	case confirmUpdate:
 		title = "🔄 Confirm System Update"
 		actionDesc = "updated"
@@ -868,14 +889,7 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 	case confirmSelectiveUpdate:
 		title = "🔄 Confirm Selective Update"
 		actionDesc = "updated"
-		for _, name := range m.confirmPackages {
-			pkg := m.getPackageByName(name)
-			if pkg != nil {
-				packages = append(packages, *pkg)
-			} else {
-				packages = append(packages, Package{Name: name})
-			}
-		}
+		packages = m.resolvePackages(m.confirmPackages)
 	case confirmRemoveOrphans:
 		title = "🧹 Confirm Orphan Removal"
 		actionDesc = "removed"
@@ -983,23 +997,7 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 			pacmanEstimate = m.dashboard.PacmanCacheSize
 			aurEstimate = m.dashboard.AurCacheSize
 		}
-		if pacmanEstimate == "" {
-			pacmanEstimate = "calculating..."
-		}
-		if aurEstimate == "" {
-			aurEstimate = "calculating..."
-		}
-
-		valStyle := lipgloss.NewStyle().Foreground(currentTheme.TextColor)
-		pacmanLabel := sourceStyle("core").Render("  pacman:")
-		helperLabel := m.config.Commands.AurHelper + ":"
-		if len(helperLabel) < 7 {
-			helperLabel += strings.Repeat(" ", 7-len(helperLabel))
-		}
-		aurLabel := sourceStyle("aur").Render("  " + helperLabel)
-
-		dialogContent = append(dialogContent, lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", pacmanLabel, valStyle.Render(pacmanEstimate))))
-		dialogContent = append(dialogContent, lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", aurLabel, valStyle.Render(aurEstimate))))
+		dialogContent = append(dialogContent, m.renderCacheBreakdown(contentWidth, pacmanEstimate, aurEstimate)...)
 		dialogContent = append(dialogContent, "")
 
 		estStyle := lipgloss.NewStyle().Width(contentWidth).Align(lipgloss.Center)
@@ -1077,19 +1075,7 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 			dialogContent = append(dialogContent, breakdownHeaderStyle.Render("Breakdown:"))
 			pacmanEst := m.dashboard.CacheFreedPacman[m.confirmType]
 			aurEst := m.dashboard.CacheFreedAur[m.confirmType]
-			if pacmanEst == "" {
-				pacmanEst = "calculating..."
-			}
-			if aurEst == "" {
-				aurEst = "calculating..."
-			}
-
-			helperLabel := m.config.Commands.AurHelper + ":"
-			if len(helperLabel) < 7 {
-				helperLabel += strings.Repeat(" ", 7-len(helperLabel))
-			}
-			dialogContent = append(dialogContent, lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", sourceStyle("core").Render("  pacman:"), lipgloss.NewStyle().Foreground(currentTheme.TextColor).Render(pacmanEst))))
-			dialogContent = append(dialogContent, lipgloss.PlaceHorizontal(contentWidth, lipgloss.Center, fmt.Sprintf("%s %s", sourceStyle("aur").Render("  "+helperLabel), lipgloss.NewStyle().Foreground(currentTheme.TextColor).Render(aurEst))))
+			dialogContent = append(dialogContent, m.renderCacheBreakdown(contentWidth, pacmanEst, aurEst)...)
 		}
 
 		if m.confirmType == confirmCleanRemoved || m.confirmType == confirmCleanSelective {
@@ -1453,18 +1439,14 @@ func (m *model) renderSimpleUpdateView(helpText string, innerWidth, innerHeight 
 	}
 
 	var content strings.Builder
-	innerContentHeight := 0
 
 	if m.loading || m.pendingUpdates == nil {
 		content.WriteString("\n  Checking for updates...")
-		innerContentHeight = 2
 	} else if len(m.pendingUpdates) == 0 {
 		content.WriteString("\n  System is up to date!")
-		innerContentHeight = 2
 	} else {
 		countStyle := lipgloss.NewStyle().Foreground(currentTheme.WarningColor).Bold(true)
 		content.WriteString(fmt.Sprintf("  The following %s system updates are available:\n\n", countStyle.Render(fmt.Sprintf("%d", len(m.pendingUpdates)))))
-		innerContentHeight += 2
 
 		// Calculate max repo width for alignment
 		maxRepoWidth := 0

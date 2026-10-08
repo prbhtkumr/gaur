@@ -172,3 +172,21 @@ func TestEnsureDetailsLoaded(t *testing.T) {
 		t.Errorf("Expected details to be cleared for nil package")
 	}
 }
+
+func TestResolvePackages(t *testing.T) {
+	m := model{
+		filtered: []Package{
+			{Name: "ripgrep", Version: "14.1.0", Source: "extra"},
+		},
+	}
+	resolved := m.resolvePackages([]string{"ripgrep", "missing-pkg"})
+	if len(resolved) != 2 {
+		t.Fatalf("Expected 2 resolved packages, got %d", len(resolved))
+	}
+	if resolved[0].Name != "ripgrep" || resolved[0].Version != "14.1.0" {
+		t.Errorf("Expected full package info for ripgrep, got %+v", resolved[0])
+	}
+	if resolved[1].Name != "missing-pkg" || resolved[1].Version != "" {
+		t.Errorf("Expected fallback package for missing-pkg, got %+v", resolved[1])
+	}
+}
