@@ -156,7 +156,7 @@ func TestCommandInjection(t *testing.T) {
 		}
 
 		// Verify only legitimate package was passed
-		for _, arg := range mRunner.capturedArgs {
+		for _, arg := range mRunner.CapturedArgs() {
 			if strings.Contains(arg, ";") || strings.Contains(arg, "rm -rf") {
 				t.Errorf("Injection attempt passed through: %q", arg)
 			}
@@ -182,7 +182,7 @@ func TestCommandInjection(t *testing.T) {
 			cmd()
 		}
 
-		for _, arg := range mRunner.capturedArgs {
+		for _, arg := range mRunner.CapturedArgs() {
 			if strings.Contains(arg, "$") || strings.Contains(arg, "`") {
 				t.Errorf("Injection attempt passed through: %q", arg)
 			}
@@ -357,11 +357,12 @@ func TestPrivilegeEscalation(t *testing.T) {
 		}
 
 		// Should use paccache, not the injected command
-		if len(mRunner.capturedArgs) > 0 && mRunner.capturedArgs[0] != "sudo" {
-			t.Errorf("Expected sudo, got %q", mRunner.capturedArgs[0])
+		capturedArgs := mRunner.CapturedArgs()
+		if len(capturedArgs) > 0 && capturedArgs[0] != "sudo" {
+			t.Errorf("Expected sudo, got %q", capturedArgs[0])
 		}
-		if len(mRunner.capturedArgs) > 1 && mRunner.capturedArgs[1] != "paccache" {
-			t.Errorf("Expected paccache after sudo, got %v", mRunner.capturedArgs)
+		if len(capturedArgs) > 1 && capturedArgs[1] != "paccache" {
+			t.Errorf("Expected paccache after sudo, got %v", capturedArgs)
 		}
 	})
 }
@@ -760,7 +761,7 @@ func TestSecurityEdgeCases(t *testing.T) {
 			msg := cmd()
 			// Should return error message, not execute
 			if _, ok := msg.(execCompleteMsg); ok {
-				if len(mRunner.capturedCalls) > 0 {
+				if len(mRunner.CapturedCalls()) > 0 {
 					t.Error("Empty package list caused command execution")
 				}
 			}
@@ -787,8 +788,9 @@ func TestSecurityEdgeCases(t *testing.T) {
 		}
 
 		// No interactive command should have been called
-		if len(mRunner.capturedCalls) > 0 {
-			for _, call := range mRunner.capturedCalls {
+		capturedCalls := mRunner.CapturedCalls()
+		if len(capturedCalls) > 0 {
+			for _, call := range capturedCalls {
 				// Should not contain any package args since all were invalid
 				for _, arg := range call[1:] { // Skip command name
 					if strings.Contains(arg, "$") || strings.Contains(arg, ";") || strings.Contains(arg, "`") {
@@ -951,19 +953,20 @@ func TestSecurityFixes(t *testing.T) {
 		}
 		cmd()
 
-		if len(mRunner.capturedArgs) < 2 {
-			t.Fatalf("Expected at least 2 arguments for sudo, got %v", mRunner.capturedArgs)
+		capturedArgs := mRunner.CapturedArgs()
+		if len(capturedArgs) < 2 {
+			t.Fatalf("Expected at least 2 arguments for sudo, got %v", capturedArgs)
 		}
 
-		if mRunner.capturedArgs[0] != "sudo" {
-			t.Errorf("Expected first arg to be sudo, got %q", mRunner.capturedArgs[0])
+		if capturedArgs[0] != "sudo" {
+			t.Errorf("Expected first arg to be sudo, got %q", capturedArgs[0])
 		}
 
-		if mRunner.capturedArgs[1] != "paccache" {
-			t.Errorf("Expected second arg to be paccache, got %q", mRunner.capturedArgs[1])
+		if capturedArgs[1] != "paccache" {
+			t.Errorf("Expected second arg to be paccache, got %q", capturedArgs[1])
 		}
 
-		for _, arg := range mRunner.capturedArgs {
+		for _, arg := range capturedArgs {
 			if strings.Contains(arg, ";") || strings.Contains(arg, "rm -rf") {
 				t.Errorf("Found suspicious string in arguments: %q", arg)
 			}

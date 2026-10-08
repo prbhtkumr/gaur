@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"sync"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 // MockCommandRunner implements CommandRunner for testing.
 type MockCommandRunner struct {
+	mu                      sync.RWMutex
 	capturedArgs            []string
 	capturedCalls           [][]string
 	RunFunc                 func(name string, args ...string) ([]byte, error)
@@ -19,17 +21,37 @@ type MockCommandRunner struct {
 }
 
 func (m *MockCommandRunner) recordCall(name string, args ...string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	call := append([]string{name}, args...)
 	m.capturedArgs = call
 	m.capturedCalls = append(m.capturedCalls, call)
 }
 
 func (m *MockCommandRunner) CapturedArgs() []string {
-	return m.capturedArgs
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.capturedArgs == nil {
+		return nil
+	}
+	cp := make([]string, len(m.capturedArgs))
+	copy(cp, m.capturedArgs)
+	return cp
 }
 
 func (m *MockCommandRunner) CapturedCalls() [][]string {
-	return m.capturedCalls
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.capturedCalls == nil {
+		return nil
+	}
+	cp := make([][]string, len(m.capturedCalls))
+	for i, c := range m.capturedCalls {
+		callCopy := make([]string, len(c))
+		copy(callCopy, c)
+		cp[i] = callCopy
+	}
+	return cp
 }
 
 func (m *MockCommandRunner) Run(name string, args ...string) ([]byte, error) {
