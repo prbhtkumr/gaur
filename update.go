@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,6 +23,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, m.keys.Quit) {
 			// ctrl+c should always quit, but 'q' should only quit if input is not focused
 			if msg.Type == tea.KeyCtrlC || !m.textInput.Focused() {
+				if m.cancelFunc != nil {
+					m.cancelFunc()
+				}
 				m.saveSettingsToDisk()
 				return m, tea.Quit
 			}
@@ -29,7 +33,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+r" && m.mode == modeDashboard {
 			m.loading = true
 			m.statusMessage = "Refreshing dashboard..."
-			return m, getDashboardData(&m.config, m.getRunner())
+			return m, getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
 		}
 
 		// 2. Overlays & Panel Intercepts
@@ -108,7 +112,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = modeDashboard
 					m.loading = true
 					m.resetState()
-					return m, getDashboardData(&m.config, m.getRunner())
+					return m, getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
 				}
 			case '2':
 				if key.Matches(msg, m.keys.InstallMode) {
@@ -134,7 +138,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.resetState()
 						m.loading = true
 						m.statusMessage = "Refreshing installed packages..."
-						return m, getInstalledPackages(m.getRunner())
+						return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
 					}
 					return m, nil
 				}
@@ -222,13 +226,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, m.performFiltering()
 				}
 				m.loading = true
-				return m, getInstalledPackages(m.getRunner())
+				return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
 			}
 		case key.Matches(msg, m.keys.DashboardMode):
 			m.mode = modeDashboard
 			m.loading = true
 			m.resetState()
-			return m, getDashboardData(&m.config, m.getRunner())
+			return m, getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())
 		case key.Matches(msg, m.keys.InstallMode):
 			if m.mode != modeInstall {
 				m.mode = modeInstall
@@ -248,7 +252,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.resetState()
 				m.loading = true
 				m.statusMessage = "Refreshing installed packages..."
-				return m, getInstalledPackages(m.getRunner())
+				return m, getInstalledPackagesWithContext(m.getContext(), m.getRunner())
 			}
 			return m, nil
 		case key.Matches(msg, m.keys.Selective):
@@ -332,6 +336,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case aurSearchMsg:
 		m.searchingAUR = false
+		m.aurCancelFunc = nil
 		query := m.textInput.Value()
 		repoFilters, searchQuery := parseRepoFilter(query)
 		shouldSearchAUR := len(repoFilters) == 0 || repoFilters["aur"]
@@ -437,7 +442,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.statusMessage = "Update completed successfully"
 			}
-			return m, checkUpdates(&m.config, m.getRunner())
+			return m, checkUpdatesWithContext(m.getContext(), &m.config, m.getRunner())
 		}
 
 	case execCompleteMsg:
@@ -783,9 +788,14 @@ func (m *model) performFiltering() tea.Cmd {
 		}
 
 		if shouldSearchAUR && len(searchQuery) >= minSearchQueryLen && searchQuery != m.lastAURQuery && !m.searchingAUR {
+			if m.aurCancelFunc != nil {
+				m.aurCancelFunc()
+			}
+			var aurCtx context.Context
+			aurCtx, m.aurCancelFunc = context.WithCancel(m.getContext())
 			m.searchingAUR = true
 			m.lastAURQuery = searchQuery
-			cmds = append(cmds, m.spinner.Tick, searchAUR(&m.config, searchQuery, m.getRunner()))
+			cmds = append(cmds, m.spinner.Tick, searchAURWithContext(aurCtx, &m.config, searchQuery, m.getRunner()))
 		}
 
 		m.filterAllPackages(query)

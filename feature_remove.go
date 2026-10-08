@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,14 +9,18 @@ import (
 )
 
 func getInstalledPackages(r ...CommandRunner) tea.Cmd {
+	return getInstalledPackagesWithContext(context.Background(), r...)
+}
+
+func getInstalledPackagesWithContext(ctx context.Context, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
 		activeRunner := getActiveRunner(r...)
-		out, err := activeRunner.Run("pacman", "-Qi")
+		out, err := activeRunner.RunContext(ctx, "pacman", "-Qi")
 		if err != nil {
 			return installedPackagesMsg{err: err}
 		}
 
-		packages, err := parseInstalledPackages(string(out), r...)
+		packages, err := parseInstalledPackagesWithContext(ctx, string(out), r...)
 		if err != nil {
 			return installedPackagesMsg{err: fmt.Errorf("failed to parse installed packages: %w", err)}
 		}
@@ -24,6 +29,10 @@ func getInstalledPackages(r ...CommandRunner) tea.Cmd {
 }
 
 func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error) {
+	return parseInstalledPackagesWithContext(context.Background(), output, r...)
+}
+
+func parseInstalledPackagesWithContext(ctx context.Context, output string, r ...CommandRunner) ([]Package, error) {
 	var packages []Package
 	blocks := strings.Split(output, "\n\n")
 
@@ -64,7 +73,7 @@ func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error
 	activeRunner := getActiveRunner(r...)
 
 	repoMap := make(map[string]string)
-	repoOut, err := activeRunner.Run("pacman", "-Sl")
+	repoOut, err := activeRunner.RunContext(ctx, "pacman", "-Sl")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query package repositories: %w", err)
 	}
@@ -82,7 +91,7 @@ func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error
 		}
 	}
 
-	foreignOut, err := activeRunner.Run("pacman", "-Qm")
+	foreignOut, err := activeRunner.RunContext(ctx, "pacman", "-Qm")
 	if err == nil {
 		foreignPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(foreignOut), "\n") {
@@ -98,7 +107,7 @@ func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error
 		}
 	}
 
-	explicitOut, err := activeRunner.Run("pacman", "-Qe")
+	explicitOut, err := activeRunner.RunContext(ctx, "pacman", "-Qe")
 	if err == nil {
 		explicitPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(explicitOut), "\n") {
@@ -112,7 +121,7 @@ func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error
 		}
 	}
 
-	orphanOut, err := activeRunner.Run("pacman", "-Qdt")
+	orphanOut, err := activeRunner.RunContext(ctx, "pacman", "-Qdt")
 	if err == nil {
 		orphanPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(orphanOut), "\n") {

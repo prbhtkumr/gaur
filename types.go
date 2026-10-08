@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -77,7 +78,9 @@ type KeyMap struct {
 // CommandRunner defines an interface for executing shell commands.
 type CommandRunner interface {
 	Run(name string, args ...string) ([]byte, error)
+	RunContext(ctx context.Context, name string, args ...string) ([]byte, error)
 	RunWithInput(input string, name string, args ...string) ([]byte, error)
+	RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error)
 	Interactive(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd
 }
 
@@ -88,13 +91,23 @@ type RealCommandRunner struct{}
 // Security note: Commands are validated by ValidateConfig and only trusted binaries
 // (paru, yay, pacman, paccache) are used. Package names are sanitized before use.
 func (r RealCommandRunner) Run(name string, args ...string) ([]byte, error) {
-	return exec.Command(name, args...).CombinedOutput() // #nosec G204 - commands validated in config
+	return r.RunContext(context.Background(), name, args...)
+}
+
+// RunContext executes a command with context cancellation and returns the combined output.
+func (r RealCommandRunner) RunContext(ctx context.Context, name string, args ...string) ([]byte, error) {
+	return exec.CommandContext(ctx, name, args...).CombinedOutput() // #nosec G204 - commands validated in config
 }
 
 // RunWithInput executes a command with stdin input and returns the combined output.
 // Security note: Commands are validated by ValidateConfig and only trusted binaries are used.
 func (r RealCommandRunner) RunWithInput(input string, name string, args ...string) ([]byte, error) {
-	cmd := exec.Command(name, args...) // #nosec G204 - commands validated in config
+	return r.RunWithInputContext(context.Background(), input, name, args...)
+}
+
+// RunWithInputContext executes a command with stdin input and context cancellation.
+func (r RealCommandRunner) RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, name, args...) // #nosec G204 - commands validated in config
 	cmd.Stdin = strings.NewReader(input)
 	return cmd.CombinedOutput()
 }

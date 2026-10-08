@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,6 +13,9 @@ import (
 type model struct {
 	config                Config
 	runner                CommandRunner
+	ctx                   context.Context
+	cancelFunc            context.CancelFunc
+	aurCancelFunc         context.CancelFunc
 	keys                  KeyMap
 	themeLoader           *ThemeLoader
 	textInput             textinput.Model
@@ -93,9 +98,13 @@ func initialModel(initialMode viewMode, cfg Config, tl *ThemeLoader, r ...Comman
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(currentTheme.SpinnerColor)
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	m := &model{
 		config:         cfg,
 		runner:         getActiveRunner(r...),
+		ctx:            ctx,
+		cancelFunc:     cancel,
 		keys:           NewKeyMap(cfg.Keys),
 		themeLoader:    tl,
 		textInput:      ti,
@@ -138,14 +147,14 @@ func (m *model) Init() tea.Cmd {
 	return tea.Batch(
 		textinput.Blink,
 		m.spinner.Tick,
-		loadRepoPackages(m.getRunner()),
-		getInstalledPackages(m.getRunner()),
+		loadRepoPackagesWithContext(m.getContext(), m.getRunner()),
+		getInstalledPackagesWithContext(m.getContext(), m.getRunner()),
 		func() tea.Msg {
 			switch m.mode {
 			case modeDashboard:
-				return getDashboardData(&m.config, m.getRunner())()
+				return getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner())()
 			case modeUpdate:
-				return checkUpdates(&m.config, m.getRunner())()
+				return checkUpdatesWithContext(m.getContext(), &m.config, m.getRunner())()
 			}
 			return nil
 		},
@@ -190,21 +199,33 @@ func (m *model) getRunner() CommandRunner {
 	return runner
 }
 
+// getContext returns the model's lifecycle context, or context.Background() if unset.
+func (m *model) getContext() context.Context {
+	if m != nil && m.ctx != nil {
+		return m.ctx
+	}
+	return context.Background()
+}
+
 // refreshAll triggers a full refresh of all system data
 func (m *model) refreshAll() tea.Cmd {
 	m.loading = true
 	m.pendingUpdates = nil
 	m.detailsCache = make(map[string]string)
 	return tea.Batch(
-		getDashboardData(&m.config, m.getRunner()),
-		loadRepoPackages(m.getRunner()),
-		getInstalledPackages(m.getRunner()),
-		checkUpdates(&m.config, m.getRunner()),
+		getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner()),
+		loadRepoPackagesWithContext(m.getContext(), m.getRunner()),
+		getInstalledPackagesWithContext(m.getContext(), m.getRunner()),
+		checkUpdatesWithContext(m.getContext(), &m.config, m.getRunner()),
 	)
 }
 
 // resetState clears common state fields like search progress and package selections
 func (m *model) resetState() {
+	if m.aurCancelFunc != nil {
+		m.aurCancelFunc()
+		m.aurCancelFunc = nil
+	}
 	m.searchingAUR = false
 	m.lastAURQuery = ""
 	m.searchStatus = ""

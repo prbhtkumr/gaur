@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,10 +34,18 @@ func (m *mockRunner) Run(name string, args ...string) ([]byte, error) {
 	return []byte{}, nil
 }
 
+func (m *mockRunner) RunContext(ctx context.Context, name string, args ...string) ([]byte, error) {
+	return m.Run(name, args...)
+}
+
 func (m *mockRunner) RunWithInput(input string, name string, args ...string) ([]byte, error) {
 	m.capturedArgs = append([]string{name}, args...)
 	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
 	return []byte{}, nil
+}
+
+func (m *mockRunner) RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error) {
+	return m.RunWithInput(input, name, args...)
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -9,16 +10,21 @@ import (
 )
 
 // Commands
-// loadRepoPackages loads all packages from local pacman database
+// loadRepoPackages loads all packages from local pacman database using background context
 func loadRepoPackages(r ...CommandRunner) tea.Cmd {
+	return loadRepoPackagesWithContext(context.Background(), r...)
+}
+
+// loadRepoPackagesWithContext loads all packages from local pacman database with context cancellation support
+func loadRepoPackagesWithContext(ctx context.Context, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
 		activeRunner := getActiveRunner(r...)
-		stdout, err := activeRunner.Run("pacman", "-Sl")
+		stdout, err := activeRunner.RunContext(ctx, "pacman", "-Sl")
 		if err != nil {
 			return repoPackagesMsg{err: err}
 		}
 
-		installedOut, err := activeRunner.Run("pacman", "-Qq")
+		installedOut, err := activeRunner.RunContext(ctx, "pacman", "-Qq")
 		if err != nil {
 			return repoPackagesMsg{err: fmt.Errorf("failed to get installed packages list: %w", err)}
 		}
@@ -99,6 +105,10 @@ func (m *model) filterAllPackages(query string) {
 }
 
 func searchAUR(c *Config, query string, r ...CommandRunner) tea.Cmd {
+	return searchAURWithContext(context.Background(), c, query, r...)
+}
+
+func searchAURWithContext(ctx context.Context, c *Config, query string, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
 		if query == "" {
 			return aurSearchMsg{packages: []Package{}, query: query}
@@ -122,8 +132,11 @@ func searchAUR(c *Config, query string, r ...CommandRunner) tea.Cmd {
 		}
 
 		args := BuildAURCommand(c, "search", searchQuery)
-		stdout, err := getActiveRunner(r...).Run(args[0], args[1:]...)
+		stdout, err := getActiveRunner(r...).RunContext(ctx, args[0], args[1:]...)
 		duration := time.Since(start)
+		if ctx.Err() != nil {
+			return aurSearchMsg{packages: []Package{}, query: query, timeTaken: duration}
+		}
 		if err != nil {
 			// Some helpers return exit 1 when no packages are found.
 			// If output is empty, treat it as "no results" rather than an error.
