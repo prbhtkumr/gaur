@@ -564,25 +564,14 @@ func (m *model) handleNavigation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	if m.selectedIndex != oldIdx {
 		m.detailsScrollOffset = 0
-		pkg := m.getSelectedPkg()
-		if pkg != nil && m.mode != modeCacheSelective {
-			if cached, ok := m.detailsCache[pkg.Name]; ok {
-				m.packageDetails = cached
-				m.loadingDetails = false
-				m.detailsForPackage = pkg.Name
-				m.pendingDetailsPackage = ""
-				return m, nil
-			}
-			m.loadingDetails = true
-			m.pendingDetailsPackage = pkg.Name
-			return m, debouncePackageDetails(m, m.pendingDetailsPackage)
-		}
+		cmd := m.ensureDetailsLoaded(m.selectedPackage())
+		return m, cmd
 	}
 	return m, nil
 }
 
 func (m *model) handleMarking() (tea.Model, tea.Cmd) {
-	pkg := m.getSelectedPkg()
+	pkg := m.selectedPackage()
 	if pkg == nil {
 		return m, nil
 	}
@@ -612,7 +601,7 @@ func (m *model) handleActionTrigger() (tea.Model, tea.Cmd) {
 			pkgs = append(pkgs, n)
 		}
 		if len(pkgs) == 0 {
-			p := m.getSelectedPkg()
+			p := m.selectedPackage()
 			if p != nil {
 				pkgs = []string{p.Name}
 			}
@@ -829,35 +818,30 @@ func (m *model) performFiltering() tea.Cmd {
 	}
 
 	// Fetch details for the first item automatically if list is not empty
-	pkg := m.getSelectedPkg()
-	if pkg != nil && m.mode != modeCacheSelective {
-		if cached, ok := m.detailsCache[pkg.Name]; ok {
-			m.packageDetails = cached
-			m.loadingDetails = false
-			m.detailsForPackage = pkg.Name
-			m.pendingDetailsPackage = ""
-		} else {
-			m.loadingDetails = true
-			m.pendingDetailsPackage = pkg.Name
-			cmds = append(cmds, debouncePackageDetails(m, m.pendingDetailsPackage))
-		}
-	} else {
-		m.loadingDetails = false
-		m.packageDetails = ""
-		m.detailsForPackage = ""
+	if cmd := m.ensureDetailsLoaded(m.selectedPackage()); cmd != nil {
+		cmds = append(cmds, cmd)
 	}
 	return tea.Batch(cmds...)
 }
 
-func (m *model) getSelectedPkg() *Package {
-	list := m.filtered
-	if m.mode == modeRemove {
-		list = m.filteredInstalled
+// ensureDetailsLoaded checks cache and triggers debounce loading for the given package.
+func (m *model) ensureDetailsLoaded(pkg *Package) tea.Cmd {
+	if pkg == nil || m.mode == modeCacheSelective {
+		m.loadingDetails = false
+		m.packageDetails = ""
+		m.detailsForPackage = ""
+		return nil
 	}
-	if m.selectedIndex >= 0 && m.selectedIndex < len(list) {
-		return &list[m.selectedIndex]
+	if cached, ok := m.detailsCache[pkg.Name]; ok {
+		m.packageDetails = cached
+		m.loadingDetails = false
+		m.detailsForPackage = pkg.Name
+		m.pendingDetailsPackage = ""
+		return nil
 	}
-	return nil
+	m.loadingDetails = true
+	m.pendingDetailsPackage = pkg.Name
+	return debouncePackageDetails(m, m.pendingDetailsPackage)
 }
 
 func (m *model) getPackageByName(name string) *Package {

@@ -150,7 +150,7 @@ func (m *model) Init() tea.Cmd {
 // currentPackageList returns the appropriate package list based on current mode.
 func (m *model) currentPackageList() []Package {
 	switch m.mode {
-	case modeInstall:
+	case modeInstall, modeUpdateSelective, modeCacheSelective:
 		return m.filtered
 	case modeRemove:
 		return m.filteredInstalled

@@ -113,4 +113,62 @@ func TestSelectedPackage(t *testing.T) {
 	if selected != nil {
 		t.Errorf("selectedPackage (out of bounds) should be nil, got %v", selected)
 	}
+
+	// Test modeUpdateSelective
+	m.mode = modeUpdateSelective
+	m.selectedIndex = 0
+	selected = m.selectedPackage()
+	if selected == nil || selected.Name != "pkg1" {
+		t.Errorf("selectedPackage (updateSelective) = %v, want pkg1", selected)
+	}
+
+	// Test modeCacheSelective
+	m.mode = modeCacheSelective
+	m.selectedIndex = 1
+	selected = m.selectedPackage()
+	if selected == nil || selected.Name != "pkg2" {
+		t.Errorf("selectedPackage (cacheSelective) = %v, want pkg2", selected)
+	}
+}
+
+func TestEnsureDetailsLoaded(t *testing.T) {
+	pkg := &Package{Name: "git"}
+	m := model{
+		mode:         modeInstall,
+		detailsCache: map[string]string{"git": "Fast, scalable, distributed VCS"},
+	}
+
+	// 1. Cached hit
+	cmd := m.ensureDetailsLoaded(pkg)
+	if cmd != nil {
+		t.Errorf("Expected nil command for cached details, got %v", cmd)
+	}
+	if m.packageDetails != "Fast, scalable, distributed VCS" {
+		t.Errorf("Expected cached details to be assigned, got %q", m.packageDetails)
+	}
+	if m.loadingDetails {
+		t.Errorf("Expected loadingDetails to be false on cache hit")
+	}
+
+	// 2. Cache miss triggers debounce command
+	pkgMiss := &Package{Name: "neovim"}
+	cmd = m.ensureDetailsLoaded(pkgMiss)
+	if cmd == nil {
+		t.Errorf("Expected debounce command for uncached package, got nil")
+	}
+	if !m.loadingDetails {
+		t.Errorf("Expected loadingDetails to be true on cache miss")
+	}
+	if m.pendingDetailsPackage != "neovim" {
+		t.Errorf("Expected pendingDetailsPackage to be neovim, got %q", m.pendingDetailsPackage)
+	}
+
+	// 3. Nil package clears details
+	cmd = m.ensureDetailsLoaded(nil)
+	if cmd != nil {
+		t.Errorf("Expected nil command for nil package, got %v", cmd)
+	}
+	if m.loadingDetails || m.packageDetails != "" {
+		t.Errorf("Expected details to be cleared for nil package")
+	}
 }
