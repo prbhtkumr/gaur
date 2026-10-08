@@ -130,10 +130,11 @@ Prefixes combine: `ae:firefox` searches AUR and Extra, `cem:` searches core, ext
 
 Selecting a row schedules a detail fetch rather than firing one immediately:
 
-1. `pendingDetailsPackage` is set and `debouncePackageDetails` (`commands.go`) returns a `debounceTickMsg` after `advanced.debounce_ms` (default **150**)
-2. the tick is discarded unless it still matches `pendingDetailsPackage`, so arrow-key spam never launches fetches
-3. `getPackageDetails` validates the name, then runs `<helper> --noconfirm -Si <name>`. It falls back to `-Qi` only for an installed package whose `Source` is still `unknown`, where there is no remote record to read
-4. the result is discarded unless it matches `detailsForPackage`, the package currently on screen
+1. the cache is checked first: a hit paints immediately and stops, with no timer and no process
+2. `pendingDetailsPackage` is set and `debouncePackageDetails` (`commands.go`) returns a `debounceTickMsg` after `advanced.debounce_ms` (default **150**)
+3. the tick is discarded unless it still matches `pendingDetailsPackage`, so arrow-key spam never launches fetches
+4. `getPackageDetails` validates the name, then runs `<helper> --noconfirm -Si <name>`. It falls back to `-Qi` only for an installed package whose `Source` is still `unknown`, where there is no remote record to read
+5. the result is discarded unless it matches `detailsForPackage`, the package currently on screen
 
 The debounce timer is the only one in the codebase. Search does not have one.
 
@@ -245,5 +246,6 @@ Both the config path and the log directory are rejected if they are not absolute
 - **Ranking is a subprocess per pass.** `fzf --filter` is spawned for each filter, in exchange for not reimplementing its scoring.
 - **AUR search is gated, not debounced.** Minimum two characters, no repeat of the same query, one request in flight, stale responses dropped.
 - **Detail fetches are debounced** at 150 ms by default and gated twice: once on the way out (`pendingDetailsPackage`) and once on the way back (`detailsForPackage`).
+- **Details are cached** by package name for the session and invalidated on every refresh, so revisiting a package paints instantly without spawning a process.
 - **Dashboard widgets run concurrently** under a wait group, with errors collected per widget so partial data still renders.
 - **Batch operations are one command.** All marked packages are passed to a single `helper -S ...` invocation instead of one process each.
