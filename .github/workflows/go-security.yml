@@ -21,7 +21,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 env:
-  GO_VERSION: '1.24'
+  GO_VERSION: '1.26'
   # Opt into Node.js 24 for GitHub Actions
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
