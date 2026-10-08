@@ -72,34 +72,17 @@ func parseInstalledPackagesWithContext(ctx context.Context, output string, r ...
 
 	activeRunner := getActiveRunner(r...)
 
-	repoMap := make(map[string]string)
-	repoOut, err := activeRunner.RunContext(ctx, "pacman", "-Sl")
+	repoMap, err := queryPackageRepoMap(ctx, activeRunner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query package repositories: %w", err)
 	}
-	for _, line := range strings.Split(string(repoOut), "\n") {
-		parts := strings.Fields(line)
-		if len(parts) >= 2 {
-
-			repoMap[parts[1]] = parts[0]
-		}
-	}
-
 	for i := range packages {
 		if repo, ok := repoMap[packages[i].Name]; ok {
 			packages[i].Source = repo
 		}
 	}
 
-	foreignOut, err := activeRunner.RunContext(ctx, "pacman", "-Qm")
-	if err == nil {
-		foreignPkgs := make(map[string]bool)
-		for _, line := range strings.Split(string(foreignOut), "\n") {
-			parts := strings.Fields(line)
-			if len(parts) >= 1 {
-				foreignPkgs[parts[0]] = true
-			}
-		}
+	if foreignPkgs, err := queryPackageSet(ctx, activeRunner, "-Qm"); err == nil {
 		for i := range packages {
 			if foreignPkgs[packages[i].Name] {
 				packages[i].Source = "aur"
@@ -107,29 +90,13 @@ func parseInstalledPackagesWithContext(ctx context.Context, output string, r ...
 		}
 	}
 
-	explicitOut, err := activeRunner.RunContext(ctx, "pacman", "-Qe")
-	if err == nil {
-		explicitPkgs := make(map[string]bool)
-		for _, line := range strings.Split(string(explicitOut), "\n") {
-			parts := strings.Fields(line)
-			if len(parts) >= 1 {
-				explicitPkgs[parts[0]] = true
-			}
-		}
+	if explicitPkgs, err := queryPackageSet(ctx, activeRunner, "-Qe"); err == nil {
 		for i := range packages {
 			packages[i].Explicit = explicitPkgs[packages[i].Name]
 		}
 	}
 
-	orphanOut, err := activeRunner.RunContext(ctx, "pacman", "-Qdt")
-	if err == nil {
-		orphanPkgs := make(map[string]bool)
-		for _, line := range strings.Split(string(orphanOut), "\n") {
-			parts := strings.Fields(line)
-			if len(parts) >= 1 {
-				orphanPkgs[parts[0]] = true
-			}
-		}
+	if orphanPkgs, err := queryPackageSet(ctx, activeRunner, "-Qdt"); err == nil {
 		for i := range packages {
 			packages[i].Orphan = orphanPkgs[packages[i].Name]
 		}

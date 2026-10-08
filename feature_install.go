@@ -24,17 +24,9 @@ func loadRepoPackagesWithContext(ctx context.Context, r ...CommandRunner) tea.Cm
 			return repoPackagesMsg{err: err}
 		}
 
-		installedOut, err := activeRunner.RunContext(ctx, "pacman", "-Qq")
+		installedSet, err := queryPackageSet(ctx, activeRunner, "-Qq")
 		if err != nil {
 			return repoPackagesMsg{err: fmt.Errorf("failed to get installed packages list: %w", err)}
-		}
-
-		installedSet := make(map[string]bool)
-		for _, name := range strings.Split(string(installedOut), "\n") {
-			name = strings.TrimSpace(name)
-			if name != "" {
-				installedSet[name] = true
-			}
 		}
 
 		// Parse "repo name version [installed]" format

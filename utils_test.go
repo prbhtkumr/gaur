@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -336,4 +338,85 @@ func TestMapSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestParsePackageRepoMap(t *testing.T) {
+	out := []byte("core linux 6.6.1-arch1-1 [installed]\nextra firefox 120.0-1\nmultilib steam 1.0.0.78-2\ninvalidline\n")
+	repoMap := parsePackageRepoMap(out)
+
+	if repoMap["linux"] != "core" {
+		t.Errorf("Expected linux -> core, got %q", repoMap["linux"])
+	}
+	if repoMap["firefox"] != "extra" {
+		t.Errorf("Expected firefox -> extra, got %q", repoMap["firefox"])
+	}
+	if repoMap["steam"] != "multilib" {
+		t.Errorf("Expected steam -> multilib, got %q", repoMap["steam"])
+	}
+	if _, ok := repoMap["invalidline"]; ok {
+		t.Errorf("Unexpected entry for invalidline in repoMap")
+	}
+}
+
+func TestParsePackageNameSet(t *testing.T) {
+	out := []byte("linux 6.6.1\nfirefox 120.0\n\nsteam\n")
+	set := parsePackageNameSet(out)
+
+	if !set["linux"] {
+		t.Errorf("Expected linux in set")
+	}
+	if !set["firefox"] {
+		t.Errorf("Expected firefox in set")
+	}
+	if !set["steam"] {
+		t.Errorf("Expected steam in set")
+	}
+	if len(set) != 3 {
+		t.Errorf("Expected set size 3, got %d", len(set))
+	}
+}
+
+func TestQueryPackageHelpers(t *testing.T) {
+	ctx := context.Background()
+	mock := &MockCommandRunner{
+		RunContextFunc: func(ctx context.Context, name string, args ...string) ([]byte, error) {
+			if len(args) > 0 && args[0] == "-Sl" {
+				return []byte("core linux 6.6.1\nextra vim 9.0\n"), nil
+			}
+			if len(args) > 0 && args[0] == "-Qm" {
+				return []byte("google-chrome 120.0\nspotify 1.2\n"), nil
+			}
+			return nil, fmt.Errorf("unexpected args: %v", args)
+		},
+	}
+
+	repoMap, err := queryPackageRepoMap(ctx, mock)
+	if err != nil {
+		t.Fatalf("queryPackageRepoMap failed: %v", err)
+	}
+	if repoMap["linux"] != "core" || repoMap["vim"] != "extra" {
+		t.Errorf("Unexpected repoMap: %v", repoMap)
+	}
+
+	foreignSet, err := queryPackageSet(ctx, mock, "-Qm")
+	if err != nil {
+		t.Fatalf("queryPackageSet failed: %v", err)
+	}
+	if !foreignSet["google-chrome"] || !foreignSet["spotify"] {
+		t.Errorf("Unexpected foreignSet: %v", foreignSet)
+	}
+
+	// Error path
+	errMock := &MockCommandRunner{
+		RunContextFunc: func(ctx context.Context, name string, args ...string) ([]byte, error) {
+			return nil, fmt.Errorf("command failed")
+		},
+	}
+	if _, err := queryPackageRepoMap(ctx, errMock); err == nil {
+		t.Errorf("Expected error from queryPackageRepoMap")
+	}
+	if _, err := queryPackageSet(ctx, errMock, "-Qm"); err == nil {
+		t.Errorf("Expected error from queryPackageSet")
+	}
+}
+
 

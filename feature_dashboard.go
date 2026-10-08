@@ -212,11 +212,7 @@ func getDashboardDataWithContext(ctx context.Context, c *Config, r ...CommandRun
 			installed := make(map[string]bool)
 			args := BuildAURCommand(c, "query-all", "-Qq")
 			if out, err := activeRunner.RunContext(ctx, args[0], args[1:]...); err == nil {
-				for _, name := range strings.Split(string(out), "\n") {
-					if n := strings.TrimSpace(name); n != "" {
-						installed[n] = true
-					}
-				}
+				installed = parsePackageNameSet(out)
 			}
 
 			type aurCacheFile struct {

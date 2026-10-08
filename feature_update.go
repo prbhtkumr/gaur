@@ -19,33 +19,14 @@ func checkUpdatesWithContext(ctx context.Context, c *Config, r ...CommandRunner)
 	return func() tea.Msg {
 		activeRunner := getActiveRunner(r...)
 
-		foreignOut, err := activeRunner.RunContext(ctx, "pacman", "-Qm")
-		foreignPkgs := make(map[string]bool)
-		if err == nil {
-			for _, line := range strings.Split(string(foreignOut), "\n") {
-				line = strings.TrimSpace(line)
-				if line != "" {
-
-					parts := strings.Fields(line)
-					if len(parts) >= 1 {
-						foreignPkgs[parts[0]] = true
-					}
-				}
-			}
+		foreignPkgs, _ := queryPackageSet(ctx, activeRunner, "-Qm")
+		if foreignPkgs == nil {
+			foreignPkgs = make(map[string]bool)
 		}
 
-		repoOut, err := activeRunner.RunContext(ctx, "pacman", "-Sl")
-		repoMap := make(map[string]string)
-		if err == nil {
-			for _, line := range strings.Split(string(repoOut), "\n") {
-				parts := strings.Fields(line)
-				if len(parts) >= 2 {
-
-					repoName := parts[0]
-					pkgName := parts[1]
-					repoMap[pkgName] = repoName
-				}
-			}
+		repoMap, _ := queryPackageRepoMap(ctx, activeRunner)
+		if repoMap == nil {
+			repoMap = make(map[string]string)
 		}
 
 		args := BuildAURCommand(c, "check-updates")

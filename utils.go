@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -40,6 +41,48 @@ func sanitizePackageNames(names []string) ([]string, bool) {
 		}
 	}
 	return valid, allValid
+}
+
+// parsePackageRepoMap parses pacman -Sl output into a map of pkgName -> repoName.
+func parsePackageRepoMap(out []byte) map[string]string {
+	repoMap := make(map[string]string)
+	for _, line := range strings.Split(string(out), "\n") {
+		parts := strings.Fields(line)
+		if len(parts) >= 2 {
+			repoMap[parts[1]] = parts[0]
+		}
+	}
+	return repoMap
+}
+
+// queryPackageRepoMap runs pacman -Sl and returns a map of pkgName -> repoName.
+func queryPackageRepoMap(ctx context.Context, runner CommandRunner) (map[string]string, error) {
+	out, err := runner.RunContext(ctx, "pacman", "-Sl")
+	if err != nil {
+		return nil, err
+	}
+	return parsePackageRepoMap(out), nil
+}
+
+// parsePackageNameSet parses lines from pacman command output into a map[string]bool set.
+func parsePackageNameSet(out []byte) map[string]bool {
+	set := make(map[string]bool)
+	for _, line := range strings.Split(string(out), "\n") {
+		parts := strings.Fields(line)
+		if len(parts) >= 1 {
+			set[parts[0]] = true
+		}
+	}
+	return set
+}
+
+// queryPackageSet runs a pacman query command and returns the package names as a set.
+func queryPackageSet(ctx context.Context, runner CommandRunner, args ...string) (map[string]bool, error) {
+	out, err := runner.RunContext(ctx, "pacman", args...)
+	if err != nil {
+		return nil, err
+	}
+	return parsePackageNameSet(out), nil
 }
 
 // fuzzyFilter filters packages using fzf for fuzzy matching.
