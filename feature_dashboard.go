@@ -638,20 +638,23 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 		topBoxWidth = 30
 	}
 
-	renderCountLine := func(char, label string, count int, color lipgloss.Color, currentBoxWidth int) string {
-		shortcut := fmt.Sprintf("[%s]", char)
+	renderBarMetricLine := func(char, label, valueStr string, value, total int64, color lipgloss.Color, currentBoxWidth int, colorWhenZero bool) string {
+		prefix := ""
+		if char != "" {
+			prefix = fmt.Sprintf("[%s]", char)
+		}
 		sStyle := lipgloss.NewStyle().Bold(true)
 		vStyle := lipgloss.NewStyle().Bold(true)
 
-		if count > 0 {
+		if colorWhenZero || value > 0 {
 			sStyle = sStyle.Foreground(color)
 			vStyle = vStyle.Foreground(color)
 		}
 
-		fullLabel := shortcut + label
-		// Use Width(12) and Width(10) for symmetry with Disk Space box
+		fullLabel := prefix + label
+		// Use Width(12) and Width(10) for symmetry between boxes
 		labelPart := lipgloss.NewStyle().Width(12).Render(sStyle.Render(fullLabel))
-		valuePart := lipgloss.NewStyle().Width(10).Render(vStyle.Render(fmt.Sprintf("%d", count)))
+		valuePart := lipgloss.NewStyle().Width(10).Render(vStyle.Render(valueStr))
 
 		internalBoxWidth := currentBoxWidth - 4
 		const textWidth = 26 // 12 + 10 + 4
@@ -661,9 +664,9 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 		}
 
 		bar := ""
-		if count > 0 && m.dashboard.TotalPackages > 0 {
-			filled := int(float64(count) / float64(m.dashboard.TotalPackages) * float64(dynamicBarWidth))
-			if filled < 1 && count > 0 {
+		if value > 0 && total > 0 {
+			filled := int(float64(value) / float64(total) * float64(dynamicBarWidth))
+			if filled < 1 && value > 0 {
 				filled = 1
 			}
 			if filled > dynamicBarWidth {
@@ -675,42 +678,17 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 		return "  " + labelPart + " │ " + valuePart + " " + bar
 	}
 
+	renderCountLine := func(char, label string, count int, color lipgloss.Color, currentBoxWidth int) string {
+		return renderBarMetricLine(char, label, fmt.Sprintf("%d", count), int64(count), int64(m.dashboard.TotalPackages), color, currentBoxWidth, false)
+	}
+
 	countsLines := []string{
 		renderCountLine("t", "otal", m.dashboard.TotalPackages, cyanColor, topBoxWidth),
 		renderCountLine("e", "xplicit", m.dashboard.ExplicitlyInstalled, greenColor, topBoxWidth),
 		renderCountLine("f", "oreign", m.dashboard.ForeignPackages, yellowColor, topBoxWidth),
 		renderCountLine("m", "issing", m.dashboard.MissingFromAUR, redColor, topBoxWidth),
+		renderCountLine("o", "rphans", m.dashboard.Orphans, redColor, topBoxWidth),
 	}
-
-	orphanStyle := lipgloss.NewStyle().Bold(true)
-
-	// Calculate orphan layout consistently with renderCountLine
-	oInternalBoxWidth := topBoxWidth - 4
-	const oTextWidth = 26
-	oBarW := oInternalBoxWidth - oTextWidth - 2
-	if oBarW < 5 {
-		oBarW = 5
-	}
-
-	orphanFullLabel := "[o]rphans"
-	if m.dashboard.Orphans > 0 {
-		orphanStyle = orphanStyle.Foreground(redColor)
-	}
-
-	oLabelPart := lipgloss.NewStyle().Width(12).Render(orphanStyle.Render(orphanFullLabel))
-	oValuePart := lipgloss.NewStyle().Width(10).Render(orphanStyle.Render(fmt.Sprintf("%d", m.dashboard.Orphans)))
-
-	orphanBar := ""
-	if m.dashboard.Orphans > 0 {
-		filled := int(float64(m.dashboard.Orphans) / float64(m.dashboard.TotalPackages) * float64(oBarW))
-		if filled < 1 {
-			filled = 1
-		}
-		orphanBar = lipgloss.NewStyle().Background(redColor).Render(strings.Repeat(" ", filled))
-	}
-
-	orphanLine := "  " + oLabelPart + " │ " + oValuePart + " " + orphanBar
-	countsLines = append(countsLines, orphanLine)
 
 	// Calculate Disk Usage Breakdown for Disk Space Box
 	totalDiskBytes := parseSizeToBytes(m.dashboard.DiskTotal)
@@ -732,37 +710,7 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 	otherColor := currentTheme.SelectedColor
 
 	renderDiskLine := func(char, label, size string, bytes int64, color lipgloss.Color, currentBoxWidth int) string {
-		prefix := ""
-		if char != "" {
-			prefix = fmt.Sprintf("[%s]", char)
-		}
-		sStyle := lipgloss.NewStyle().Bold(true).Foreground(color)
-		vStyle := lipgloss.NewStyle().Bold(true).Foreground(color)
-
-		fullLabel := prefix + label
-		labelPart := lipgloss.NewStyle().Width(12).Render(sStyle.Render(fullLabel))
-		valuePart := lipgloss.NewStyle().Width(10).Render(vStyle.Render(size))
-
-		internalBoxWidth := currentBoxWidth - 4
-		const textWidth = 26
-		dynamicBarWidth := internalBoxWidth - textWidth - 2
-		if dynamicBarWidth < 5 {
-			dynamicBarWidth = 5
-		}
-
-		bar := ""
-		if bytes > 0 && totalDiskBytes > 0 {
-			filled := int(float64(bytes) / float64(totalDiskBytes) * float64(dynamicBarWidth))
-			if filled < 1 && bytes > 0 {
-				filled = 1
-			}
-			if filled > dynamicBarWidth {
-				filled = dynamicBarWidth
-			}
-			bar = lipgloss.NewStyle().Background(color).Render(strings.Repeat(" ", filled))
-		}
-
-		return "  " + labelPart + " │ " + valuePart + " " + bar
+		return renderBarMetricLine(char, label, size, bytes, totalDiskBytes, color, currentBoxWidth, true)
 	}
 
 	storageLines := []string{
@@ -944,6 +892,15 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 		boxInnerW = 10
 	}
 
+	formatTableRow := func(rank int, name string, nameW int, nameColor lipgloss.Color, valStr string, valStyle lipgloss.Style) string {
+		rankStyle := lipgloss.NewStyle().Foreground(currentTheme.DimText)
+		nameStyle := lipgloss.NewStyle().Foreground(nameColor)
+		return fmt.Sprintf("%s %s %s",
+			rankStyle.Render(fmt.Sprintf("%2d.", rank)),
+			lipgloss.NewStyle().Width(nameW).Render(nameStyle.Render(truncateWithAnsi(name, nameW))),
+			valStyle.Render(valStr))
+	}
+
 	var topWeightLines []string
 	if len(m.dashboard.TopPackages) > 0 {
 		count := len(m.dashboard.TopPackages)
@@ -958,9 +915,6 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 
 		for i := 0; i < count; i++ {
 			pkg := m.dashboard.TopPackages[i]
-			rankStyle := lipgloss.NewStyle().Foreground(currentTheme.DimText)
-			nameStyle := lipgloss.NewStyle().Foreground(cyanColor)
-
 			pkgSizeBytes := parseSizeToBytes(pkg.Size)
 			sizeColor := cyanColor
 			if pkgSizeBytes > 1024*1024*1024 {
@@ -968,13 +922,8 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 			} else if pkgSizeBytes > 500*1024*1024 {
 				sizeColor = orangeColor
 			}
-			sizeStyle := lipgloss.NewStyle().Foreground(sizeColor)
 
-			line := fmt.Sprintf("%s %s %s",
-				rankStyle.Render(fmt.Sprintf("%2d.", i+1)),
-				lipgloss.NewStyle().Width(nameW).Render(nameStyle.Render(truncateWithAnsi(pkg.Name, nameW))),
-				sizeStyle.Render(fmt.Sprintf("%10s", pkg.Size)))
-			topWeightLines = append(topWeightLines, line)
+			topWeightLines = append(topWeightLines, formatTableRow(i+1, pkg.Name, nameW, cyanColor, fmt.Sprintf("%10s", pkg.Size), lipgloss.NewStyle().Foreground(sizeColor)))
 		}
 	}
 	topWeightBox := renderBox(boxTitleStyle.Render(" \ueddf  Top by Weight "), topWeightLines, bottomVizWidth)
@@ -993,15 +942,7 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 
 		for i := 0; i < count; i++ {
 			pkg := m.dashboard.TopCacheHogs[i]
-			rankStyle := lipgloss.NewStyle().Foreground(currentTheme.DimText)
-			nameStyle := lipgloss.NewStyle().Foreground(orangeColor)
-			sizeStyle := lipgloss.NewStyle().Foreground(yellowColor)
-
-			line := fmt.Sprintf("%s %s %s",
-				rankStyle.Render(fmt.Sprintf("%2d.", i+1)),
-				lipgloss.NewStyle().Width(nameW).Render(nameStyle.Render(truncateWithAnsi(pkg.Name, nameW))),
-				sizeStyle.Render(fmt.Sprintf("%10s", pkg.Size)))
-			topCacheLines = append(topCacheLines, line)
+			topCacheLines = append(topCacheLines, formatTableRow(i+1, pkg.Name, nameW, orangeColor, fmt.Sprintf("%10s", pkg.Size), lipgloss.NewStyle().Foreground(yellowColor)))
 		}
 	}
 	cacheHogsBox := renderBox(boxTitleStyle.Render(" \uf0c7  Top Cache Hogs "), topCacheLines, bottomVizWidth)
@@ -1013,15 +954,7 @@ func (m *model) renderDashboard(helpText string, innerWidth, innerHeight int) st
 			nameW = 5
 		}
 
-		rankStyle := lipgloss.NewStyle().Foreground(currentTheme.DimText)
-		nameStyle := lipgloss.NewStyle().Foreground(greenColor)
-		timeStyle := lipgloss.NewStyle().Foreground(dimColor)
-
-		line := fmt.Sprintf("%s %s %s",
-			rankStyle.Render(fmt.Sprintf("%2d.", i+1)),
-			lipgloss.NewStyle().Width(nameW).Render(nameStyle.Render(truncateWithAnsi(pkg.Name, nameW))),
-			timeStyle.Render(pkg.Timestamp))
-		recentLines = append(recentLines, line)
+		recentLines = append(recentLines, formatTableRow(i+1, pkg.Name, nameW, greenColor, pkg.Timestamp, lipgloss.NewStyle().Foreground(dimColor)))
 	}
 	recentBox := renderBox(boxTitleStyle.Render(" \uf1da  Recently Installed "), recentLines, bottomVizWidth)
 

@@ -167,3 +167,38 @@ func TestSizeColorCodingLogic(t *testing.T) {
 		}
 	}
 }
+
+func TestDashboardMetricAndTableRendering(t *testing.T) {
+	m := testModel(t, modeDashboard, DefaultConfig())
+	m.width = 120
+	m.height = 40
+	m.loading = false
+	m.dashboard = DashboardData{
+		TotalPackages: 500,
+		Orphans:       12,
+		TopPackages: []PackageSize{
+			{Name: "linux-kernel", Size: "1.2 GiB"},
+		},
+		TopCacheHogs: []PackageSize{
+			{Name: "gcc", Size: "250 MiB"},
+		},
+		RecentlyInstalled: []RecentPackage{
+			{Name: "ripgrep", Timestamp: "2026-10-08 09:00"},
+		},
+	}
+
+	view := m.renderDashboard("help", m.width, m.height)
+
+	if !strings.Contains(view, "[o]rphans") || !strings.Contains(view, "12") {
+		t.Errorf("Dashboard view missing orphan count or label")
+	}
+
+	if !strings.Contains(view, "gcc") || !strings.Contains(view, "250 MiB") {
+		t.Errorf("Dashboard view missing cache hog")
+	}
+
+	if !strings.Contains(view, "ripgrep") || !strings.Contains(view, "2026-10-08 09:00") {
+		t.Errorf("Dashboard view missing recently installed package")
+	}
+}
+
