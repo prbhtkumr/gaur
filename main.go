@@ -8,7 +8,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// Version is the application version, optionally injected at build time via -ldflags "-X main.Version=..."
+var Version = "dev"
+
 func main() {
+	versionFlag := flag.Bool("version", false, "Print version and exit")
+	versionFlagShort := flag.Bool("v", false, "Short flag for version")
 	themeFlag := flag.String("theme", "", "Color theme (use --list-themes to see options)")
 	listThemesFlag := flag.Bool("list-themes", false, "List available themes and exit")
 	exportThemesFlag := flag.Bool("export-themes", false, "Export default themes to config directory")
@@ -21,6 +26,11 @@ func main() {
 	dashFlag := flag.Bool("dash", false, "Start in dashboard mode (view system stats)")
 	dashFlagShort := flag.Bool("d", false, "Short flag for dashboard mode")
 	flag.Parse()
+
+	if *versionFlag || *versionFlagShort {
+		fmt.Printf("gaur %s\n", Version)
+		return
+	}
 
 	themeLoader, err := InitThemeLoader()
 	if err != nil {

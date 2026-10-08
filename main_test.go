@@ -638,3 +638,10 @@ func TestUpdateModeYKeyNoEffectWhenLoading(t *testing.T) {
 		t.Error("Expected nil command when pressing 'y' while loading updates")
 	}
 }
+
+func TestVersionVariable(t *testing.T) {
+	if Version == "" {
+		t.Error("Expected Version to have default non-empty value")
+	}
+}
+
