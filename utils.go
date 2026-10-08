@@ -6,10 +6,164 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 )
+
+// sanitizeUntrusted strips terminal control sequences (C0/C1 codes except newline/tab,
+// OSC, CSI, DCS, APC, PM escapes) from untrusted external strings.
+func sanitizeUntrusted(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	i := 0
+	for i < len(s) {
+		bByte := s[i]
+		if bByte == 0x1b {
+			// Escape sequence
+			if i+1 < len(s) {
+				next := s[i+1]
+				switch next {
+				case '[': // CSI
+					j := i + 2
+					for j < len(s) && (s[j] < 0x40 || s[j] > 0x7e) {
+						j++
+					}
+					if j < len(s) {
+						j++ // consume final byte
+					}
+					i = j
+					continue
+				case ']': // OSC: ESC ] ... (BEL | ESC \)
+					j := i + 2
+					for j < len(s) {
+						if s[j] == 0x07 {
+							j++
+							break
+						}
+						if s[j] == 0x1b && j+1 < len(s) && s[j+1] == '\\' {
+							j += 2
+							break
+						}
+						j++
+					}
+					i = j
+					continue
+				case 'P', '_', '^': // DCS, APC, PM: ESC P ... (BEL | ESC \)
+					j := i + 2
+					for j < len(s) {
+						if s[j] == 0x07 {
+							j++
+							break
+						}
+						if s[j] == 0x1b && j+1 < len(s) && s[j+1] == '\\' {
+							j += 2
+							break
+						}
+						j++
+					}
+					i = j
+					continue
+				default:
+					i += 2
+					continue
+				}
+			}
+			i++
+			continue
+		}
+
+		// Allow newline and tab, but strip other C0 control characters (0x00-0x1f, 0x7f)
+		if bByte < 0x20 {
+			if bByte == '\n' || bByte == '\t' {
+				b.WriteByte(bByte)
+			}
+			i++
+			continue
+		}
+		if bByte == 0x7f {
+			i++
+			continue
+		}
+
+		r, size := utf8.DecodeRuneInString(s[i:])
+		if r == utf8.RuneError && size == 1 {
+			i++
+			continue
+		}
+		if (r >= 0x80 && r <= 0x9f) || r == 0x2028 || r == 0x2029 {
+			i += size
+			continue
+		}
+		b.WriteString(s[i : i+size])
+		i += size
+	}
+	return b.String()
+}
+
+// stripNonSGREscapes ensures that the rendered view only contains SGR styling (ESC[...m)
+// and never contains OSC, cursor movement, erase-screen, or other terminal control sequences.
+func stripNonSGREscapes(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		if s[i] == 0x1b {
+			if i+1 < len(s) {
+				switch s[i+1] {
+				case '[':
+					j := i + 2
+					for j < len(s) && (s[j] < 0x40 || s[j] > 0x7e) {
+						j++
+					}
+					if j < len(s) {
+						if s[j] == 'm' {
+							b.WriteString(s[i : j+1])
+							i = j
+							continue
+						}
+						i = j
+						continue
+					}
+				case ']': // OSC
+					j := i + 2
+					for j < len(s) {
+						if s[j] == 0x07 {
+							break
+						}
+						if s[j] == 0x1b && j+1 < len(s) && s[j+1] == '\\' {
+							j++
+							break
+						}
+						j++
+					}
+					i = j
+					continue
+				case 'P', '_', '^': // DCS, APC, PM
+					j := i + 2
+					for j < len(s) {
+						if s[j] == 0x07 {
+							break
+						}
+						if s[j] == 0x1b && j+1 < len(s) && s[j+1] == '\\' {
+							j++
+							break
+						}
+						j++
+					}
+					i = j
+					continue
+				default:
+					i++
+					continue
+				}
+			}
+			continue
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
 
 // isValidPackageName checks if a package name contains only safe characters.
 // Valid package names contain only alphanumeric, @, ., _, +, and - characters.

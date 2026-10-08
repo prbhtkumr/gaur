@@ -107,7 +107,7 @@ func (m *model) View() string {
 		content = overlayOnBase(content, mirrorOverlay, innerWidth, innerHeight)
 	}
 
-	return content
+	return stripNonSGREscapes(content)
 }
 
 // overlaySettings manually layers the settings menu on top of base content
@@ -295,7 +295,7 @@ func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeCol
 	if m.loadingDetails {
 		detailsContent = fmt.Sprintf("Loading details for %s...", m.detailsForPackage)
 	} else if m.packageDetails != "" {
-		detailsContent = m.packageDetails
+		detailsContent = sanitizeUntrusted(m.packageDetails)
 	} else {
 		detailsContent = "Select an update to see details"
 	}
@@ -544,7 +544,7 @@ func (m *model) renderPackageListLayout(innerWidth, innerHeight int, activeColor
 		if m.loadingDetails {
 			detailsContent = fmt.Sprintf("Loading details for %s...", m.detailsForPackage)
 		} else if m.packageDetails != "" {
-			detailsContent = m.packageDetails
+			detailsContent = sanitizeUntrusted(m.packageDetails)
 		} else {
 			detailsContent = "Select an update to see details"
 		}
@@ -552,7 +552,7 @@ func (m *model) renderPackageListLayout(innerWidth, innerHeight int, activeColor
 		if m.loadingDetails {
 			detailsContent = fmt.Sprintf("Loading details for %s...", m.detailsForPackage)
 		} else if m.packageDetails != "" {
-			detailsContent = m.packageDetails
+			detailsContent = sanitizeUntrusted(m.packageDetails)
 		} else {
 			if m.textInput.Value() == "" {
 				detailsContent = "Search for a package to see details"
@@ -564,7 +564,7 @@ func (m *model) renderPackageListLayout(innerWidth, innerHeight int, activeColor
 		if m.loadingDetails {
 			detailsContent = fmt.Sprintf("Loading details for %s...", m.detailsForPackage)
 		} else if m.packageDetails != "" {
-			detailsContent = m.packageDetails
+			detailsContent = sanitizeUntrusted(m.packageDetails)
 		} else {
 			detailsContent = "Select a package to see details"
 		}
@@ -816,10 +816,13 @@ func (m *model) overlaySelectionsPanel(content string, innerWidth int, headerHei
 func (m *model) resolvePackages(names []string) []Package {
 	packages := make([]Package, 0, len(names))
 	for _, name := range names {
+		cleanName := sanitizeUntrusted(name)
 		if pkg := m.getPackageByName(name); pkg != nil {
-			packages = append(packages, *pkg)
+			cp := *pkg
+			cp.Name = cleanName
+			packages = append(packages, cp)
 		} else {
-			packages = append(packages, Package{Name: name})
+			packages = append(packages, Package{Name: cleanName})
 		}
 	}
 	return packages
@@ -876,7 +879,7 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 		title = "🧹 Confirm Orphan Removal"
 		actionDesc = "removed"
 		for _, name := range m.confirmPackages {
-			packages = append(packages, Package{Name: name})
+			packages = append(packages, Package{Name: sanitizeUntrusted(name)})
 		}
 	case confirmCleanKeep3, confirmCleanKeep1, confirmCleanNuke:
 		title = "🧹 Confirm Cache Cleaning"
@@ -887,19 +890,19 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 		actionDesc = "cleaned"
 		if len(m.dashboard.RemovedPacmanCache) > 0 {
 			for _, p := range m.dashboard.RemovedPacmanCache {
-				packages = append(packages, Package{Name: p.Name, Size: p.Size})
+				packages = append(packages, Package{Name: sanitizeUntrusted(p.Name), Size: p.Size})
 			}
 		}
 		if len(m.dashboard.RemovedAurCache) > 0 {
 			for _, p := range m.dashboard.RemovedAurCache {
-				packages = append(packages, Package{Name: p.Name, Size: p.Size})
+				packages = append(packages, Package{Name: sanitizeUntrusted(p.Name), Size: p.Size})
 			}
 		}
 	case confirmCleanSelective:
 		title = "🧹 Confirm Selective Clean"
 		actionDesc = "removed from cache"
 		for _, name := range m.confirmPackages {
-			packages = append(packages, Package{Name: name, Size: ""}) // Size filled later if available
+			packages = append(packages, Package{Name: sanitizeUntrusted(name), Size: ""}) // Size filled later if available
 		}
 	}
 
@@ -1133,11 +1136,11 @@ func (m *model) renderErrorOverlay(innerWidth, innerHeight int) string {
 
 	// Ensure each line of the error message is individually centered
 	msgWidth := dialogWidth - 4
-	message := renderCenteredWrappedText(m.errorMessage, msgWidth)
+	message := renderCenteredWrappedText(sanitizeUntrusted(m.errorMessage), msgWidth)
 
 	var details string
 	if m.errorDetails != "" {
-		if renderedDetails := renderCenteredWrappedText(m.errorDetails, msgWidth); renderedDetails != "" {
+		if renderedDetails := renderCenteredWrappedText(sanitizeUntrusted(m.errorDetails), msgWidth); renderedDetails != "" {
 			details = "\n" + renderedDetails
 		}
 	}

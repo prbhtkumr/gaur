@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -26,4 +27,23 @@ func testModel(tb testing.TB, mode viewMode, cfg Config) *model {
 	})
 	tl := newTestThemeLoader()
 	return initialModel(mode, cfg, tl)
+}
+
+// stripSGR removes only legitimate style sequences (ESC[...m)
+func stripSGR(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == 0x1b && i+1 < len(s) && s[i+1] == '[' {
+			j := i + 2
+			for j < len(s) && (s[j] < 0x40 || s[j] > 0x7e) {
+				j++
+			}
+			if j < len(s) && s[j] == 'm' {
+				i = j
+				continue
+			}
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
 }

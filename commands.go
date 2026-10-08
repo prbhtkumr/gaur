@@ -83,7 +83,7 @@ func getPackageDetails(m *model, pkg Package) tea.Cmd {
 			return packageDetailsMsg{details: "Failed to get package details", packageName: pkg.Name, err: err}
 		}
 
-		return packageDetailsMsg{details: string(out), packageName: pkg.Name}
+		return packageDetailsMsg{details: sanitizeUntrusted(string(out)), packageName: pkg.Name}
 	}
 }
 
@@ -120,9 +120,9 @@ func checkDependencies() error {
 
 // executePackageOperationInTerminal runs the AUR helper interactively for a package operation.
 func executePackageOperationInTerminal(m *model, op confirmationType, action string, packages []string) tea.Cmd {
-	LogCommand(action, packages)
-
 	validNames, _ := sanitizePackageNames(packages)
+	LogCommand(action, validNames)
+
 	if len(validNames) == 0 {
 		LogError("CMD", "%s operation aborted: no valid package names from %v", action, packages)
 		return func() tea.Msg {

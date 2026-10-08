@@ -423,7 +423,11 @@ func TestTUISpoofing(t *testing.T) {
 		for _, desc := range maliciousDescriptions {
 			pkg := Package{
 				Name:        "test-pkg",
-				Description: desc,
+				Description: sanitizeUntrusted(desc),
+			}
+
+			if strings.IndexByte(pkg.Description, 0x1b) >= 0 {
+				t.Errorf("sanitizeUntrusted failed to strip ESC from: %q, got: %q", desc, pkg.Description)
 			}
 
 			// truncateWithAnsi should handle/preserve ANSI but not allow escape sequences
@@ -431,9 +435,13 @@ func TestTUISpoofing(t *testing.T) {
 			truncated := truncateWithAnsi(pkg.Description, 80)
 
 			// The function preserves ANSI for styling, but UI should be constrained
-			// Check that output width is bounded
+			// Check that output width is bounded and clean of raw non-SGR escapes
 			if lipgloss.Width(truncated) > 80 {
 				t.Errorf("truncateWithAnsi failed to constrain width for: %q", desc)
+			}
+			clean := stripSGR(truncated)
+			if strings.IndexByte(clean, 0x1b) >= 0 {
+				t.Errorf("truncateWithAnsi preserved raw non-SGR ESC for: %q (got %q)", desc, clean)
 			}
 		}
 	})

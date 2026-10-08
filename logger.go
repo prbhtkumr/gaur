@@ -211,6 +211,33 @@ func center(s string, width int) string {
 	return strings.Repeat(" ", left) + s + strings.Repeat(" ", right)
 }
 
+// sanitizeLogString neutralizes terminal escape sequences and embedded newlines in log messages.
+func sanitizeLogString(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == 0x1b {
+			b.WriteString("^[")
+			continue
+		}
+		if c == '\r' {
+			b.WriteString("\\r")
+			continue
+		}
+		if c == '\n' {
+			b.WriteString("\\n")
+			continue
+		}
+		if c < 0x20 && c != '\t' {
+			b.WriteString(fmt.Sprintf("\\x%02x", c))
+			continue
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
+}
+
 // writeLogLocked writes a log entry (must hold lock)
 func (l *Logger) writeLogLocked(level LogLevel, category string, format string, args ...interface{}) {
 	if l.logger == nil {
@@ -219,7 +246,8 @@ func (l *Logger) writeLogLocked(level LogLevel, category string, format string, 
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
 	levelStr := strings.ToUpper(level.String())
-	message := fmt.Sprintf(format, args...)
+	rawMessage := fmt.Sprintf(format, args...)
+	message := sanitizeLogString(rawMessage)
 
 	// Format: [TIMESTAMP] [LEVEL] [CATEGORY] message
 	logLine := fmt.Sprintf("[%s] [%s] [%s] %s", timestamp, center(levelStr, 7), center(category, 9), message)

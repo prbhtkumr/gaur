@@ -277,7 +277,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.statusMessage = "Sync failed"
 		m.showErrorOverlay = true
 		m.errorTitle = "Repository Sync Failed"
-		m.errorMessage = msg.err.Error()
+		m.errorMessage = sanitizeUntrusted(msg.err.Error())
 
 	case updateCheckMsg:
 		m.loading = false
@@ -293,7 +293,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusMessage = "Failed to check for updates"
 			m.showErrorOverlay = true
 			m.errorTitle = "Update Check Error"
-			m.errorMessage = msg.err.Error()
+			m.errorMessage = sanitizeUntrusted(msg.err.Error())
 		}
 
 	case aurSearchMsg:
@@ -323,7 +323,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if strings.Contains(errMsg, "Too many package results") {
 					m.searchStatus = "Search term too broad (too many results)."
 				} else {
-					m.searchStatus = fmt.Sprintf("AUR search failed: %s", simplifyErrorMessage(errMsg))
+					m.searchStatus = sanitizeUntrusted(fmt.Sprintf("AUR search failed: %s", simplifyErrorMessage(errMsg)))
 				}
 			}
 			return m, m.performFiltering()
@@ -335,12 +335,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case packageDetailsMsg:
+		cleanDetails := sanitizeUntrusted(msg.details)
 		if msg.err == nil {
-			m.detailsCache[msg.packageName] = msg.details
+			m.detailsCache[msg.packageName] = cleanDetails
 		}
 		if msg.packageName == m.detailsForPackage {
 			m.loadingDetails = false
-			m.packageDetails = msg.details
+			m.packageDetails = cleanDetails
 		}
 
 	case debounceTickMsg:
@@ -389,7 +390,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.showErrorOverlay = true
 			m.errorTitle = "Action Failed"
-			m.errorMessage = msg.err.Error()
+			m.errorMessage = sanitizeUntrusted(msg.err.Error())
 			return m, nil
 		}
 		return m, m.refreshAll()
@@ -400,7 +401,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.err != nil {
 				m.showErrorOverlay = true
 				m.errorTitle = "Update Failed"
-				m.errorMessage = msg.err.Error()
+				m.errorMessage = sanitizeUntrusted(msg.err.Error())
 			} else {
 				m.statusMessage = "Update completed successfully"
 			}
@@ -920,7 +921,7 @@ func (m *model) handleExecComplete(msg execCompleteMsg) (tea.Model, tea.Cmd) {
 	if msg.err != nil {
 		m.showErrorOverlay = true
 		m.errorTitle = "Operation Failed"
-		m.errorMessage = msg.err.Error()
+		m.errorMessage = sanitizeUntrusted(msg.err.Error())
 		return m, nil
 	}
 
