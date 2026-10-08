@@ -79,6 +79,8 @@ type model struct {
 	originalHelper string // Track AUR helper change for refresh
 	// Mirror overlay state
 	showMirrorOverlay     bool
+	reflectorInstalled    bool
+	reflectorCheckDone    bool
 	mirrorConfig          MirrorConfig
 	mirrorSelectedItem    MirrorOverlayItem
 	mirrorUpdating        bool
@@ -215,6 +217,18 @@ func (m *model) getTheme() Theme {
 		return m.theme
 	}
 	return currentTheme
+}
+
+// isReflectorInstalled returns whether reflector is installed, caching the result per overlay session.
+func (m *model) isReflectorInstalled() bool {
+	if m == nil {
+		return false
+	}
+	if !m.reflectorCheckDone {
+		m.reflectorInstalled = checkReflectorInstalled(m.getRunner())
+		m.reflectorCheckDone = true
+	}
+	return m.reflectorInstalled
 }
 
 // refreshAll triggers a full refresh of all system data

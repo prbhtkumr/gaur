@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -86,7 +87,9 @@ func getPackageDetails(m *model, pkg Package) tea.Cmd {
 		}
 
 		args := []string{"--noconfirm", arg, pkg.Name}
-		out, err := m.getRunner().Run(m.config.Commands.AurHelper, args...)
+		ctx, cancel := context.WithTimeout(m.getContext(), 5*time.Second)
+		defer cancel()
+		out, err := m.getRunner().RunContext(ctx, m.config.Commands.AurHelper, args...)
 		if err != nil {
 			return packageDetailsMsg{details: "Failed to get package details", packageName: pkg.Name, err: err}
 		}

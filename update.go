@@ -241,6 +241,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.String() == "m" || msg.String() == "M":
 			if m.mode == modeUpdate && !m.loading {
 				m.showMirrorOverlay = true
+				m.reflectorCheckDone = false
 				m.mirrorSelectedItem = mirrorItemSortBy
 				m.mirrorError = ""
 				LogDebug("MIRROR", "Mirror overlay opened")
@@ -362,6 +363,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, getPackageDetails(m, *pkg)
 			}
 		}
+
+	case filterResultMsg:
+		if msg.mode != m.mode || msg.query != m.textInput.Value() {
+			// Drop stale filter result if mode or query changed while filtering was in-flight
+			return m, nil
+		}
+		if m.mode == modeInstall || m.mode == modeUpdateSelective || m.mode == modeCacheSelective {
+			m.filtered = msg.packages
+			m.matchIndices = msg.matchIndices
+		} else if m.mode == modeRemove {
+			m.filteredInstalled = msg.packages
+			m.matchIndices = msg.matchIndices
+		}
+		if m.selectedIndex >= len(m.currentPackageList()) {
+			m.selectedIndex = 0
+		}
+		return m, m.ensureDetailsLoaded(m.selectedPackage())
 
 	case installedPackagesMsg:
 		m.loading = false
@@ -770,10 +788,20 @@ func (m *model) performFiltering() tea.Cmd {
 			cmds = append(cmds, m.spinner.Tick, searchAURWithContext(aurCtx, &m.config, searchQuery, m.getRunner()))
 		}
 
-		m.filterAllPackages(query)
+		if query == "" {
+			m.filtered = []Package{}
+			m.matchIndices = nil
+		} else {
+			cmds = append(cmds, m.filterAllPackagesCmd(query))
+		}
 	}
 	if m.mode == modeRemove {
-		m.filterInstalledPackages(query)
+		if query == "" {
+			m.filteredInstalled = m.installed
+			m.matchIndices = nil
+		} else {
+			cmds = append(cmds, m.filterInstalledPackagesCmd(query))
+		}
 	}
 	if m.mode == modeUpdateSelective {
 		if query == "" {
@@ -799,9 +827,11 @@ func (m *model) performFiltering() tea.Cmd {
 		}
 	}
 
-	// Fetch details for the first item automatically if list is not empty
-	if cmd := m.ensureDetailsLoaded(m.selectedPackage()); cmd != nil {
-		cmds = append(cmds, cmd)
+	// Fetch details for the first item automatically if list is not empty (for synchronous modes or empty query)
+	if query == "" || m.mode == modeUpdateSelective || m.mode == modeCacheSelective {
+		if cmd := m.ensureDetailsLoaded(m.selectedPackage()); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	}
 	return tea.Batch(cmds...)
 }

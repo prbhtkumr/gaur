@@ -91,7 +91,9 @@ type RealCommandRunner struct{}
 // Security note: Commands are validated by ValidateConfig and only trusted binaries
 // (paru, yay, pacman, paccache) are used. Package names are sanitized before use.
 func (r RealCommandRunner) Run(name string, args ...string) ([]byte, error) {
-	return r.RunContext(context.Background(), name, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return r.RunContext(ctx, name, args...)
 }
 
 // RunContext executes a command with context cancellation and returns the combined output.
@@ -102,7 +104,9 @@ func (r RealCommandRunner) RunContext(ctx context.Context, name string, args ...
 // RunWithInput executes a command with stdin input and returns the combined output.
 // Security note: Commands are validated by ValidateConfig and only trusted binaries are used.
 func (r RealCommandRunner) RunWithInput(input string, name string, args ...string) ([]byte, error) {
-	return r.RunWithInputContext(context.Background(), input, name, args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	return r.RunWithInputContext(ctx, input, name, args...)
 }
 
 // RunWithInputContext executes a command with stdin input and context cancellation.
@@ -110,6 +114,14 @@ func (r RealCommandRunner) RunWithInputContext(ctx context.Context, input string
 	cmd := exec.CommandContext(ctx, name, args...) // #nosec G204 - commands validated in config
 	cmd.Stdin = strings.NewReader(input)
 	return cmd.CombinedOutput()
+}
+
+// filterResultMsg is delivered asynchronously after fuzzy filtering finishes.
+type filterResultMsg struct {
+	query        string
+	mode         viewMode
+	packages     []Package
+	matchIndices map[int][]int
 }
 
 // Interactive executes a command interactively using tea.ExecProcess.

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -257,7 +258,9 @@ func fuzzyFilter(packages []Package, query string, r ...CommandRunner) []Package
 		input.WriteString(fmt.Sprintf("%d\t%s\n", i, pkg.Name))
 	}
 
-	stdout, _ := getActiveRunner(r...).RunWithInput(input.String(), "fzf", "--filter", query, "-d", "\t", "-n2", "--tiebreak=begin,length")
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	stdout, _ := getActiveRunner(r...).RunWithInputContext(ctx, input.String(), "fzf", "--filter", query, "-d", "\t", "-n2", "--tiebreak=begin,length")
 
 	// Parse output and rebuild package list
 	var result []Package

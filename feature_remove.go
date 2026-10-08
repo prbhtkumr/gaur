@@ -105,11 +105,10 @@ func parseInstalledPackagesWithContext(ctx context.Context, output string, r ...
 	return packages, nil
 }
 
-func (m *model) filterInstalledPackages(query string) {
+// computeFilterInstalledPackages processes remove filters and packages for a query.
+func (m *model) computeFilterInstalledPackages(query string) ([]Package, map[int][]int) {
 	if query == "" {
-		m.filteredInstalled = m.installed
-		m.matchIndices = nil
-		return
+		return m.installed, nil
 	}
 
 	filters, searchQuery := parseRemoveFilter(query)
@@ -140,11 +139,71 @@ func (m *model) filterInstalledPackages(query string) {
 	}
 
 	if searchQuery == "" {
-		m.filteredInstalled = candidates
-		m.matchIndices = nil
-		return
+		return candidates, nil
 	}
 
-	m.filteredInstalled = fuzzyFilter(candidates, searchQuery, m.getRunner())
-	m.matchIndices = computeAllMatchIndices(m.filteredInstalled, searchQuery)
+	runner := m.getRunner()
+	filtered := fuzzyFilter(candidates, searchQuery, runner)
+	matchIndices := computeAllMatchIndices(filtered, searchQuery)
+	return filtered, matchIndices
+}
+
+func (m *model) filterInstalledPackages(query string) {
+	pkgs, indices := m.computeFilterInstalledPackages(query)
+	m.filteredInstalled = pkgs
+	m.matchIndices = indices
+}
+
+// filterInstalledPackagesCmd executes fuzzy filtering asynchronously in a tea.Cmd to keep UI responsive.
+func (m *model) filterInstalledPackagesCmd(query string) tea.Cmd {
+	filters, searchQuery := parseRemoveFilter(query)
+
+	candidates := make([]Package, len(m.installed))
+	copy(candidates, m.installed)
+
+	if len(filters) > 0 {
+		var filtered []Package
+		for _, pkg := range candidates {
+			match := false
+			if filters["total"] {
+				match = true
+			}
+			if filters["explicit"] && pkg.Explicit {
+				match = true
+			}
+			if filters["foreign"] && pkg.Source == "aur" {
+				match = true
+			}
+			if filters["orphan"] && pkg.Orphan {
+				match = true
+			}
+
+			if match {
+				filtered = append(filtered, pkg)
+			}
+		}
+		candidates = filtered
+	}
+
+	runner := m.getRunner()
+
+	return func() tea.Msg {
+		if searchQuery == "" {
+			return filterResultMsg{
+				query:        query,
+				mode:         modeRemove,
+				packages:     candidates,
+				matchIndices: nil,
+			}
+		}
+
+		filtered := fuzzyFilter(candidates, searchQuery, runner)
+		matchIndices := computeAllMatchIndices(filtered, searchQuery)
+		return filterResultMsg{
+			query:        query,
+			mode:         modeRemove,
+			packages:     filtered,
+			matchIndices: matchIndices,
+		}
+	}
 }

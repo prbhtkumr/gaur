@@ -49,21 +49,16 @@ func loadRepoPackagesWithContext(ctx context.Context, r ...CommandRunner) tea.Cm
 	}
 }
 
-// filterAllPackages combines repo and AUR packages, then fuzzy filters together
-// This ensures fzf ranks all packages by relevance to the query
-// Supports repo filtering with prefixes: c (core), e (extra), m (multilib), a (aur)
-// Filters can be combined: ae:, cem:, aem: etc.
-func (m *model) filterAllPackages(query string) {
+// computeFilterAllPackages processes repo filters and packages for a query.
+func (m *model) computeFilterAllPackages(query string) ([]Package, map[int][]int) {
 	if query == "" {
-		m.filtered = []Package{}
-		m.matchIndices = nil
-		return
+		return []Package{}, nil
 	}
 
 	repoFilters, searchQuery := parseRepoFilter(query)
 	shouldIncludeAUR := len(repoFilters) == 0 || repoFilters["aur"]
 
-	allPackages := make([]Package, 0, len(m.repoPackages))
+	allPackages := make([]Package, 0, len(m.repoPackages)+len(m.aurPackages))
 	allPackages = append(allPackages, m.repoPackages...)
 	if shouldIncludeAUR {
 		allPackages = append(allPackages, m.aurPackages...)
@@ -80,20 +75,79 @@ func (m *model) filterAllPackages(query string) {
 	}
 
 	if len(allPackages) == 0 {
-		m.filtered = []Package{}
-		m.matchIndices = nil
-		return
+		return []Package{}, nil
 	}
 
 	if searchQuery == "" {
-		m.filtered = allPackages
-		m.matchIndices = nil
-		return
+		return allPackages, nil
 	}
 
-	m.filtered = fuzzyFilter(allPackages, searchQuery, m.getRunner())
+	filtered := fuzzyFilter(allPackages, searchQuery, m.getRunner())
+	matchIndices := computeAllMatchIndices(filtered, searchQuery)
+	return filtered, matchIndices
+}
 
-	m.matchIndices = computeAllMatchIndices(m.filtered, searchQuery)
+// filterAllPackages combines repo and AUR packages, then fuzzy filters together
+// This ensures fzf ranks all packages by relevance to the query
+// Supports repo filtering with prefixes: c (core), e (extra), m (multilib), a (aur)
+// Filters can be combined: ae:, cem:, aem: etc.
+func (m *model) filterAllPackages(query string) {
+	pkgs, indices := m.computeFilterAllPackages(query)
+	m.filtered = pkgs
+	m.matchIndices = indices
+}
+
+// filterAllPackagesCmd executes fuzzy filtering asynchronously in a tea.Cmd to keep UI responsive.
+func (m *model) filterAllPackagesCmd(query string) tea.Cmd {
+	repoFilters, searchQuery := parseRepoFilter(query)
+	shouldIncludeAUR := len(repoFilters) == 0 || repoFilters["aur"]
+
+	allPackages := make([]Package, 0, len(m.repoPackages)+len(m.aurPackages))
+	allPackages = append(allPackages, m.repoPackages...)
+	if shouldIncludeAUR {
+		allPackages = append(allPackages, m.aurPackages...)
+	}
+
+	if len(repoFilters) > 0 {
+		var filtered []Package
+		for _, pkg := range allPackages {
+			if repoFilters[pkg.Source] {
+				filtered = append(filtered, pkg)
+			}
+		}
+		allPackages = filtered
+	}
+
+	runner := m.getRunner()
+
+	return func() tea.Msg {
+		if len(allPackages) == 0 {
+			return filterResultMsg{
+				query:        query,
+				mode:         modeInstall,
+				packages:     []Package{},
+				matchIndices: nil,
+			}
+		}
+
+		if searchQuery == "" {
+			return filterResultMsg{
+				query:        query,
+				mode:         modeInstall,
+				packages:     allPackages,
+				matchIndices: nil,
+			}
+		}
+
+		filtered := fuzzyFilter(allPackages, searchQuery, runner)
+		matchIndices := computeAllMatchIndices(filtered, searchQuery)
+		return filterResultMsg{
+			query:        query,
+			mode:         modeInstall,
+			packages:     filtered,
+			matchIndices: matchIndices,
+		}
+	}
 }
 
 func searchAUR(c *Config, query string, r ...CommandRunner) tea.Cmd {
