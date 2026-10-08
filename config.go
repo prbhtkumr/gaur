@@ -94,7 +94,7 @@ func LoadConfig() (Config, error) {
 		return DefaultConfig(), err
 	}
 
-	var cfg Config
+	cfg := DefaultConfig()
 	if err := toml.Unmarshal(data, &cfg); err != nil {
 		// Log to file if possible (logger may not be initialized yet)
 		LogError("CONFIG", "Failed to parse config file: %v", err)
@@ -108,6 +108,8 @@ func LoadConfig() (Config, error) {
 
 // ValidateConfig ensures the configuration values are supported and safe.
 func ValidateConfig(c *Config) {
+	def := DefaultConfig()
+
 	helper := strings.ToLower(strings.TrimSpace(c.Commands.AurHelper))
 	if helper == "" || (helper != "paru" && helper != "yay") {
 		LogWarn("CONFIG", "Unsupported AUR helper '%s'. Resetting to 'paru'.", c.Commands.AurHelper)
@@ -118,11 +120,18 @@ func ValidateConfig(c *Config) {
 
 	// Validate CacheTool - only allow known safe tools
 	tool := strings.TrimSpace(c.Commands.CacheTool)
-	if tool != "" && tool != "paccache" {
-		LogWarn("CONFIG", "Unsupported cache tool '%s'. Resetting to 'paccache'.", c.Commands.CacheTool)
+	if tool != "paccache" {
+		if tool != "" {
+			LogWarn("CONFIG", "Unsupported cache tool '%s'. Resetting to 'paccache'.", c.Commands.CacheTool)
+		}
 		c.Commands.CacheTool = "paccache"
 	} else {
-		c.Commands.CacheTool = tool // Assign trimmed value
+		c.Commands.CacheTool = tool
+	}
+
+	// Guard DebounceMs
+	if c.Advanced.DebounceMs <= 0 {
+		c.Advanced.DebounceMs = 150
 	}
 
 	// Clean and validate CacheDir if provided
@@ -146,6 +155,20 @@ func ValidateConfig(c *Config) {
 		c.Logging.Level = "info"
 	} else {
 		c.Logging.Level = level
+	}
+
+	// Ensure critical keybindings are present
+	if len(c.Keys.Quit) == 0 {
+		c.Keys.Quit = def.Keys.Quit
+	}
+	if len(c.Keys.Cancel) == 0 {
+		c.Keys.Cancel = def.Keys.Cancel
+	}
+	if len(c.Keys.Confirm) == 0 {
+		c.Keys.Confirm = def.Keys.Confirm
+	}
+	if len(c.Keys.Search) == 0 {
+		c.Keys.Search = def.Keys.Search
 	}
 }
 

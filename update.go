@@ -19,10 +19,19 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleMouse(msg)
 
 	case tea.KeyMsg:
+		// Hardcoded fail-safe: Ctrl+C always quits regardless of configured bindings
+		if msg.Type == tea.KeyCtrlC {
+			if m.cancelFunc != nil {
+				m.cancelFunc()
+			}
+			m.saveSettingsToDisk()
+			return m, tea.Quit
+		}
+
 		// 1. Global Intercepts (Highest Priority)
 		if key.Matches(msg, m.keys.Quit) {
-			// ctrl+c should always quit, but 'q' should only quit if input is not focused
-			if msg.Type == tea.KeyCtrlC || !m.textInput.Focused() {
+			// 'q' should only quit if input is not focused
+			if !m.textInput.Focused() {
 				if m.cancelFunc != nil {
 					m.cancelFunc()
 				}

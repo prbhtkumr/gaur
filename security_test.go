@@ -351,7 +351,7 @@ func TestPrivilegeEscalation(t *testing.T) {
 			{"paccache", "paccache"},
 			{"rm -rf /", "paccache"},
 			{"/bin/bash", "paccache"},
-			{"", ""},                     // Empty is allowed (uses default)
+			{"", "paccache"},             // Empty defaults to paccache
 			{"  paccache  ", "paccache"}, // Whitespace trimmed
 		}
 
