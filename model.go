@@ -35,6 +35,7 @@ type model struct {
 	selectionScrollOffset int             // Scroll offset for the selection panel
 	packageDetails        string
 	detailsCache          map[string]string // Cache for fetched package details
+	detailsCacheOrder     []string          // FIFO order for detailsCache eviction
 	detailsForPackage     string
 	pendingDetailsPackage string // Package waiting for debounce to complete
 	detailsScrollOffset   int    // Scroll offset for the dash/details pane
@@ -231,11 +232,41 @@ func (m *model) isReflectorInstalled() bool {
 	return m.reflectorInstalled
 }
 
+// Maximum entries allowed in detailsCache to prevent unbounded memory growth (S-10).
+const maxDetailsCacheEntries = 500
+
+// cachePackageDetails inserts or updates an entry in detailsCache with bounded FIFO eviction.
+func (m *model) cachePackageDetails(pkgName, details string) {
+	if m == nil {
+		return
+	}
+	if m.detailsCache == nil {
+		m.detailsCache = make(map[string]string)
+	}
+	if _, exists := m.detailsCache[pkgName]; !exists {
+		for len(m.detailsCache) >= maxDetailsCacheEntries {
+			if len(m.detailsCacheOrder) > 0 {
+				oldest := m.detailsCacheOrder[0]
+				m.detailsCacheOrder = m.detailsCacheOrder[1:]
+				delete(m.detailsCache, oldest)
+			} else {
+				for k := range m.detailsCache {
+					delete(m.detailsCache, k)
+					break
+				}
+			}
+		}
+		m.detailsCacheOrder = append(m.detailsCacheOrder, pkgName)
+	}
+	m.detailsCache[pkgName] = details
+}
+
 // refreshAll triggers a full refresh of all system data
 func (m *model) refreshAll() tea.Cmd {
 	m.loading = true
 	m.pendingUpdates = nil
 	m.detailsCache = make(map[string]string)
+	m.detailsCacheOrder = nil
 	return tea.Batch(
 		getDashboardDataWithContext(m.getContext(), &m.config, m.getRunner()),
 		loadRepoPackagesWithContext(m.getContext(), m.getRunner()),

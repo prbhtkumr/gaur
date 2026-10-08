@@ -347,7 +347,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case packageDetailsMsg:
 		cleanDetails := sanitizeUntrusted(msg.details)
 		if msg.err == nil {
-			m.detailsCache[msg.packageName] = cleanDetails
+			m.cachePackageDetails(msg.packageName, cleanDetails)
 		}
 		if msg.packageName == m.detailsForPackage {
 			m.loadingDetails = false

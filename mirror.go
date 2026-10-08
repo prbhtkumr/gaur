@@ -244,7 +244,7 @@ func executeMirrorUpdate(cfg MirrorConfig, r ...CommandRunner) tea.Cmd {
 				return
 			}
 
-			cmd := exec.Command("sudo", fullArgs...) // #nosec G204
+			cmd := exec.Command("sudo", fullArgs...) // #nosec G204 - reflector arguments are strictly constructed from structured MirrorConfig and hardcoded flags
 			stderr, err := cmd.StderrPipe()
 			if err != nil {
 				LogError("MIRROR", "Failed to create stderr pipe: %v", err)

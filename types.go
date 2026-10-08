@@ -97,12 +97,13 @@ func (r RealCommandRunner) Run(name string, args ...string) ([]byte, error) {
 }
 
 // RunContext executes a command with context cancellation and returns the combined output.
+// Security note: Binaries are validated in config (aur_helper, cache_tool) or fixed system utilities (pacman, fzf, sudo, rm).
 func (r RealCommandRunner) RunContext(ctx context.Context, name string, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, name, args...).CombinedOutput() // #nosec G204 - commands validated in config
+	return exec.CommandContext(ctx, name, args...).CombinedOutput() // #nosec G204 - executable and arguments are validated
 }
 
 // RunWithInput executes a command with stdin input and returns the combined output.
-// Security note: Commands are validated by ValidateConfig and only trusted binaries are used.
+// Security note: Binaries are validated in config (aur_helper, cache_tool) or fixed system utilities (pacman, fzf, sudo, rm).
 func (r RealCommandRunner) RunWithInput(input string, name string, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -111,7 +112,7 @@ func (r RealCommandRunner) RunWithInput(input string, name string, args ...strin
 
 // RunWithInputContext executes a command with stdin input and context cancellation.
 func (r RealCommandRunner) RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, name, args...) // #nosec G204 - commands validated in config
+	cmd := exec.CommandContext(ctx, name, args...) // #nosec G204 - executable and arguments are validated
 	cmd.Stdin = strings.NewReader(input)
 	return cmd.CombinedOutput()
 }
@@ -125,9 +126,9 @@ type filterResultMsg struct {
 }
 
 // Interactive executes a command interactively using tea.ExecProcess.
-// Security note: Commands are validated by ValidateConfig and only trusted binaries are used.
+// Security note: Binaries are validated in config (aur_helper, cache_tool) or fixed system utilities (pacman, fzf, sudo, rm).
 func (r RealCommandRunner) Interactive(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
-	return tea.ExecProcess(exec.Command(name, args...), onExit) // #nosec G204 - commands validated in config
+	return tea.ExecProcess(exec.Command(name, args...), onExit) // #nosec G204 - executable and arguments are validated
 }
 
 var runner CommandRunner = RealCommandRunner{}
