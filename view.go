@@ -1101,6 +1101,27 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 	return SafeJoinVertical(innerWidth, innerHeight, "", []string{lipgloss.Place(innerWidth, innerHeight, lipgloss.Center, lipgloss.Center, dialog)}, "")
 }
 
+// renderCenteredWrappedText wraps text to width, trims whitespace from each non-empty line,
+// and centers each line within width, returning the joined vertical string.
+func renderCenteredWrappedText(text string, width int) string {
+	if text == "" || width <= 0 {
+		return ""
+	}
+	wrapped := lipgloss.NewStyle().Width(width).Render(text)
+	var lines []string
+	lineStyle := lipgloss.NewStyle().Width(width).Align(lipgloss.Center)
+	for _, line := range strings.Split(wrapped, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			lines = append(lines, lineStyle.Render(trimmed))
+		}
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	return lipgloss.JoinVertical(lipgloss.Center, lines...)
+}
+
 // renderErrorOverlay renders a centered error overlay dialog
 func (m *model) renderErrorOverlay(innerWidth, innerHeight int) string {
 	dialogWidth := innerWidth - 20
@@ -1129,29 +1150,14 @@ func (m *model) renderErrorOverlay(innerWidth, innerHeight int) string {
 	title := titleStyle.Render("⚠  " + m.errorTitle + "  ⚠")
 
 	// Ensure each line of the error message is individually centered
-	// We wrap the text manually then center each resulting line
 	msgWidth := dialogWidth - 4
-	wrappedMessage := lipgloss.NewStyle().Width(msgWidth).Render(m.errorMessage)
-	var messageLines []string
-	for _, line := range strings.Split(wrappedMessage, "\n") {
-		trimmed := strings.TrimSpace(line)
-		if trimmed != "" {
-			messageLines = append(messageLines, lipgloss.NewStyle().Width(msgWidth).Align(lipgloss.Center).Render(trimmed))
-		}
-	}
-	message := lipgloss.JoinVertical(lipgloss.Center, messageLines...)
+	message := renderCenteredWrappedText(m.errorMessage, msgWidth)
 
 	var details string
 	if m.errorDetails != "" {
-		wrappedDetails := lipgloss.NewStyle().Width(msgWidth).Render(m.errorDetails)
-		var detailsLines []string
-		for _, line := range strings.Split(wrappedDetails, "\n") {
-			trimmed := strings.TrimSpace(line)
-			if trimmed != "" {
-				detailsLines = append(detailsLines, lipgloss.NewStyle().Width(msgWidth).Align(lipgloss.Center).Render(trimmed))
-			}
+		if renderedDetails := renderCenteredWrappedText(m.errorDetails, msgWidth); renderedDetails != "" {
+			details = "\n" + renderedDetails
 		}
-		details = "\n" + lipgloss.JoinVertical(lipgloss.Center, detailsLines...)
 	}
 
 	hint := "\n" + hintStyle.Render(fmt.Sprintf("Press %s, %s, or %s to dismiss",

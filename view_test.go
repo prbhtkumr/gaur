@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestViewNoCrash(t *testing.T) {
@@ -75,3 +77,35 @@ func TestRepoSummary(t *testing.T) {
 		t.Error("Empty package list should return empty summary")
 	}
 }
+
+func TestRenderCenteredWrappedText(t *testing.T) {
+	// Empty text or zero/negative width should return empty string
+	if got := renderCenteredWrappedText("", 50); got != "" {
+		t.Errorf("Expected empty string for empty input, got %q", got)
+	}
+	if got := renderCenteredWrappedText("hello", 0); got != "" {
+		t.Errorf("Expected empty string for zero width, got %q", got)
+	}
+	if got := renderCenteredWrappedText("hello", -10); got != "" {
+		t.Errorf("Expected empty string for negative width, got %q", got)
+	}
+
+	// Normal text
+	text := "First line\nSecond line"
+	width := 40
+	rendered := renderCenteredWrappedText(text, width)
+	lines := strings.Split(rendered, "\n")
+	if len(lines) != 2 {
+		t.Fatalf("Expected 2 lines, got %d", len(lines))
+	}
+	for _, l := range lines {
+		trimmed := strings.TrimSpace(l)
+		if trimmed == "" {
+			t.Errorf("Unexpected empty line in rendered output")
+		}
+		if w := lipgloss.Width(l); w != width {
+			t.Errorf("Expected line width %d, got %d", width, w)
+		}
+	}
+}
+
