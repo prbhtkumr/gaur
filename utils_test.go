@@ -418,3 +418,32 @@ func TestQueryPackageHelpers(t *testing.T) {
 		t.Errorf("Expected error from queryPackageSet")
 	}
 }
+
+func TestParsePackageOutputInstalledCaseInsensitivity(t *testing.T) {
+	sample := `core/linux 6.6.1-1 [installed]
+    Linux kernel
+extra/firefox 120.0-1 [Installed: 119.0-1]
+    Fast web browser
+aur/yay 12.1.2-1 [INSTALLED]
+    AUR helper
+extra/vim 9.0-1
+    Vi IMproved
+`
+	pkgs := parsePackageOutput(sample)
+	if len(pkgs) != 4 {
+		t.Fatalf("Expected 4 packages, got %d", len(pkgs))
+	}
+	if !pkgs[0].Installed {
+		t.Errorf("Expected linux to be detected as installed ([installed])")
+	}
+	if !pkgs[1].Installed {
+		t.Errorf("Expected firefox to be detected as installed ([Installed: ...])")
+	}
+	if !pkgs[2].Installed {
+		t.Errorf("Expected yay to be detected as installed ([INSTALLED])")
+	}
+	if pkgs[3].Installed {
+		t.Errorf("Expected vim to be detected as NOT installed")
+	}
+}
+

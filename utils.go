@@ -554,8 +554,8 @@ func parsePackageOutput(output string) []Package {
 			version = sanitizeUntrusted(fields[pkgFieldIdx+1])
 		}
 
-		// Check for installed status
-		installed := strings.Contains(line, "[Installed")
+		// Check for installed status (case-insensitive for pacman/paru/yay compatibility)
+		installed := strings.Contains(strings.ToLower(line), "[installed")
 
 		// Get description from next line if it's indented
 		description := ""
