@@ -232,3 +232,71 @@ func stripAnsi(s string) string {
 	}
 	return b.String()
 }
+
+func TestRenderPaginatedList(t *testing.T) {
+	items := []string{"apple", "banana", "cherry", "date", "elderberry"}
+
+	// 1. Empty list
+	empty := RenderPaginatedList(PaginatedListConfig{
+		TotalCount:     0,
+		SelectedIndex:  0,
+		ViewportHeight: 5,
+		ContentWidth:   20,
+	})
+	if empty != "" {
+		t.Errorf("Expected empty string for 0 items, got %q", empty)
+	}
+
+	// 2. Viewport height larger than items, forward order
+	forward := RenderPaginatedList(PaginatedListConfig{
+		TotalCount:     len(items),
+		SelectedIndex:  0,
+		ViewportHeight: 10,
+		ContentWidth:   20,
+		Reversed:       false,
+		RenderItem: func(idx int, width int) string {
+			return items[idx]
+		},
+	})
+	expectedForward := "apple\nbanana\ncherry\ndate\nelderberry"
+	if forward != expectedForward {
+		t.Errorf("Forward list mismatch: got %q, want %q", forward, expectedForward)
+	}
+
+	// 3. Reversed order (bottom-up)
+	reversed := RenderPaginatedList(PaginatedListConfig{
+		TotalCount:     len(items),
+		SelectedIndex:  0,
+		ViewportHeight: 10,
+		ContentWidth:   20,
+		Reversed:       true,
+		RenderItem: func(idx int, width int) string {
+			return items[idx]
+		},
+	})
+	expectedReversed := "elderberry\ndate\ncherry\nbanana\napple"
+	if reversed != expectedReversed {
+		t.Errorf("Reversed list mismatch: got %q, want %q", reversed, expectedReversed)
+	}
+
+	// 4. Windowing with scrollbar when items exceed viewport
+	paged := RenderPaginatedList(PaginatedListConfig{
+		TotalCount:     len(items),
+		SelectedIndex:  3, // "date"
+		ViewportHeight: 3,
+		ContentWidth:   20,
+		ActiveColor:    lipgloss.Color("35"),
+		Reversed:       false,
+		RenderItem: func(idx int, width int) string {
+			return items[idx]
+		},
+	})
+	// With selectedIndex=3 and viewportHeight=3: startIdx = 3 - 3 + 1 = 1 ("banana")
+	// window covers idx 1, 2, 3: "banana", "cherry", "date"
+	if !strings.Contains(paged, "banana") || !strings.Contains(paged, "cherry") || !strings.Contains(paged, "date") {
+		t.Errorf("Expected paged output to contain banana, cherry, date; got %q", paged)
+	}
+	if strings.Contains(paged, "apple") {
+		t.Errorf("Did not expect apple in paged window; got %q", paged)
+	}
+}

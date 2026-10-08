@@ -196,6 +196,53 @@ func (m *model) renderUpdateSelectiveView(helpText string, innerWidth, innerHeig
 	return SafeJoinVertical(innerWidth, innerHeight, "", []string{output}, "")
 }
 
+// renderPackageListItem formats a single package row for package list views.
+func (m *model) renderPackageListItem(pkg Package, index int, maxWidth int, showVersion bool, showInstalledBadge bool) string {
+	marker := " "
+	if m.markedPackages[pkg.Name] {
+		marker = "*"
+	}
+	prefix := " " + marker
+	if index == m.selectedIndex {
+		prefix = ">" + marker
+	}
+
+	sourceStyle := lipgloss.NewStyle()
+	if color, ok := sourceColors[pkg.Source]; ok {
+		sourceStyle = sourceStyle.Foreground(color)
+	}
+
+	var displayPkgStr string
+	if indices, ok := m.matchIndices[index]; ok {
+		displayPkgStr = highlightMatchesWithSourceColor(pkg, indices)
+	} else {
+		displayPkgStr = sourceStyle.Render(pkg.Source) + "/" + pkg.Name
+	}
+
+	var line string
+	if showVersion {
+		line = fmt.Sprintf("%s%s %s",
+			prefix,
+			displayPkgStr,
+			styleWithForeground(colorMediumGray).Render(pkg.Version),
+		)
+		if showInstalledBadge && pkg.Installed {
+			line += " " + installedBadge.Render("[installed]")
+		}
+	} else {
+		line = fmt.Sprintf("%s%s", prefix, displayPkgStr)
+	}
+
+	if lipgloss.Width(line) > maxWidth {
+		line = truncateWithAnsi(line, maxWidth-3) + "..."
+	}
+
+	if index == m.selectedIndex {
+		line = selectedStyle.Render(line)
+	}
+	return line
+}
+
 // renderVerticalSplitLayout renders a side-by-side view (list on left, dash on right)
 func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeColor lipgloss.Color) string {
 	borderStyle := baseBorderStyle.BorderForeground(activeColor)
@@ -213,8 +260,6 @@ func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeCol
 	}
 
 	// 1. Render List Side (Left)
-	var results strings.Builder
-	var resultsStr string
 	var pkgList []Package
 	if m.mode == modeUpdateSelective {
 		pkgList = m.filtered
@@ -227,71 +272,23 @@ func (m *model) renderVerticalSplitLayout(innerWidth, innerHeight int, activeCol
 		resultsHeight = 1
 	}
 
+	var resultsStr string
 	if m.loading {
-		results.WriteString("  Loading...")
+		resultsStr = "  Loading..."
 	} else if len(pkgList) == 0 {
-		results.WriteString("  No matches")
+		resultsStr = "  No matches"
 	} else {
-		startIdx := 0
-		if m.selectedIndex >= resultsHeight {
-			startIdx = m.selectedIndex - resultsHeight + 1
-		}
-		endIdx := startIdx + resultsHeight
-		if endIdx > len(pkgList) {
-			endIdx = len(pkgList)
-		}
-
-		var lines []string
-		for i := startIdx; i < endIdx; i++ {
-			pkg := pkgList[i]
-			marker := " "
-			if m.markedPackages[pkg.Name] {
-				marker = "*"
-			}
-			prefix := " " + marker
-			if i == m.selectedIndex {
-				prefix = ">" + marker
-			}
-
-			sourceStyle := lipgloss.NewStyle()
-			if color, ok := sourceColors[pkg.Source]; ok {
-				sourceStyle = sourceStyle.Foreground(color)
-			}
-
-			var displayPkgStr string
-			if indices, ok := m.matchIndices[i]; ok {
-				displayPkgStr = highlightMatchesWithSourceColor(pkg, indices)
-			} else {
-				displayPkgStr = sourceStyle.Render(pkg.Source) + "/" + pkg.Name
-			}
-
-			line := fmt.Sprintf("%s%s", prefix, displayPkgStr)
-
-			// Truncate to fit listWidth-6 (accounting for scrollbar space)
-			if lipgloss.Width(line) > listWidth-6 {
-				line = truncateWithAnsi(line, listWidth-9) + "..."
-			}
-
-			if i == m.selectedIndex {
-				line = selectedStyle.Render(line)
-			}
-			lines = append(lines, line)
-		}
-		// List is rendered bottom-to-top near input field
-		for i := len(lines) - 1; i >= 0; i-- {
-			results.WriteString(lines[i])
-			if i > 0 {
-				results.WriteString("\n")
-			}
-		}
-
-		resultsStr = results.String()
-		if !m.loading && len(pkgList) > resultsHeight {
-			scrollbar := renderScrollbar(len(pkgList), startIdx, resultsHeight, activeColor, true)
-			resultsStr = lipgloss.JoinHorizontal(lipgloss.Top,
-				lipgloss.NewStyle().Width(listWidth-6).Render(resultsStr),
-				lipgloss.NewStyle().MarginLeft(1).Render(scrollbar))
-		}
+		resultsStr = RenderPaginatedList(PaginatedListConfig{
+			TotalCount:     len(pkgList),
+			SelectedIndex:  m.selectedIndex,
+			ViewportHeight: resultsHeight,
+			ContentWidth:   listWidth - 4,
+			ActiveColor:    activeColor,
+			Reversed:       true,
+			RenderItem: func(i int, itemWidth int) string {
+				return m.renderPackageListItem(pkgList[i], i, itemWidth, false, false)
+			},
+		})
 	}
 
 	resultsContainer := lipgloss.NewStyle().
@@ -765,94 +762,26 @@ func (m *model) renderPackageListLayout(innerWidth, innerHeight int, activeColor
 	}
 
 	// Build results list
-	var results strings.Builder
 	var resultsStr string
 
 	if m.loading {
-		results.WriteString("  Loading...")
+		resultsStr = "  Loading..."
 	} else if m.mode == modeUpdateSelective && len(pkgList) == 0 && !m.loading {
-		results.WriteString("  " + m.statusMessage)
+		resultsStr = "  " + m.statusMessage
 	} else if len(pkgList) == 0 {
-		results.WriteString("  No packages to display")
+		resultsStr = "  No packages to display"
 	} else {
-		startIdx := 0
-		if m.selectedIndex >= resultsHeight {
-			startIdx = m.selectedIndex - resultsHeight + 1
-		}
-		endIdx := startIdx + resultsHeight
-		if endIdx > len(pkgList) {
-			endIdx = len(pkgList)
-		}
-
-		// Get the appropriate match indices map
-		matchIndicesMap := m.matchIndices
-
-		// Build lines in reverse order (most relevant at bottom, near input field)
-		var lines []string
-		for i := startIdx; i < endIdx; i++ {
-			pkg := pkgList[i]
-			marker := " "
-			if m.markedPackages[pkg.Name] {
-				marker = "*"
-			}
-			prefix := " " + marker
-			if i == m.selectedIndex {
-				prefix = ">" + marker
-			}
-
-			sourceStyle := lipgloss.NewStyle()
-			if color, ok := sourceColors[pkg.Source]; ok {
-				sourceStyle = sourceStyle.Foreground(color)
-			}
-
-			// Apply highlighting with source colors
-			var displayPkgStr string
-			if matchIndicesMap != nil {
-				if indices, ok := matchIndicesMap[i]; ok {
-					displayPkgStr = highlightMatchesWithSourceColor(pkg, indices)
-				} else {
-					displayPkgStr = sourceStyle.Render(pkg.Source) + "/" + pkg.Name
-				}
-			} else {
-				displayPkgStr = sourceStyle.Render(pkg.Source) + "/" + pkg.Name
-			}
-
-			line := fmt.Sprintf("%s%s %s",
-				prefix,
-				displayPkgStr,
-				styleWithForeground(colorMediumGray).Render(pkg.Version),
-			)
-
-			if pkg.Installed && m.mode == modeInstall {
-				line += " " + installedBadge.Render("[installed]")
-			}
-
-			// Truncate to fit innerWidth-6 (accounting for scrollbar space)
-			if lipgloss.Width(line) > innerWidth-6 {
-				line = truncateWithAnsi(line, innerWidth-9) + "..."
-			}
-
-			if i == m.selectedIndex {
-				line = selectedStyle.Render(line)
-			}
-
-			lines = append(lines, line)
-		}
-
-		for i := len(lines) - 1; i >= 0; i-- {
-			results.WriteString(lines[i])
-			if i > 0 {
-				results.WriteString("\n")
-			}
-		}
-
-		resultsStr = results.String()
-		if !m.loading && len(pkgList) > resultsHeight {
-			scrollbar := renderScrollbar(len(pkgList), startIdx, resultsHeight, activeColor, true)
-			resultsStr = lipgloss.JoinHorizontal(lipgloss.Top,
-				lipgloss.NewStyle().Width(innerWidth-6).Render(resultsStr),
-				lipgloss.NewStyle().MarginLeft(1).Render(scrollbar))
-		}
+		resultsStr = RenderPaginatedList(PaginatedListConfig{
+			TotalCount:     len(pkgList),
+			SelectedIndex:  m.selectedIndex,
+			ViewportHeight: resultsHeight,
+			ContentWidth:   innerWidth - 4,
+			ActiveColor:    activeColor,
+			Reversed:       true,
+			RenderItem: func(i int, itemWidth int) string {
+				return m.renderPackageListItem(pkgList[i], i, itemWidth, true, m.mode == modeInstall)
+			},
+		})
 	}
 
 	resultsBox := lipgloss.NewStyle().

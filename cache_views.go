@@ -130,113 +130,88 @@ func (m *model) renderSelectiveCacheView(helpText string, innerWidth, innerHeigh
 	}
 
 	// Build results list
-	var results strings.Builder
 	var resultsStr string
 	pkgList := m.filtered
 
 	if len(pkgList) == 0 {
 		if m.textInput.Value() != "" {
-			results.WriteString("  No matches for '" + m.textInput.Value() + "'")
+			resultsStr = "  No matches for '" + m.textInput.Value() + "'"
 		} else {
-			results.WriteString("  No packages found in cache")
+			resultsStr = "  No packages found in cache"
 		}
 	} else {
-		startIdx := 0
-		if m.selectedIndex >= resultsHeight {
-			startIdx = m.selectedIndex - resultsHeight + 1
-		}
-		endIdx := startIdx + resultsHeight
-		if endIdx > len(pkgList) {
-			endIdx = len(pkgList)
-		}
+		resultsStr = RenderPaginatedList(PaginatedListConfig{
+			TotalCount:     len(pkgList),
+			SelectedIndex:  m.selectedIndex,
+			ViewportHeight: resultsHeight,
+			ContentWidth:   contentWidth,
+			ActiveColor:    activeColor,
+			Reversed:       true,
+			RenderItem: func(i int, itemWidth int) string {
+				pkg := pkgList[i]
 
-		var lines []string
-		for i := startIdx; i < endIdx; i++ {
-			pkg := pkgList[i]
-
-			marker := "[ ]"
-			if m.markedPackages[pkg.Name] {
-				marker = "[x]"
-			}
-			prefix := "  " + marker
-			if i == m.selectedIndex {
-				prefix = "> " + marker
-			}
-
-			// nameWidth calculation
-			// Left gutter: prefix (5) + space (1) = 6 chars
-			// Right gutter: we want 2 chars for scrollbar space
-			// Total layout: prefix (5) + space (1) + name (nameWidth) + space (1) + size (10) + scrollbar(2) = contentWidth
-			nameWidth := contentWidth - 20
-			if nameWidth < 10 {
-				nameWidth = 10
-			}
-
-			nameStr := pkg.Name
-			if indices, ok := m.matchIndices[i]; ok && m.textInput.Value() != "" {
-				nameStr = highlightMatches(pkg.Name, indices)
-			}
-			nameStr = truncateWithAnsi(nameStr, nameWidth)
-
-			visualNameWidth := lipgloss.Width(nameStr)
-			paddedName := nameStr
-			if visualNameWidth < nameWidth {
-				paddedName += strings.Repeat(" ", nameWidth-visualNameWidth)
-			}
-
-			// Use non-breaking space to prevent wrapping within the size string
-			displaySize := strings.ReplaceAll(pkg.Size, " ", "\u00a0")
-			sizeStr := fmt.Sprintf("%10s", displaySize)
-
-			var line string
-			itemWidth := contentWidth
-			if len(pkgList) > resultsHeight {
-				itemWidth = contentWidth - 2
-			}
-
-			if i == m.selectedIndex || m.markedPackages[pkg.Name] {
-				bgColor := currentTheme.SelectionBG
-				if i == m.selectedIndex {
-					bgColor = currentTheme.SelectedColor
+				marker := "[ ]"
+				if m.markedPackages[pkg.Name] {
+					marker = "[x]"
 				}
-				fgColor := currentTheme.TextColor
+				prefix := "  " + marker
+				if i == m.selectedIndex {
+					prefix = "> " + marker
+				}
 
-				maintainedName := maintainBackground(paddedName, bgColor)
-				lineContent := fmt.Sprintf("%s %s %s", prefix, maintainedName, sizeStr)
+				// nameWidth calculation
+				// Left gutter: prefix (5) + space (1) = 6 chars
+				// Right gutter: we want 2 chars for scrollbar space
+				// Total layout: prefix (5) + space (1) + name (nameWidth) + space (1) + size (10) + scrollbar(2) = contentWidth
+				nameWidth := contentWidth - 20
+				if nameWidth < 10 {
+					nameWidth = 10
+				}
 
-				line = lipgloss.NewStyle().
-					Background(bgColor).
-					Foreground(fgColor).
-					Bold(i == m.selectedIndex).
-					Width(itemWidth).
-					Render(lineContent)
-			} else {
+				nameStr := pkg.Name
+				if indices, ok := m.matchIndices[i]; ok && m.textInput.Value() != "" {
+					nameStr = highlightMatches(pkg.Name, indices)
+				}
+				nameStr = truncateWithAnsi(nameStr, nameWidth)
+
+				visualNameWidth := lipgloss.Width(nameStr)
+				paddedName := nameStr
+				if visualNameWidth < nameWidth {
+					paddedName += strings.Repeat(" ", nameWidth-visualNameWidth)
+				}
+
+				// Use non-breaking space to prevent wrapping within the size string
+				displaySize := strings.ReplaceAll(pkg.Size, " ", "\u00a0")
+				sizeStr := fmt.Sprintf("%10s", displaySize)
+
+				if i == m.selectedIndex || m.markedPackages[pkg.Name] {
+					bgColor := currentTheme.SelectionBG
+					if i == m.selectedIndex {
+						bgColor = currentTheme.SelectedColor
+					}
+					fgColor := currentTheme.TextColor
+
+					maintainedName := maintainBackground(paddedName, bgColor)
+					lineContent := fmt.Sprintf("%s %s %s", prefix, maintainedName, sizeStr)
+
+					return lipgloss.NewStyle().
+						Background(bgColor).
+						Foreground(fgColor).
+						Bold(i == m.selectedIndex).
+						Width(itemWidth).
+						Render(lineContent)
+				}
+
 				namePart := lipgloss.NewStyle().Foreground(currentTheme.TextColor).Render(paddedName)
 				sizePart := lipgloss.NewStyle().Foreground(currentTheme.DimText).Render(sizeStr)
-				line = fmt.Sprintf("%s %s %s", prefix, namePart, sizePart)
+				line := fmt.Sprintf("%s %s %s", prefix, namePart, sizePart)
 				// Ensure unselected lines also fit the width
 				if lipgloss.Width(line) > itemWidth {
 					line = truncateWithAnsi(line, itemWidth)
 				}
-			}
-
-			lines = append(lines, line)
-		}
-
-		for i := len(lines) - 1; i >= 0; i-- {
-			results.WriteString(lines[i])
-			if i > 0 {
-				results.WriteString("\n")
-			}
-		}
-
-		resultsStr = results.String()
-		if len(pkgList) > resultsHeight {
-			scrollbar := renderScrollbar(len(pkgList), startIdx, resultsHeight, activeColor, true)
-			resultsStr = lipgloss.JoinHorizontal(lipgloss.Top,
-				lipgloss.NewStyle().Width(contentWidth-2).Render(resultsStr),
-				lipgloss.NewStyle().MarginLeft(1).Render(scrollbar))
-		}
+				return line
+			},
+		})
 	}
 
 	resultsBox := lipgloss.NewStyle().

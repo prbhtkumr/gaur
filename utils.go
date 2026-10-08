@@ -800,6 +800,70 @@ func renderScrollbar(total, offset, visibleHeight int, activeColor lipgloss.Colo
 	return scrollbar.String()
 }
 
+// PaginatedListConfig defines parameters for rendering a scrollable, paginated list.
+type PaginatedListConfig struct {
+	TotalCount     int
+	SelectedIndex  int
+	ViewportHeight int
+	ContentWidth   int
+	ActiveColor    lipgloss.Color
+	Reversed       bool
+	RenderItem     func(index int, itemWidth int) string
+}
+
+// RenderPaginatedList renders a slice of items into a scrollable, paginated text block with optional scrollbar.
+func RenderPaginatedList(cfg PaginatedListConfig) string {
+	if cfg.ViewportHeight <= 0 || cfg.TotalCount <= 0 || cfg.RenderItem == nil {
+		return ""
+	}
+
+	startIdx := 0
+	if cfg.SelectedIndex >= cfg.ViewportHeight {
+		startIdx = cfg.SelectedIndex - cfg.ViewportHeight + 1
+	}
+	endIdx := startIdx + cfg.ViewportHeight
+	if endIdx > cfg.TotalCount {
+		endIdx = cfg.TotalCount
+	}
+
+	itemWidth := cfg.ContentWidth
+	if cfg.TotalCount > cfg.ViewportHeight {
+		itemWidth = cfg.ContentWidth - 2
+	}
+
+	var lines []string
+	for i := startIdx; i < endIdx; i++ {
+		lines = append(lines, cfg.RenderItem(i, itemWidth))
+	}
+
+	var results strings.Builder
+	if cfg.Reversed {
+		for i := len(lines) - 1; i >= 0; i-- {
+			results.WriteString(lines[i])
+			if i > 0 {
+				results.WriteString("\n")
+			}
+		}
+	} else {
+		for i := 0; i < len(lines); i++ {
+			results.WriteString(lines[i])
+			if i < len(lines)-1 {
+				results.WriteString("\n")
+			}
+		}
+	}
+
+	resultsStr := results.String()
+	if cfg.TotalCount > cfg.ViewportHeight {
+		scrollbar := renderScrollbar(cfg.TotalCount, startIdx, cfg.ViewportHeight, cfg.ActiveColor, cfg.Reversed)
+		resultsStr = lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(cfg.ContentWidth-2).Render(resultsStr),
+			lipgloss.NewStyle().MarginLeft(1).Render(scrollbar))
+	}
+
+	return resultsStr
+}
+
 // SafeJoinVertical joins multiple sections vertically, ensuring the result is exactly width x height.
 // It takes a header, a slice of panels (which will be truncated if they exceed available space),
 // and a footer. The header and footer are prioritized over panels.
