@@ -17,6 +17,7 @@ type model struct {
 	cancelFunc            context.CancelFunc
 	aurCancelFunc         context.CancelFunc
 	keys                  KeyMap
+	theme                 Theme
 	themeLoader           *ThemeLoader
 	textInput             textinput.Model
 	repoPackages          []Package       // All repo packages from local cache
@@ -106,6 +107,7 @@ func initialModel(initialMode viewMode, cfg Config, tl *ThemeLoader, r ...Comman
 		ctx:            ctx,
 		cancelFunc:     cancel,
 		keys:           NewKeyMap(cfg.Keys),
+		theme:          currentTheme,
 		themeLoader:    tl,
 		textInput:      ti,
 		repoPackages:   []Package{},
@@ -205,6 +207,14 @@ func (m *model) getContext() context.Context {
 		return m.ctx
 	}
 	return context.Background()
+}
+
+// getTheme returns the model's active theme, or currentTheme if unset.
+func (m *model) getTheme() Theme {
+	if m != nil && m.theme.Name != "" {
+		return m.theme
+	}
+	return currentTheme
 }
 
 // refreshAll triggers a full refresh of all system data

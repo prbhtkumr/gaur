@@ -61,6 +61,10 @@ func newTestThemeLoader() *ThemeLoader {
 
 func testModel(tb testing.TB, mode viewMode, cfg Config) *model {
 	tb.Helper()
+	prevTheme := currentTheme
+	tb.Cleanup(func() {
+		setTheme(prevTheme)
+	})
 	tl := newTestThemeLoader()
 	return initialModel(mode, cfg, tl)
 }

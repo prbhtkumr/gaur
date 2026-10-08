@@ -243,45 +243,49 @@ func (tl *ThemeLoader) parseTheme(data []byte, filename string) (Theme, error) {
 		return Theme{}, fmt.Errorf("TOML parse error: %w", err)
 	}
 
+	cleanColor := func(c string) lipgloss.Color {
+		return lipgloss.Color(strings.TrimSpace(c))
+	}
+
 	theme := Theme{
-		BorderColor:      lipgloss.Color(sanitizeColor(tt.Border)),
-		SelectedColor:    lipgloss.Color(sanitizeColor(tt.Selected)),
-		TextColor:        lipgloss.Color(sanitizeColor(tt.Text)),
-		SubtleColor:      lipgloss.Color(sanitizeColor(tt.Subtle)),
-		TitleColor:       lipgloss.Color(sanitizeColor(tt.Title)),
-		ScrollbarTrack:   lipgloss.Color(sanitizeColor(tt.ScrollbarTrack)),
-		ScrollbarThumb:   lipgloss.Color(sanitizeColor(tt.ScrollbarThumb)),
-		SelectionBG:      lipgloss.Color(sanitizeColor(tt.SelectionBG)),
-		DimText:          lipgloss.Color(sanitizeColor(tt.DimText)),
-		InstallColor:     lipgloss.Color(sanitizeColor(tt.Install)),
-		DashboardColor:   lipgloss.Color(sanitizeColor(tt.Dashboard)),
-		RemoveColor:      lipgloss.Color(sanitizeColor(tt.Remove)),
-		UpdateColor:      lipgloss.Color(sanitizeColor(tt.Update)),
-		CacheColor:       lipgloss.Color(sanitizeColor(tt.Cache)),
-		CoreColor:        lipgloss.Color(sanitizeColor(tt.Core)),
-		ExtraColor:       lipgloss.Color(sanitizeColor(tt.Extra)),
-		MultilibColor:    lipgloss.Color(sanitizeColor(tt.Multilib)),
-		AurColor:         lipgloss.Color(sanitizeColor(tt.Aur)),
-		SuccessColor:     lipgloss.Color(sanitizeColor(tt.Success)),
-		WarningColor:     lipgloss.Color(sanitizeColor(tt.Warning)),
-		ErrorColor:       lipgloss.Color(sanitizeColor(tt.Error)),
-		HighlightColor:   lipgloss.Color(sanitizeColor(tt.Highlight)),
-		DashboardLabel:   lipgloss.Color(sanitizeColor(tt.DashboardLabel)),
-		DashboardValue:   lipgloss.Color(sanitizeColor(tt.DashboardValue)),
-		DashboardWarning: lipgloss.Color(sanitizeColor(tt.DashboardWarning)),
-		DashboardDesc:    lipgloss.Color(sanitizeColor(tt.DashboardDesc)),
-		DialogBorder:     lipgloss.Color(sanitizeColor(tt.DialogBorder)),
-		ConfirmInstall:   lipgloss.Color(sanitizeColor(tt.ConfirmInstall)),
-		ConfirmRemove:    lipgloss.Color(sanitizeColor(tt.ConfirmRemove)),
-		ConfirmClean:     lipgloss.Color(sanitizeColor(tt.ConfirmClean)),
-		ConfirmNuke:      lipgloss.Color(sanitizeColor(tt.ConfirmNuke)),
-		ConfirmSelective: lipgloss.Color(sanitizeColor(tt.ConfirmSelective)),
-		ButtonBg:         lipgloss.Color(sanitizeColor(tt.ButtonBg)),
-		ButtonFg:         lipgloss.Color(sanitizeColor(tt.ButtonFg)),
-		ButtonDangerBg:   lipgloss.Color(sanitizeColor(tt.ButtonDangerBg)),
-		ProgressTrack:    lipgloss.Color(sanitizeColor(tt.ProgressTrack)),
-		AccentColor:      lipgloss.Color(sanitizeColor(tt.AccentColor)),
-		SpinnerColor:     lipgloss.Color(sanitizeColor(tt.SpinnerColor)),
+		BorderColor:      cleanColor(tt.Border),
+		SelectedColor:    cleanColor(tt.Selected),
+		TextColor:        cleanColor(tt.Text),
+		SubtleColor:      cleanColor(tt.Subtle),
+		TitleColor:       cleanColor(tt.Title),
+		ScrollbarTrack:   cleanColor(tt.ScrollbarTrack),
+		ScrollbarThumb:   cleanColor(tt.ScrollbarThumb),
+		SelectionBG:      cleanColor(tt.SelectionBG),
+		DimText:          cleanColor(tt.DimText),
+		InstallColor:     cleanColor(tt.Install),
+		DashboardColor:   cleanColor(tt.Dashboard),
+		RemoveColor:      cleanColor(tt.Remove),
+		UpdateColor:      cleanColor(tt.Update),
+		CacheColor:       cleanColor(tt.Cache),
+		CoreColor:        cleanColor(tt.Core),
+		ExtraColor:       cleanColor(tt.Extra),
+		MultilibColor:    cleanColor(tt.Multilib),
+		AurColor:         cleanColor(tt.Aur),
+		SuccessColor:     cleanColor(tt.Success),
+		WarningColor:     cleanColor(tt.Warning),
+		ErrorColor:       cleanColor(tt.Error),
+		HighlightColor:   cleanColor(tt.Highlight),
+		DashboardLabel:   cleanColor(tt.DashboardLabel),
+		DashboardValue:   cleanColor(tt.DashboardValue),
+		DashboardWarning: cleanColor(tt.DashboardWarning),
+		DashboardDesc:    cleanColor(tt.DashboardDesc),
+		DialogBorder:     cleanColor(tt.DialogBorder),
+		ConfirmInstall:   cleanColor(tt.ConfirmInstall),
+		ConfirmRemove:    cleanColor(tt.ConfirmRemove),
+		ConfirmClean:     cleanColor(tt.ConfirmClean),
+		ConfirmNuke:      cleanColor(tt.ConfirmNuke),
+		ConfirmSelective: cleanColor(tt.ConfirmSelective),
+		ButtonBg:         cleanColor(tt.ButtonBg),
+		ButtonFg:         cleanColor(tt.ButtonFg),
+		ButtonDangerBg:   cleanColor(tt.ButtonDangerBg),
+		ProgressTrack:    cleanColor(tt.ProgressTrack),
+		AccentColor:      cleanColor(tt.AccentColor),
+		SpinnerColor:     cleanColor(tt.SpinnerColor),
 	}
 
 	theme = applyDefaults(theme, filename)
@@ -300,48 +304,122 @@ func sanitizeColor(color string) string {
 func applyDefaults(theme Theme, filename string) Theme {
 	defaults := getFallbackDefaults(filename)
 
-	if string(theme.BorderColor) == "" || string(theme.BorderColor) == "#ffffff" {
+	if string(theme.BorderColor) == "" {
 		theme.BorderColor = defaults.BorderColor
 	}
-	if string(theme.SelectedColor) == "" || string(theme.SelectedColor) == "#ffffff" {
+	if string(theme.SelectedColor) == "" {
 		theme.SelectedColor = defaults.SelectedColor
 	}
-	if string(theme.TextColor) == "" || string(theme.TextColor) == "#ffffff" {
+	if string(theme.TextColor) == "" {
 		theme.TextColor = defaults.TextColor
 	}
-	if string(theme.ScrollbarTrack) == "" || string(theme.ScrollbarTrack) == "#ffffff" {
+	if string(theme.SubtleColor) == "" {
+		theme.SubtleColor = defaults.SubtleColor
+	}
+	if string(theme.TitleColor) == "" {
+		theme.TitleColor = defaults.TitleColor
+	}
+	if string(theme.ScrollbarTrack) == "" {
 		theme.ScrollbarTrack = defaults.ScrollbarTrack
 	}
-	if string(theme.ScrollbarThumb) == "" || string(theme.ScrollbarThumb) == "#ffffff" {
+	if string(theme.ScrollbarThumb) == "" {
 		theme.ScrollbarThumb = defaults.ScrollbarThumb
 	}
-	if string(theme.SelectionBG) == "" || string(theme.SelectionBG) == "#ffffff" {
+	if string(theme.SelectionBG) == "" {
 		theme.SelectionBG = defaults.SelectionBG
 	}
-	if string(theme.DimText) == "" || string(theme.DimText) == "#ffffff" {
+	if string(theme.DimText) == "" {
 		theme.DimText = defaults.DimText
 	}
-	if string(theme.CacheColor) == "" || string(theme.CacheColor) == "#ffffff" {
+	if string(theme.InstallColor) == "" {
+		theme.InstallColor = defaults.InstallColor
+	}
+	if string(theme.DashboardColor) == "" {
+		theme.DashboardColor = defaults.DashboardColor
+	}
+	if string(theme.RemoveColor) == "" {
+		theme.RemoveColor = defaults.RemoveColor
+	}
+	if string(theme.UpdateColor) == "" {
+		theme.UpdateColor = defaults.UpdateColor
+	}
+	if string(theme.CacheColor) == "" {
 		theme.CacheColor = defaults.CacheColor
 	}
-	if string(theme.ButtonBg) == "" || string(theme.ButtonBg) == "#ffffff" {
+	if string(theme.CoreColor) == "" {
+		theme.CoreColor = defaults.CoreColor
+	}
+	if string(theme.ExtraColor) == "" {
+		theme.ExtraColor = defaults.ExtraColor
+	}
+	if string(theme.MultilibColor) == "" {
+		theme.MultilibColor = defaults.MultilibColor
+	}
+	if string(theme.AurColor) == "" {
+		theme.AurColor = defaults.AurColor
+	}
+	if string(theme.SuccessColor) == "" {
+		theme.SuccessColor = defaults.SuccessColor
+	}
+	if string(theme.WarningColor) == "" {
+		theme.WarningColor = defaults.WarningColor
+	}
+	if string(theme.ErrorColor) == "" {
+		theme.ErrorColor = defaults.ErrorColor
+	}
+	if string(theme.HighlightColor) == "" {
+		theme.HighlightColor = defaults.HighlightColor
+	}
+	if string(theme.DashboardLabel) == "" {
+		theme.DashboardLabel = defaults.DashboardLabel
+	}
+	if string(theme.DashboardValue) == "" {
+		theme.DashboardValue = defaults.DashboardValue
+	}
+	if string(theme.DashboardWarning) == "" {
+		theme.DashboardWarning = defaults.DashboardWarning
+	}
+	if string(theme.DashboardDesc) == "" {
+		theme.DashboardDesc = defaults.DashboardDesc
+	}
+	if string(theme.DialogBorder) == "" {
+		theme.DialogBorder = defaults.DialogBorder
+	}
+	if string(theme.ConfirmInstall) == "" {
+		theme.ConfirmInstall = defaults.ConfirmInstall
+	}
+	if string(theme.ConfirmRemove) == "" {
+		theme.ConfirmRemove = defaults.ConfirmRemove
+	}
+	if string(theme.ConfirmClean) == "" {
+		theme.ConfirmClean = defaults.ConfirmClean
+	}
+	if string(theme.ConfirmNuke) == "" {
+		theme.ConfirmNuke = defaults.ConfirmNuke
+	}
+	if string(theme.ConfirmSelective) == "" {
+		theme.ConfirmSelective = defaults.ConfirmSelective
+	}
+	if string(theme.ButtonBg) == "" {
 		theme.ButtonBg = defaults.ButtonBg
 	}
-	if string(theme.ButtonFg) == "" || string(theme.ButtonFg) == "#ffffff" {
+	if string(theme.ButtonFg) == "" {
 		theme.ButtonFg = defaults.ButtonFg
 	}
-	if string(theme.ButtonDangerBg) == "" || string(theme.ButtonDangerBg) == "#ffffff" {
+	if string(theme.ButtonDangerBg) == "" {
 		theme.ButtonDangerBg = defaults.ButtonDangerBg
 	}
-	if string(theme.ProgressTrack) == "" || string(theme.ProgressTrack) == "#ffffff" {
+	if string(theme.ProgressTrack) == "" {
 		theme.ProgressTrack = defaults.ProgressTrack
 	}
-	if string(theme.AccentColor) == "" || string(theme.AccentColor) == "#ffffff" {
+	if string(theme.AccentColor) == "" {
 		theme.AccentColor = defaults.AccentColor
 	}
-	if string(theme.SpinnerColor) == "" || string(theme.SpinnerColor) == "#ffffff" {
+	if string(theme.SpinnerColor) == "" {
 		theme.SpinnerColor = defaults.SpinnerColor
 	}
+
+	return theme
 
 	return theme
 }

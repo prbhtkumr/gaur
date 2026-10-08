@@ -331,3 +331,42 @@ func TestNewThemeColors(t *testing.T) {
 		t.Error("SpinnerColor should be populated from theme TOML")
 	}
 }
+
+func TestApplyDefaultsPreservesExplicitWhite(t *testing.T) {
+	// CS-06: Explicit #ffffff must not be overwritten by fallback defaults
+	theme := Theme{
+		BorderColor:   lipgloss.Color("#ffffff"),
+		SelectedColor: lipgloss.Color("#ffffff"),
+	}
+
+	result := applyDefaults(theme, "test.toml")
+
+	if string(result.BorderColor) != "#ffffff" {
+		t.Errorf("BorderColor #ffffff was incorrectly overwritten with %q", result.BorderColor)
+	}
+	if string(result.SelectedColor) != "#ffffff" {
+		t.Errorf("SelectedColor #ffffff was incorrectly overwritten with %q", result.SelectedColor)
+	}
+}
+
+func TestModelThemeLifecycle(t *testing.T) {
+	var nilModel *model
+	if nilModel.getTheme().BorderColor == "" {
+		t.Error("nilModel.getTheme() should return currentTheme with non-empty border color")
+	}
+
+	cfg := DefaultConfig()
+	m := testModel(t, modeInstall, cfg)
+	if m.getTheme().Name == "" {
+		t.Error("m.getTheme() should return initialized theme")
+	}
+
+	customTheme := Theme{
+		Name:        "Custom White",
+		BorderColor: lipgloss.Color("#ffffff"),
+	}
+	m.theme = customTheme
+	if m.getTheme().Name != "Custom White" || string(m.getTheme().BorderColor) != "#ffffff" {
+		t.Errorf("m.getTheme() failed to return model-level custom theme")
+	}
+}

@@ -83,6 +83,7 @@ func (m *model) updateConfigFromSettings() {
 	case "ui.theme":
 		m.config.UI.Theme = val
 		if theme, ok := m.themeLoader.GetThemeByConfigName(val); ok {
+			m.theme = theme
 			setTheme(theme)
 		}
 	case "startup.default_mode":
