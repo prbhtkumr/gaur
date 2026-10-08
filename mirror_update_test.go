@@ -447,10 +447,38 @@ func TestExecuteMirrorUpdateValidatesConfig(t *testing.T) {
 		Save:         false,
 	}
 
+	mock := &MockCommandRunner{}
 	// This should not panic
-	cmd := executeMirrorUpdate(cfg)
+	cmd := executeMirrorUpdate(cfg, mock)
 	if cmd == nil {
 		t.Error("expected non-nil command even with invalid config")
+	}
+}
+
+func TestSecurity_S13_MirrorUpdateGoesThroughInjectedRunner(t *testing.T) {
+	var capturedName string
+	var capturedArgs []string
+	mock := &MockCommandRunner{
+		RunFunc: func(name string, args ...string) ([]byte, error) {
+			capturedName = name
+			capturedArgs = args
+			return nil, nil
+		},
+	}
+	cmd := executeMirrorUpdate(DefaultMirrorConfig(), mock)
+	if cmd == nil {
+		t.Fatal("expected non-nil cmd")
+	}
+	msg := cmd()
+	if capturedName != "sudo" {
+		t.Errorf("expected sudo, got %s", capturedName)
+	}
+	if len(capturedArgs) == 0 || capturedArgs[0] != "reflector" {
+		t.Errorf("expected reflector as first arg, got %v", capturedArgs)
+	}
+	updateMsg, ok := msg.(mirrorUpdateMsg)
+	if !ok || !updateMsg.success {
+		t.Errorf("expected successful mirrorUpdateMsg, got %v", msg)
 	}
 }
 

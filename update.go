@@ -418,7 +418,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		LogInfo("MIRROR", "Sudo credentials acquired, executing mirror update")
-		return m, executeMirrorUpdate(m.mirrorConfig)
+		return m, executeMirrorUpdate(m.mirrorConfig, m.getRunner())
 
 	case mirrorProgressMsg:
 		m.mirrorProgressCurrent = msg.current

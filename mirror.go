@@ -209,69 +209,85 @@ type mirrorProgressMsg struct {
 
 // executeMirrorUpdate runs reflector with the given configuration,
 // streaming stderr to report per-mirror progress back to the TUI.
-func executeMirrorUpdate(cfg MirrorConfig) tea.Cmd {
+func executeMirrorUpdate(cfg MirrorConfig, r ...CommandRunner) tea.Cmd {
 	// Validate config indices before launching goroutine to prevent panics
 	ValidateMirrorConfig(&cfg)
+	activeRunner := getActiveRunner(r...)
 
-	ch := make(chan tea.Msg, 1)
+	return func() tea.Msg {
+		ch := make(chan tea.Msg, 1)
 
-	go func() {
-		LogInfo("MIRROR", "Starting mirror update with reflector")
-		LogDebug("MIRROR", "Config: sort=%s, country=%s, latest=%d, protocol=%s",
-			MirrorSortOptions[cfg.SortBy].Name,
-			MirrorCountries[cfg.CountryIndex].Name,
-			cfg.Latest,
-			MirrorProtocols[cfg.Protocol].Name)
+		go func() {
+			LogInfo("MIRROR", "Starting mirror update with reflector")
+			LogDebug("MIRROR", "Config: sort=%s, country=%s, latest=%d, protocol=%s",
+				MirrorSortOptions[cfg.SortBy].Name,
+				MirrorCountries[cfg.CountryIndex].Name,
+				cfg.Latest,
+				MirrorProtocols[cfg.Protocol].Name)
 
-		args := BuildReflectorCommand(cfg)
-		LogDebug("MIRROR", "Command: sudo reflector %s", strings.Join(args, " "))
+			args := BuildReflectorCommand(cfg)
+			LogDebug("MIRROR", "Command: sudo reflector %s", strings.Join(args, " "))
 
-		// reflector needs sudo to write to /etc/pacman.d/mirrorlist
-		fullArgs := append([]string{"reflector"}, args...)
+			// reflector needs sudo to write to /etc/pacman.d/mirrorlist
+			fullArgs := append([]string{"reflector"}, args...)
 
-		cmd := exec.Command("sudo", fullArgs...) // #nosec G204
-		stderr, err := cmd.StderrPipe()
-		if err != nil {
-			LogError("MIRROR", "Failed to create stderr pipe: %v", err)
-			ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
-			return
-		}
-
-		if err := cmd.Start(); err != nil {
-			LogError("MIRROR", "Failed to start reflector: %v", err)
-			ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
-			return
-		}
-
-		total := cfg.Latest
-		current := 0
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			current++
-			progress := current
-			if progress > total {
-				progress = total
+			if _, isReal := activeRunner.(RealCommandRunner); !isReal {
+				// For mock / injected runners, execute through activeRunner
+				_, err := activeRunner.Run("sudo", fullArgs...)
+				if err != nil {
+					LogError("MIRROR", "Reflector failed: %v", err)
+					ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
+					return
+				}
+				LogInfo("MIRROR", "Mirror update completed successfully")
+				ch <- mirrorUpdateMsg{success: true}
+				return
 			}
-			ch <- mirrorProgressMsg{current: progress, total: total, ch: ch}
-		}
 
-		if scanErr := scanner.Err(); scanErr != nil {
-			LogError("MIRROR", "Error reading reflector output: %v", scanErr)
-		}
+			cmd := exec.Command("sudo", fullArgs...) // #nosec G204
+			stderr, err := cmd.StderrPipe()
+			if err != nil {
+				LogError("MIRROR", "Failed to create stderr pipe: %v", err)
+				ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
+				return
+			}
 
-		err = cmd.Wait()
-		if err != nil {
-			LogError("MIRROR", "Reflector failed: %v", err)
-			ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
-			return
-		}
+			if err := cmd.Start(); err != nil {
+				LogError("MIRROR", "Failed to start reflector: %v", err)
+				ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
+				return
+			}
 
-		LogInfo("MIRROR", "Mirror update completed successfully")
-		ch <- mirrorUpdateMsg{success: true}
-	}()
+			total := cfg.Latest
+			current := 0
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				current++
+				progress := current
+				if progress > total {
+					progress = total
+				}
+				ch <- mirrorProgressMsg{current: progress, total: total, ch: ch}
+			}
 
-	// Return the initial listener command
-	return waitForMirrorProgress(ch)
+			if scanErr := scanner.Err(); scanErr != nil {
+				LogError("MIRROR", "Error reading reflector output: %v", scanErr)
+			}
+
+			err = cmd.Wait()
+			if err != nil {
+				LogError("MIRROR", "Reflector failed: %v", err)
+				ch <- mirrorUpdateMsg{success: false, err: fmt.Errorf("reflector failed: %w", err)}
+				return
+			}
+
+			LogInfo("MIRROR", "Mirror update completed successfully")
+			ch <- mirrorUpdateMsg{success: true}
+		}()
+
+		// Wait for the first message from the channel
+		return <-ch
+	}
 }
 
 // waitForMirrorProgress returns a tea.Cmd that reads the next message from the channel
