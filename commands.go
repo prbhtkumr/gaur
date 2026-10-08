@@ -255,7 +255,10 @@ func executeSelectiveClean(m *model, packages []string, pacmanCachePath string, 
 			if len(parts) > 3 {
 				baseName := strings.Join(parts[:len(parts)-3], "-")
 				if toDelete[baseName] {
-					files = append(files, filepath.Join(dirPath, name))
+					fullPath := filepath.Join(dirPath, name)
+					if fi, err := os.Lstat(fullPath); err == nil && fi.Mode().IsRegular() {
+						files = append(files, fullPath)
+					}
 				}
 			}
 		}
@@ -274,7 +277,9 @@ func executeSelectiveClean(m *model, packages []string, pacmanCachePath string, 
 		if len(parts) > 3 {
 			baseName := strings.Join(parts[:len(parts)-3], "-")
 			if toDelete[baseName] {
-				files = append(files, path)
+				if fi, err := os.Lstat(path); err == nil && fi.Mode().IsRegular() {
+					files = append(files, path)
+				}
 			}
 		}
 		return nil
@@ -289,13 +294,14 @@ func executeSelectiveClean(m *model, packages []string, pacmanCachePath string, 
 	// 2. Decide if we need sudo
 	needsSudo := false
 	for _, f := range files {
-		if strings.HasPrefix(f, "/var/cache") {
+		cleanF := filepath.Clean(f)
+		if cleanF == "/var/cache/pacman/pkg" || strings.HasPrefix(cleanF, "/var/cache/pacman/pkg/") {
 			needsSudo = true
 			break
 		}
 	}
 
-	args := append([]string{"rm", "-f"}, files...)
+	args := append([]string{"rm", "-f", "--"}, files...)
 	execCmd := "rm"
 	execArgs := args[1:]
 	if needsSudo {

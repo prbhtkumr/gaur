@@ -587,13 +587,14 @@ func TestConfigurationHijacking(t *testing.T) {
 			input    string
 			expected string
 		}{
-			{"/tmp/gaur/../../../etc/passwd", "/etc/passwd"}, // Cleaned but absolute
-			{"/var/cache/normal", "/var/cache/normal"},
-			{"./relative/path", ""},   // Relative should be rejected
-			{"../escape/attempt", ""}, // Relative should be rejected
-			{"", ""},                  // Empty is OK
-			{"/tmp/gaur", "/tmp/gaur"},
-			{"/tmp/gaur/./subdir", "/tmp/gaur/subdir"}, // Cleaned
+			{"/tmp/gaur/../../../etc/passwd", ""}, // Outside allowed cache roots -> rejected
+			{"/var/cache-evil", ""},               // Outside allowed cache roots -> rejected
+			{"/etc", ""},                          // Outside allowed cache roots -> rejected
+			{"./relative/path", ""},               // Relative should be rejected
+			{"../escape/attempt", ""},             // Relative should be rejected
+			{"", ""},                              // Empty is OK
+			{"/var/cache/pacman/pkg", "/var/cache/pacman/pkg"},
+			{"/var/cache/pacman/pkg/./subdir", "/var/cache/pacman/pkg/subdir"}, // Cleaned
 		}
 
 		for _, tt := range tests {
@@ -932,11 +933,11 @@ func TestSecurityFixes(t *testing.T) {
 	t.Run("ValidateConfig_CacheDir_Normalization", func(t *testing.T) {
 		cfg := &Config{
 			Advanced: AdvancedConfig{
-				CacheDir: "/tmp/gaur/../gaur",
+				CacheDir: "/var/cache/pacman/pkg/../pkg",
 			},
 		}
 		ValidateConfig(cfg)
-		expected := filepath.Clean("/tmp/gaur/../gaur")
+		expected := filepath.Clean("/var/cache/pacman/pkg/../pkg")
 		if cfg.Advanced.CacheDir != expected {
 			t.Errorf("Expected CacheDir to be normalized to %q, got %q", expected, cfg.Advanced.CacheDir)
 		}

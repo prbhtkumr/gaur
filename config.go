@@ -129,19 +129,46 @@ func ValidateConfig(c *Config) {
 		c.Commands.CacheTool = tool
 	}
 
+	// Validate install and remove flags against allowlist (S-04)
+	c.Commands.InstallFlags = validateInstallFlags(c.Commands.InstallFlags)
+	c.Commands.RemoveFlags = validateRemoveFlags(c.Commands.RemoveFlags)
+
 	// Guard DebounceMs
 	if c.Advanced.DebounceMs <= 0 {
 		c.Advanced.DebounceMs = 150
 	}
 
-	// Clean and validate CacheDir if provided
+	// Clean and validate CacheDir if provided (S-08)
 	if c.Advanced.CacheDir != "" {
-		c.Advanced.CacheDir = filepath.Clean(c.Advanced.CacheDir)
-		if !filepath.IsAbs(c.Advanced.CacheDir) {
-			// If it's relative, we could make it absolute or reset it.
-			// For security, let's just reset it to default if it's not absolute or looks suspicious.
-			LogWarn("CONFIG", "Cache directory must be absolute path. Resetting to default.")
+		cleaned := filepath.Clean(c.Advanced.CacheDir)
+		isAllowed := false
+
+		// 1. System pacman cache root
+		if cleaned == "/var/cache/pacman/pkg" || strings.HasPrefix(cleaned, "/var/cache/pacman/pkg/") {
+			isAllowed = true
+		}
+
+		// 2. User XDG cache root
+		if xdgCache := os.Getenv("XDG_CACHE_HOME"); xdgCache != "" {
+			cleanXDG := filepath.Clean(xdgCache)
+			if cleaned == cleanXDG || strings.HasPrefix(cleaned, cleanXDG+string(filepath.Separator)) {
+				isAllowed = true
+			}
+		}
+
+		// 3. User ~/.cache root
+		if home, err := os.UserHomeDir(); err == nil && home != "" {
+			dotCache := filepath.Join(home, ".cache")
+			if cleaned == dotCache || strings.HasPrefix(cleaned, dotCache+string(filepath.Separator)) {
+				isAllowed = true
+			}
+		}
+
+		if !isAllowed || !filepath.IsAbs(cleaned) {
+			LogWarn("CONFIG", "Cache directory '%s' is not in allowed cache roots. Resetting to default.", c.Advanced.CacheDir)
 			c.Advanced.CacheDir = ""
+		} else {
+			c.Advanced.CacheDir = cleaned
 		}
 	}
 
@@ -212,4 +239,108 @@ func TokenizeFlags(flags string) []string {
 		return nil
 	}
 	return strings.Fields(flags)
+}
+
+var allowedInstallFlags = map[string]bool{
+	"--noconfirm":     true,
+	"--needed":        true,
+	"--asdeps":        true,
+	"--asexplicit":    true,
+	"--noprogressbar": true,
+	"--quiet":         true,
+	"-q":              true,
+	"--debug":         true,
+	"--clean":         true,
+	"--rebuild":       true,
+	"--redownload":    true,
+	"--sudoloop":      true,
+	"--nodiffmenu":    true,
+	"--noeditmenu":    true,
+	"--noupgrademenu": true,
+	"--removemake":    true,
+	"--topdown":       true,
+	"--bottomup":      true,
+}
+
+var allowedRemoveFlags = map[string]bool{
+	"--noconfirm":     true,
+	"--nosave":        true,
+	"-n":              true,
+	"--recursive":     true,
+	"-s":              true,
+	"--unneeded":      true,
+	"-u":              true,
+	"--cascade":       true,
+	"-c":              true,
+	"--noprogressbar": true,
+	"--quiet":         true,
+	"-q":              true,
+}
+
+func isAllowedInstallFlag(token string) bool {
+	return allowedInstallFlags[token]
+}
+
+func isAllowedRemoveFlag(token string) bool {
+	if allowedRemoveFlags[token] {
+		return true
+	}
+	if strings.HasPrefix(token, "-R") {
+		rest := token[2:]
+		if len(rest) == 0 {
+			return true // bare -R
+		}
+		for _, r := range rest {
+			if r != 'n' && r != 's' && r != 'c' && r != 'u' {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func validateInstallFlags(raw string) string {
+	tokens := TokenizeFlags(raw)
+	if len(tokens) == 0 {
+		return ""
+	}
+	var validTokens []string
+	for _, tok := range tokens {
+		if isAllowedInstallFlag(tok) {
+			validTokens = append(validTokens, tok)
+		} else {
+			LogWarn("CONFIG", "Disallowed install flag '%s'. Stripping.", tok)
+		}
+	}
+	return strings.Join(validTokens, " ")
+}
+
+func validateRemoveFlags(raw string) string {
+	tokens := TokenizeFlags(raw)
+	if len(tokens) == 0 {
+		return "-Rns"
+	}
+	var validTokens []string
+	for _, tok := range tokens {
+		if isAllowedRemoveFlag(tok) {
+			validTokens = append(validTokens, tok)
+		} else {
+			LogWarn("CONFIG", "Disallowed remove flag '%s'. Stripping.", tok)
+		}
+	}
+	if len(validTokens) == 0 {
+		return "-Rns"
+	}
+	hasAction := false
+	for _, tok := range validTokens {
+		if strings.HasPrefix(tok, "-R") {
+			hasAction = true
+			break
+		}
+	}
+	if !hasAction {
+		validTokens = append([]string{"-R"}, validTokens...)
+	}
+	return strings.Join(validTokens, " ")
 }
