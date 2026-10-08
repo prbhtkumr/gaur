@@ -109,3 +109,24 @@ func TestRenderCenteredWrappedText(t *testing.T) {
 	}
 }
 
+func TestRenderHelpText(t *testing.T) {
+	m := testModel(t, modeInstall, DefaultConfig())
+	activeColor := lipgloss.Color("#a6e3a1")
+
+	// Verify all modes generate non-empty help text containing essential actions
+	modes := []viewMode{modeDashboard, modeInstall, modeUpdate, modeUpdateSelective, modeRemove, modeSettings}
+	for _, mode := range modes {
+		m.mode = mode
+		help := stripAnsi(m.renderHelpText(activeColor))
+		if help == "" {
+			t.Errorf("Help text is empty for mode %v", mode)
+		}
+		for _, required := range []string{"search", "mark", "[d]ash", "[i]nstall", "[u]pdate", "[r]emove", "settings", "[q]uit"} {
+			if !strings.Contains(help, required) {
+				t.Errorf("Help text in mode %v missing required item %q in %q", mode, required, help)
+			}
+		}
+	}
+}
+
+

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -20,51 +21,32 @@ func (m *model) renderHelpText(activeColor lipgloss.Color) string {
 	dimStyle := helpStyle
 	activeStyle := styleBoldWithForeground(activeColor)
 
-	var parts []string
-
-	parts = append(parts, renderKeyHint("search", m.keys.Search, dimStyle))
-	parts = append(parts, dimStyle.Render("  "))
-	parts = append(parts, renderKeyHint("mark", m.keys.Mark, dimStyle))
-	parts = append(parts, dimStyle.Render("  "))
-
-	dashStyle := dimStyle
-	if m.mode == modeDashboard {
-		dashStyle = activeStyle
+	entries := []struct {
+		label  string
+		key    key.Binding
+		active bool
+	}{
+		{"search", m.keys.Search, false},
+		{"mark", m.keys.Mark, false},
+		{"dash", m.keys.DashboardMode, m.mode == modeDashboard},
+		{"install", m.keys.InstallMode, m.mode == modeInstall},
+		{"update", m.keys.UpdateMode, m.mode == modeUpdate || m.mode == modeUpdateSelective},
+		{"remove", m.keys.RemoveMode, m.mode == modeRemove},
+		{"settings", m.keys.Settings, m.mode == modeSettings},
+		{"quit", m.keys.Quit, false},
 	}
-	parts = append(parts, renderKeyHint("dash", m.keys.DashboardMode, dashStyle))
-	parts = append(parts, dimStyle.Render("  "))
 
-	installStyle := dimStyle
-	if m.mode == modeInstall {
-		installStyle = activeStyle
+	separator := dimStyle.Render("  ")
+	parts := make([]string, len(entries))
+	for i, e := range entries {
+		st := dimStyle
+		if e.active {
+			st = activeStyle
+		}
+		parts[i] = renderKeyHint(e.label, e.key, st)
 	}
-	parts = append(parts, renderKeyHint("install", m.keys.InstallMode, installStyle))
-	parts = append(parts, dimStyle.Render("  "))
 
-	updateStyle := dimStyle
-	if m.mode == modeUpdate || m.mode == modeUpdateSelective {
-		updateStyle = activeStyle
-	}
-	parts = append(parts, renderKeyHint("update", m.keys.UpdateMode, updateStyle))
-	parts = append(parts, dimStyle.Render("  "))
-
-	removeStyle := dimStyle
-	if m.mode == modeRemove {
-		removeStyle = activeStyle
-	}
-	parts = append(parts, renderKeyHint("remove", m.keys.RemoveMode, removeStyle))
-	parts = append(parts, dimStyle.Render("  "))
-
-	settingsStyle := dimStyle
-	if m.mode == modeSettings {
-		settingsStyle = activeStyle
-	}
-	parts = append(parts, renderKeyHint("settings", m.keys.Settings, settingsStyle))
-	parts = append(parts, dimStyle.Render("  "))
-
-	parts = append(parts, renderKeyHint("quit", m.keys.Quit, dimStyle))
-
-	return strings.Join(parts, "")
+	return strings.Join(parts, separator)
 }
 
 func (m *model) View() string {
