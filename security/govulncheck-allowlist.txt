@@ -1,0 +1,2 @@
+# Allowlist for known, triaged govulncheck advisories.
+# Format: GO-YYYY-NNNN # owner, reason, review-by date

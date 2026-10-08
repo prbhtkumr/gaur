@@ -66,6 +66,34 @@ jobs:
         continue-on-error: true
 
   # ════════════════════════════════════════════════════════════════════════════
+  # Format, Tidy & Lint
+  # ════════════════════════════════════════════════════════════════════════════
+  fmt-lint:
+    name: Format, Tidy & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Verify gofmt
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::Unformatted files detected:"
+            echo "$out"
+            exit 1
+          fi
+
+      - name: Verify go mod tidy
+        run: go mod tidy -diff
+
+  # ════════════════════════════════════════════════════════════════════════════
   # Security Tests
   # ════════════════════════════════════════════════════════════════════════════
   security-tests:
@@ -83,7 +111,9 @@ jobs:
 
       - name: Run security-focused tests
         run: |
-          go test -v -run "TestCommandInjection|TestPrivilegeEscalation|TestTUISpoofing|TestConfigurationHijacking|TestSecurityEdgeCases|TestSecurityFixes" ./...
+          go test -race -count=1 -v \
+            -run 'TestSecurity_|TestCommandInjection|TestPrivilegeEscalation|TestTUISpoofing|TestConfigurationHijacking|TestSecurityEdgeCases|TestSecurityFixes' \
+            ./...
 
   # ════════════════════════════════════════════════════════════════════════════
   # Gosec - Go Security Checker
@@ -138,7 +168,6 @@ jobs:
 
       - name: Run staticcheck
         run: staticcheck ./...
-        continue-on-error: true # Report issues but don't fail CI for existing code
 
   # ════════════════════════════════════════════════════════════════════════════
   # Vulnerability Check
@@ -159,18 +188,30 @@ jobs:
       - name: Install govulncheck
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
-      - name: Run govulncheck
+      - name: Run govulncheck (fail on new reachable vulnerabilities)
         run: |
-          # Run govulncheck and capture output
-          # Exit code 3 means vulnerabilities found - we handle this gracefully
-          # for stdlib vulnerabilities that require a Go version upgrade
-          govulncheck -format text ./... || exit_code=$?
-          if [ "${exit_code:-0}" -eq 3 ]; then
-            echo "::warning::Vulnerabilities detected. Review output above."
-            echo "Note: Standard library vulnerabilities require Go version upgrade."
-          elif [ "${exit_code:-0}" -ne 0 ]; then
-            exit $exit_code
+          set +e
+          govulncheck -format text ./... | tee govulncheck.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          [ "$code" -eq 0 ] && exit 0
+          [ "$code" -ne 3 ] && exit "$code"
+          found=$(grep -oE 'GO-[0-9]{4}-[0-9]+' govulncheck.txt | sort -u)
+          allow=$(grep -oE 'GO-[0-9]{4}-[0-9]+' security/govulncheck-allowlist.txt 2>/dev/null | sort -u)
+          new=$(comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$allow") | grep -c . || true)
+          if [ "${new:-0}" -gt 0 ]; then
+            echo "::error::New reachable advisories (not in allowlist):"
+            comm -23 <(printf '%s\n' "$found") <(printf '%s\n' "$allow")
+            exit 1
           fi
+          echo "All reachable advisories are triaged in security/govulncheck-allowlist.txt"
+
+      - name: Upload govulncheck report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: govulncheck-report
+          path: govulncheck.txt
 
   # ════════════════════════════════════════════════════════════════════════════
   # Dependency Review (for PRs)
@@ -239,3 +280,27 @@ jobs:
       - name: Check licenses
         run: go-licenses check ./...
         continue-on-error: true # Report but don't fail
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # CI Gate (Unified Required Check)
+  # ════════════════════════════════════════════════════════════════════════════
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build, fmt-lint, security-tests, gosec, staticcheck, govulncheck, codeql, license-check]
+    steps:
+      - name: Aggregate status
+        run: |
+          results="${{ join(needs.*.result, ' ') }}"
+          echo "results: $results"
+          case "$results" in
+            *failure*|*cancelled*)
+              echo "::error::One or more required CI jobs failed or were cancelled"
+              exit 1
+              ;;
+            *)
+              echo "All required CI jobs passed successfully"
+              exit 0
+              ;;
+          esac
