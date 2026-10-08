@@ -445,8 +445,6 @@ func applyDefaults(theme Theme, filename string) Theme {
 	}
 
 	return theme
-
-	return theme
 }
 
 func getFallbackDefaults(filename string) Theme {
