@@ -961,3 +961,16 @@ func simplifyErrorMessage(msg string) string {
 
 	return strings.Join(uniqueParts, ": ")
 }
+
+// mapSlice transforms each element of the items slice using fn and returns the mapped slice.
+// If items is nil, it returns nil.
+func mapSlice[T any, R any](items []T, fn func(T) R) []R {
+	if items == nil {
+		return nil
+	}
+	result := make([]R, len(items))
+	for i, item := range items {
+		result[i] = fn(item)
+	}
+	return result
+}

@@ -300,3 +300,40 @@ func TestRenderPaginatedList(t *testing.T) {
 		t.Errorf("Did not expect apple in paged window; got %q", paged)
 	}
 }
+
+func TestMapSlice(t *testing.T) {
+	// Test nil slice
+	var nilSlice []int
+	mappedNil := mapSlice(nilSlice, func(n int) int { return n * 2 })
+	if mappedNil != nil {
+		t.Errorf("Expected nil for nil input, got %v", mappedNil)
+	}
+
+	// Test empty slice
+	emptySlice := []int{}
+	mappedEmpty := mapSlice(emptySlice, func(n int) int { return n * 2 })
+	if mappedEmpty == nil || len(mappedEmpty) != 0 {
+		t.Errorf("Expected empty non-nil slice, got %v", mappedEmpty)
+	}
+
+	// Test mapping struct to string
+	type testItem struct {
+		Name string
+	}
+	items := []testItem{
+		{Name: "alpha"},
+		{Name: "beta"},
+		{Name: "gamma"},
+	}
+	names := mapSlice(items, func(item testItem) string { return item.Name })
+	expected := []string{"alpha", "beta", "gamma"}
+	if len(names) != len(expected) {
+		t.Fatalf("Length mismatch: got %d, want %d", len(names), len(expected))
+	}
+	for i := range names {
+		if names[i] != expected[i] {
+			t.Errorf("Index %d mismatch: got %q, want %q", i, names[i], expected[i])
+		}
+	}
+}
+

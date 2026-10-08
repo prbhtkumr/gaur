@@ -186,30 +186,19 @@ func ValidateMirrorConfig(cfg *MirrorConfig) {
 
 // GetMirrorSortOptions returns the list of sort option names
 func GetMirrorSortOptions() []string {
-	names := make([]string, len(MirrorSortOptions))
-	for i, opt := range MirrorSortOptions {
-		names[i] = opt.Name
-	}
-	return names
+	return mapSlice(MirrorSortOptions, func(opt MirrorSortOption) string { return opt.Name })
 }
 
 // GetMirrorCountryNames returns the list of country names
 func GetMirrorCountryNames() []string {
-	names := make([]string, len(MirrorCountries))
-	for i, c := range MirrorCountries {
-		names[i] = c.Name
-	}
-	return names
+	return mapSlice(MirrorCountries, func(c MirrorCountry) string { return c.Name })
 }
 
 // GetMirrorProtocolNames returns the list of protocol names
 func GetMirrorProtocolNames() []string {
-	names := make([]string, len(MirrorProtocols))
-	for i, p := range MirrorProtocols {
-		names[i] = p.Name
-	}
-	return names
+	return mapSlice(MirrorProtocols, func(p MirrorProtocol) string { return p.Name })
 }
+
 
 // mirrorProgressMsg is sent for each line of reflector output during mirror update
 type mirrorProgressMsg struct {
