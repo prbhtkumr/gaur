@@ -171,7 +171,10 @@ func executeCleanCache(m *model, op confirmationType, keep int, removed bool) te
 		cacheTool = "paccache"
 	}
 
-	aurCache, _ := GetAURCacheDir(&m.config)
+	aurCache, err := GetAURCacheDir(&m.config)
+	if err != nil {
+		LogWarn("CACHE", "Failed to resolve AUR cache directory: %v", err)
+	}
 
 	var args []string
 	if removed {

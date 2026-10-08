@@ -71,7 +71,7 @@ func TestConfigLoadPersistence(t *testing.T) {
 
 	if !testing.Short() {
 		// Verify content contains dracula
-		if !containsString(string(data), "dracula") {
+		if !strings.Contains(string(data), "dracula") {
 			t.Error("Saved TOML does not contain the updated theme value")
 		}
 	}
@@ -106,10 +106,6 @@ func TestConfigMultiKeyPersistence(t *testing.T) {
 	if !strings.Contains(content, `dashboard_mode = ['d', 'alt+1']`) {
 		t.Errorf("Saved TOML does not contain expected dashboard_mode array, got:\n%s", content)
 	}
-}
-
-func containsString(s, substr string) bool {
-	return strings.Contains(s, substr)
 }
 
 func TestValidateConfig(t *testing.T) {

@@ -624,4 +624,17 @@ func TestUpdateModeAKeyExecutesUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateModeYKeyNoEffectWhenLoading(t *testing.T) {}
+func TestUpdateModeYKeyNoEffectWhenLoading(t *testing.T) {
+	m := newTestModelUpdate(t, testPackages())
+	m.loading = true
+
+	result, cmd := m.Update(keyMsg("y"))
+	resultModel := result.(*model)
+
+	if resultModel.statusMessage == "Running system update..." {
+		t.Error("Expected 'y' to have no effect while loading updates")
+	}
+	if cmd != nil {
+		t.Error("Expected nil command when pressing 'y' while loading updates")
+	}
+}

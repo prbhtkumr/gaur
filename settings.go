@@ -90,6 +90,7 @@ func (m *model) updateConfigFromSettings() {
 func (m *model) saveSettingsToDisk() {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
+		LogError("SETTINGS", "Failed to get user config dir: %v", err)
 		return
 	}
 
@@ -97,10 +98,13 @@ func (m *model) saveSettingsToDisk() {
 
 	data, err := toml.Marshal(m.config)
 	if err != nil {
+		LogError("SETTINGS", "Failed to marshal settings: %v", err)
 		return
 	}
 
-	_ = os.WriteFile(configPath, data, 0600)
+	if err := os.WriteFile(configPath, data, 0600); err != nil {
+		LogError("SETTINGS", "Failed to write config file %s: %v", configPath, err)
+	}
 }
 
 func (m *model) getBorderStyle() lipgloss.Border {
