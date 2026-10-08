@@ -194,7 +194,29 @@ func getDashboardDataWithContext(ctx context.Context, c *Config, r ...CommandRun
 		go func() {
 			defer wg.Done()
 			pacmanCachePath := "/var/cache/pacman/pkg"
-			pacmanSize := calculateDirSize(pacmanCachePath)
+			var pacmanSize int64
+			pacmanHogs := make(map[string]int64)
+			_ = filepath.WalkDir(pacmanCachePath, func(_ string, entry os.DirEntry, err error) error {
+				if err != nil || entry.IsDir() {
+					return nil
+				}
+				info, err := entry.Info()
+				if err != nil {
+					return nil
+				}
+				size := info.Size()
+				pacmanSize += size
+
+				name := entry.Name()
+				if strings.HasSuffix(name, ".pkg.tar.zst") || strings.HasSuffix(name, ".pkg.tar.xz") {
+					parts := strings.Split(name, "-")
+					if len(parts) > 3 {
+						baseName := strings.Join(parts[:len(parts)-3], "-")
+						pacmanHogs[baseName] += size
+					}
+				}
+				return nil
+			})
 
 			aurClonePath, err := GetAURCacheDir(c)
 			if err != nil {
@@ -221,26 +243,6 @@ func getDashboardDataWithContext(ctx context.Context, c *Config, r ...CommandRun
 				modTime time.Time
 			}
 			aurFiles := make(map[string][]aurCacheFile)
-
-			pacmanHogs := make(map[string]int64)
-			if entries, err := os.ReadDir(pacmanCachePath); err == nil {
-				for _, entry := range entries {
-					if entry.IsDir() {
-						continue
-					}
-					name := entry.Name()
-					if !strings.HasSuffix(name, ".pkg.tar.zst") && !strings.HasSuffix(name, ".pkg.tar.xz") {
-						continue
-					}
-					parts := strings.Split(name, "-")
-					if len(parts) > 3 {
-						baseName := strings.Join(parts[:len(parts)-3], "-")
-						if info, err := entry.Info(); err == nil {
-							pacmanHogs[baseName] += info.Size()
-						}
-					}
-				}
-			}
 
 			_ = filepath.WalkDir(aurClonePath, func(path string, d os.DirEntry, err error) error {
 				if err != nil || d.IsDir() {
