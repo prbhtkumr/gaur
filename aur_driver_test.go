@@ -48,9 +48,11 @@ func TestAurDriver_RegistryAndLookup(t *testing.T) {
 
 type mockCustomDriver struct{}
 
-func (m mockCustomDriver) Name() string                                         { return "customaur" }
-func (m mockCustomDriver) BuildCommand(action, flags string, args ...string) []string { return []string{"customaur", action} }
-func (m mockCustomDriver) StatsArgs() []string                                  { return []string{"--stats"} }
+func (m mockCustomDriver) Name() string { return "customaur" }
+func (m mockCustomDriver) BuildCommand(action, flags string, args ...string) []string {
+	return []string{"customaur", action}
+}
+func (m mockCustomDriver) StatsArgs() []string { return []string{"--stats"} }
 func (m mockCustomDriver) ResolveCacheDir(userCacheDir, customDir string) string {
 	return filepath.Join(userCacheDir, "custom")
 }
