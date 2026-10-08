@@ -181,6 +181,7 @@ func (m *model) selectedPackage() *Package {
 func (m *model) refreshAll() tea.Cmd {
 	m.loading = true
 	m.pendingUpdates = nil
+	m.detailsCache = make(map[string]string)
 	return tea.Batch(
 		getDashboardData(&m.config),
 		loadRepoPackages(),

@@ -368,10 +368,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case packageDetailsMsg:
+		if msg.err == nil {
+			m.detailsCache[msg.packageName] = msg.details
+		}
 		if msg.packageName == m.detailsForPackage {
 			m.loadingDetails = false
 			m.packageDetails = msg.details
-			m.detailsCache[msg.packageName] = msg.details
 		}
 
 	case debounceTickMsg:
@@ -564,6 +566,13 @@ func (m *model) handleNavigation(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.detailsScrollOffset = 0
 		pkg := m.getSelectedPkg()
 		if pkg != nil && m.mode != modeCacheSelective {
+			if cached, ok := m.detailsCache[pkg.Name]; ok {
+				m.packageDetails = cached
+				m.loadingDetails = false
+				m.detailsForPackage = pkg.Name
+				m.pendingDetailsPackage = ""
+				return m, nil
+			}
 			m.loadingDetails = true
 			m.pendingDetailsPackage = pkg.Name
 			return m, debouncePackageDetails(m, m.pendingDetailsPackage)
@@ -819,12 +828,19 @@ func (m *model) performFiltering() tea.Cmd {
 		}
 	}
 
-	// Fetch dash for the first item automatically if list is not empty
+	// Fetch details for the first item automatically if list is not empty
 	pkg := m.getSelectedPkg()
 	if pkg != nil && m.mode != modeCacheSelective {
-		m.loadingDetails = true
-		m.pendingDetailsPackage = pkg.Name
-		cmds = append(cmds, debouncePackageDetails(m, m.pendingDetailsPackage))
+		if cached, ok := m.detailsCache[pkg.Name]; ok {
+			m.packageDetails = cached
+			m.loadingDetails = false
+			m.detailsForPackage = pkg.Name
+			m.pendingDetailsPackage = ""
+		} else {
+			m.loadingDetails = true
+			m.pendingDetailsPackage = pkg.Name
+			cmds = append(cmds, debouncePackageDetails(m, m.pendingDetailsPackage))
+		}
 	} else {
 		m.loadingDetails = false
 		m.packageDetails = ""
