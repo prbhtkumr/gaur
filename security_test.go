@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -15,44 +13,8 @@ import (
 // Test Infrastructure
 // ══════════════════════════════════════════════════════════════════════════════
 
-// mockRunner for capturing interactive command arguments
-type mockRunner struct {
-	RealCommandRunner
-	capturedArgs  []string
-	capturedCalls [][]string // Track multiple calls
-}
-
-func (m *mockRunner) Interactive(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
-	m.capturedArgs = append([]string{name}, args...)
-	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
-	return func() tea.Msg { return nil }
-}
-
-func (m *mockRunner) Run(name string, args ...string) ([]byte, error) {
-	m.capturedArgs = append([]string{name}, args...)
-	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
-	return []byte{}, nil
-}
-
-func (m *mockRunner) RunContext(ctx context.Context, name string, args ...string) ([]byte, error) {
-	return m.Run(name, args...)
-}
-
-func (m *mockRunner) RunWithInput(input string, name string, args ...string) ([]byte, error) {
-	m.capturedArgs = append([]string{name}, args...)
-	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
-	return []byte{}, nil
-}
-
-func (m *mockRunner) RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error) {
-	return m.RunWithInput(input, name, args...)
-}
-
-func (m *mockRunner) RunWithStderrScan(name string, onLine func(string), args ...string) error {
-	m.capturedArgs = append([]string{name}, args...)
-	m.capturedCalls = append(m.capturedCalls, m.capturedArgs)
-	return nil
-}
+// mockRunner for capturing interactive command arguments (aliased to MockCommandRunner - TS-04)
+type mockRunner = MockCommandRunner
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 1. COMMAND INJECTION TESTS
