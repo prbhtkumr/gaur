@@ -907,11 +907,17 @@ func (m *model) renderConfirmationDialog(innerWidth, innerHeight int, activeColo
 	}
 
 	dialogWidth := innerWidth - 10
+	if dialogWidth > 90 {
+		dialogWidth = 90
+	}
 	if dialogWidth < 60 {
 		dialogWidth = 60
 	}
-	if dialogWidth > 90 {
-		dialogWidth = 90
+	if dialogWidth > innerWidth-2 {
+		dialogWidth = innerWidth - 2
+	}
+	if dialogWidth < 10 {
+		dialogWidth = 10
 	}
 
 	activeBorderColor := activeColor
@@ -1110,11 +1116,17 @@ func renderCenteredWrappedText(text string, width int) string {
 // renderErrorOverlay renders a centered error overlay dialog
 func (m *model) renderErrorOverlay(innerWidth, innerHeight int) string {
 	dialogWidth := innerWidth - 20
+	if dialogWidth > 100 {
+		dialogWidth = 100
+	}
 	if dialogWidth < 50 {
 		dialogWidth = 50
 	}
-	if dialogWidth > 100 {
-		dialogWidth = 100
+	if dialogWidth > innerWidth-2 {
+		dialogWidth = innerWidth - 2
+	}
+	if dialogWidth < 10 {
+		dialogWidth = 10
 	}
 
 	titleStyle := lipgloss.NewStyle().

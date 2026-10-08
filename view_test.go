@@ -128,3 +128,29 @@ func TestRenderHelpText(t *testing.T) {
 		}
 	}
 }
+
+func TestNarrowTerminalDialogWidthClamping(t *testing.T) {
+	m := testModel(t, modeInstall, DefaultConfig())
+	m.confirmType = confirmInstall
+	m.confirmPackages = []string{"test-pkg"}
+	m.errorTitle = "Error"
+	m.errorMessage = "Something broke"
+
+	narrowWidth := 40
+	height := 20
+
+	confirmView := m.renderConfirmationDialog(narrowWidth, height, lipgloss.Color("7"))
+	for i, line := range strings.Split(confirmView, "\n") {
+		if w := lipgloss.Width(line); w > narrowWidth {
+			t.Errorf("Confirmation line %d width %d exceeds canvas width %d", i, w, narrowWidth)
+		}
+	}
+
+	errorView := m.renderErrorOverlay(narrowWidth, height)
+	for i, line := range strings.Split(errorView, "\n") {
+		if w := lipgloss.Width(line); w > narrowWidth {
+			t.Errorf("Error overlay line %d width %d exceeds canvas width %d", i, w, narrowWidth)
+		}
+	}
+}
+
