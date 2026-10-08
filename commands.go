@@ -46,6 +46,14 @@ func BuildAURCommand(c *Config, action string, args ...string) []string {
 		cmd = []string{helper, "-Qu"}
 	case "search":
 		cmd = []string{helper, "-Ss", "-a"}
+		var cleanArgs []string
+		for _, arg := range args {
+			trimmed := strings.TrimLeft(arg, "-")
+			if trimmed != "" {
+				cleanArgs = append(cleanArgs, trimmed)
+			}
+		}
+		return append(cmd, cleanArgs...)
 	case "dash":
 		cmd = []string{helper, "-Si"}
 	case "check-updates":

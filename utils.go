@@ -166,10 +166,15 @@ func stripNonSGREscapes(s string) string {
 }
 
 // isValidPackageName checks if a package name contains only safe characters.
-// Valid package names contain only alphanumeric, @, ., _, +, and - characters.
-// This prevents command injection through malicious package names.
+// Valid package names must begin with an alphanumeric character or '@', and can contain
+// alphanumeric, @, ., _, +, and - characters. Package names starting with '-' or '.'
+// (and standalone '.', '..', '-') are rejected to prevent option injection and path traversal.
 func isValidPackageName(name string) bool {
-	if name == "" {
+	if name == "" || name == "." || name == ".." || name == "-" {
+		return false
+	}
+	first := name[0]
+	if first == '-' || first == '.' {
 		return false
 	}
 	for _, r := range name {
@@ -534,13 +539,16 @@ func parsePackageOutput(output string) []Package {
 			continue
 		}
 
-		source := parts[0]
-		name := parts[1]
+		source := sanitizeUntrusted(parts[0])
+		name := sanitizeUntrusted(parts[1])
+		if !isValidPackageName(name) {
+			continue
+		}
 
 		// Get version (next field after repo/name)
 		version := ""
 		if pkgFieldIdx+1 < len(fields) {
-			version = fields[pkgFieldIdx+1]
+			version = sanitizeUntrusted(fields[pkgFieldIdx+1])
 		}
 
 		// Check for installed status
@@ -551,7 +559,7 @@ func parsePackageOutput(output string) []Package {
 		if i+1 < len(lines) {
 			nextLine := lines[i+1]
 			if strings.HasPrefix(nextLine, " ") || strings.HasPrefix(nextLine, "\t") {
-				description = strings.TrimSpace(nextLine)
+				description = sanitizeUntrusted(strings.TrimSpace(nextLine))
 			}
 		}
 

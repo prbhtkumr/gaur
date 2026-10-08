@@ -465,6 +465,45 @@ func TestTUISpoofing(t *testing.T) {
 		}
 	})
 
+	t.Run("PackageName_LeadingDashAndDots", func(t *testing.T) {
+		// Names starting with '-' or '.' or standalone symbols must be rejected (S-05)
+		hostileNames := []string{
+			"-Syu",
+			"--remove",
+			"-Rns",
+			"--noconfirm",
+			".",
+			"..",
+			"-",
+			".hidden",
+			"-invalid",
+		}
+		for _, name := range hostileNames {
+			if isValidPackageName(name) {
+				t.Errorf("isValidPackageName should reject hostile/leading-dash name %q", name)
+			}
+		}
+
+		// Legitimate packages with embedded dots must remain valid (S-05)
+		legitNames := []string{
+			"vim",
+			"glibc",
+			"lib32-foo",
+			"@world",
+			"db5.3",
+			"ffmpeg4.4",
+			"litehtml0.9",
+			"python-jaraco.classes",
+			"vid.stab",
+			"aspnet-runtime-9.0",
+		}
+		for _, name := range legitNames {
+			if !isValidPackageName(name) {
+				t.Errorf("isValidPackageName should accept legitimate package %q", name)
+			}
+		}
+	})
+
 	t.Run("PackageVersion_TruncationSafe", func(t *testing.T) {
 		// Extremely long versions should be safely truncated
 		longVersion := strings.Repeat("1.0.", 1000) + "final"
