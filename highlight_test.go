@@ -18,9 +18,9 @@ func TestHighlightingLogic(t *testing.T) {
 			{Source: "extra", Name: "neovim", Version: "0.9"},
 		}
 		m.textInput.SetValue("vim")
-		
+
 		m.performFiltering()
-		
+
 		if len(m.filtered) == 0 {
 			t.Errorf("Filtered list is empty, expected matches for 'vim'")
 		}
@@ -40,9 +40,9 @@ func TestHighlightingLogic(t *testing.T) {
 			{Name: "neovim", Size: "20MB", SizeBytes: 2000000},
 		}
 		m.textInput.SetValue("vim")
-		
+
 		m.performFiltering()
-		
+
 		if len(m.filtered) == 0 {
 			t.Errorf("Filtered list is empty, expected matches for 'vim'")
 		}
@@ -55,9 +55,9 @@ func TestHighlightingLogic(t *testing.T) {
 	t.Run("highlightMatchesWithSourceColor logic", func(t *testing.T) {
 		pkg := Package{Source: "extra", Name: "vim"}
 		indices := []int{6, 7, 8} // "extra/vim" -> v is at 6, i at 7, m at 8
-		
+
 		result := highlightMatchesWithSourceColor(pkg, indices)
-		
+
 		if result == "" {
 			t.Errorf("highlightMatchesWithSourceColor returned empty string")
 		}
@@ -68,26 +68,26 @@ func TestMatchIndicesConsolidation(t *testing.T) {
 	// This test ensures that we are using m.matchIndices for all modes in View()
 	// by checking if the render logic correctly picks up indices from m.matchIndices
 	// even in Remove mode.
-	
+
 	m := testModel(t, modeRemove, DefaultConfig())
 	m.width = 100
 	m.height = 40
-	
+
 	pkgList := []Package{
 		{Source: "extra", Name: "vim", Version: "9.0"},
 	}
 	m.filteredInstalled = pkgList
-	
+
 	// Set matchIndices
 	m.matchIndices = map[int][]int{
 		0: {6, 7, 8}, // vim
 	}
-	
+
 	defer func() {
 		if r := recover(); r != nil {
 			t.Errorf("View() panicked: %v", r)
 		}
 	}()
-	
+
 	_ = m.View()
 }

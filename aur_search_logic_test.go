@@ -27,7 +27,7 @@ func TestAurSearchTriggeringLogic(t *testing.T) {
 			name:               "Very short query (no search)",
 			query:              "g", // Length 1 < minSearchQueryLen (2)
 			shouldTrigger:      false,
-			shouldClearAur:     true, 
+			shouldClearAur:     true,
 			expectedStatusPart: "",
 		},
 		{
@@ -116,8 +116,8 @@ func TestAurSearchResponseHandling(t *testing.T) {
 
 	// Mock successful search response
 	msg := aurSearchMsg{
-		packages: []Package{{Name: "test-pkg", Source: "aur"}},
-		query:    "test",
+		packages:  []Package{{Name: "test-pkg", Source: "aur"}},
+		query:     "test",
 		timeTaken: 1 * time.Second,
 	}
 
@@ -135,7 +135,7 @@ func TestAurSearchResponseHandling(t *testing.T) {
 	m.aurPackages = nil
 	m.searchStatus = ""
 	msg.query = "test" // same query
-	
+
 	m.Update(msg)
 	if m.aurPackages != nil {
 		t.Errorf("aurPackages should NOT have been updated because repo filter excludes AUR")
@@ -147,14 +147,14 @@ func TestAurSearchResponseHandling(t *testing.T) {
 
 func TestAurSearchRaceCondition(t *testing.T) {
 	m := testModel(t, modeInstall, DefaultConfig())
-	
+
 	// User types "hel", search 1 triggers
 	m.textInput.SetValue("hel")
 	m.performFiltering()
 	if !m.searchingAUR || m.lastAURQuery != "hel" {
 		t.Fatalf("Search 1 for 'hel' should have triggered")
 	}
-	
+
 	// User quickly types "hello", search 2 is NOT triggered yet because searchingAUR is true
 	m.textInput.SetValue("hello")
 	m.performFiltering()
@@ -167,13 +167,13 @@ func TestAurSearchRaceCondition(t *testing.T) {
 
 	// Now Search 1 for "hel" returns
 	msg := aurSearchMsg{
-		packages: []Package{{Name: "hel-pkg", Source: "aur"}},
-		query:    "hel",
+		packages:  []Package{{Name: "hel-pkg", Source: "aur"}},
+		query:     "hel",
 		timeTaken: 100 * time.Millisecond,
 	}
-	
+
 	m.Update(msg)
-	
+
 	// THE FIX: m.searchingAUR should be true NOW because it should have triggered a new search for "hello"
 	if !m.searchingAUR {
 		t.Errorf("searchingAUR should be true after update because a pending query was waiting")

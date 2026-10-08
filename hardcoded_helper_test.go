@@ -11,16 +11,16 @@ import (
 func TestNoHardcodedAURHelpers(t *testing.T) {
 	// Files to skip
 	skipFiles := map[string]bool{
-		"config.go":        true, // Default values are allowed
-		"config_test.go":   true,
-		"commands_test.go": true,
-		"model_test.go":    true,
+		"config.go":           true, // Default values are allowed
+		"config_test.go":      true,
+		"commands_test.go":    true,
+		"model_test.go":       true,
 		"integration_test.go": true,
 		"mock_runner_test.go": true,
-		"quit_test.go": true,
-		"dashboard_test.go": true,
+		"quit_test.go":        true,
+		"dashboard_test.go":   true,
 		"cache_logic_test.go": true,
-		"types.go": true, // Struct definitions
+		"types.go":            true, // Struct definitions
 	}
 
 	// Patterns that look like hardcoded helper usage in commands

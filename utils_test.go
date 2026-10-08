@@ -418,5 +418,3 @@ func TestQueryPackageHelpers(t *testing.T) {
 		t.Errorf("Expected error from queryPackageSet")
 	}
 }
-
-

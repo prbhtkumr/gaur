@@ -13,7 +13,7 @@ func TestDashboardLoadingDimensions(t *testing.T) {
 	m_init.width = 80
 	m_init.height = 24
 	m_init.loading = true
-	
+
 	// Crucial: Initialize layout constants via Update and use the result
 	new_m, _ := m_init.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m := new_m.(*model)
@@ -24,7 +24,7 @@ func TestDashboardLoadingDimensions(t *testing.T) {
 	if len(lines) != 24 {
 		t.Errorf("Expected loading height 24, got %d", len(lines))
 	}
-	
+
 	for i, line := range lines {
 		if lipgloss.Width(line) != 80 {
 			t.Errorf("Line %d width mismatch: expected 80, got %d", i, lipgloss.Width(line))
@@ -34,10 +34,10 @@ func TestDashboardLoadingDimensions(t *testing.T) {
 
 func TestDashboardRendering(t *testing.T) {
 	m_init := testModel(t, modeDashboard, DefaultConfig())
-	
+
 	// Crucial: Initialize layout constants via Update and use the result
 	new_m, _ := m_init.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-	m := new_m.(*model) 
+	m := new_m.(*model)
 	m.loading = false
 
 	// Mock Dashboard Data
@@ -65,7 +65,7 @@ func TestDashboardRendering(t *testing.T) {
 		TopPackages: []PackageSize{
 			{Name: "huge-pkg", Size: "2.5 GiB"}, // Should be red
 			{Name: "big-pkg", Size: "750 MiB"},  // Should be orange
-			{Name: "small-pkg", Size: "10 MiB"},  // Should be cyan
+			{Name: "small-pkg", Size: "10 MiB"}, // Should be cyan
 		},
 	}
 
@@ -201,4 +201,3 @@ func TestDashboardMetricAndTableRendering(t *testing.T) {
 		t.Errorf("Dashboard view missing recently installed package")
 	}
 }
-

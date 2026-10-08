@@ -344,7 +344,7 @@ func TestLogDirectoryValidation(t *testing.T) {
 		"../logs",
 		"../../etc/cron.d",
 	}
-	
+
 	for _, p := range relativePaths {
 		t.Run("RelativePath_"+p, func(t *testing.T) {
 			err := InitLogger(LogLevelInfo, p)
@@ -373,7 +373,7 @@ func TestLogDirectoryValidation(t *testing.T) {
 
 	logPath := GetLogFilePath()
 	expectedDir := filepath.Join(tmpDir, "safe_logs")
-	
+
 	if !strings.HasPrefix(logPath, expectedDir) {
 		t.Errorf("Log path was not properly cleaned. Expected prefix %s, got %s", expectedDir, logPath)
 	}

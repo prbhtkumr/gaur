@@ -64,7 +64,7 @@ func TestRenderScrollbar(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := renderScrollbar(tt.total, tt.offset, tt.visibleHeight, color, tt.reversed)
-			
+
 			if tt.shouldBeEmpty {
 				if res != "" {
 					t.Errorf("Expected empty string, got %q", res)

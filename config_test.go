@@ -54,7 +54,7 @@ func TestConfigLoadPersistence(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.toml")
-	
+
 	// Test Saving
 	cfg := DefaultConfig()
 	cfg.UI.Theme = "dracula"
@@ -85,7 +85,7 @@ func TestConfigMultiKeyPersistence(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	configPath := filepath.Join(tmpDir, "config.toml")
-	
+
 	cfg := DefaultConfig()
 	// DefaultConfig now has multiple keys for modes
 	err = saveConfig(configPath, cfg)

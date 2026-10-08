@@ -37,7 +37,9 @@ func TestUnitConsistency(t *testing.T) {
 				// Special case for our "Random size" which might have float precision issues in the test itself
 				if tt.name == "Random size MiB" || tt.name == "Random size GiB" {
 					diff := parsed - tt.bytes
-					if diff < 0 { diff = -diff }
+					if diff < 0 {
+						diff = -diff
+					}
 					if diff > 1024 { // Allow 1KB error for float tests
 						t.Errorf("parseSizeToBytes(%q) = %d, want %d (diff %d)", formatted, parsed, tt.bytes, diff)
 					}
@@ -90,7 +92,7 @@ func TestDashboardLayoutWidth(t *testing.T) {
 	if len(formatted) < 10 {
 		t.Errorf("Expected formatted size %q to be at least 10 chars, got %d", formatted, len(formatted))
 	}
-	
+
 	// Ensure it doesn't exceed 10 if it is exactly 10
 	if len(size) == 10 && len(formatted) != 10 {
 		t.Errorf("Expected formatted size %q to be exactly 10 chars, got %d", formatted, len(formatted))

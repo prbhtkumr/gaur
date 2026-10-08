@@ -128,5 +128,3 @@ func TestRenderHelpText(t *testing.T) {
 		}
 	}
 }
-
-

@@ -199,7 +199,6 @@ func GetMirrorProtocolNames() []string {
 	return mapSlice(MirrorProtocols, func(p MirrorProtocol) string { return p.Name })
 }
 
-
 // mirrorProgressMsg is sent for each line of reflector output during mirror update
 type mirrorProgressMsg struct {
 	current int

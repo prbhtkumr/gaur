@@ -169,4 +169,3 @@ func TestParseInstalledPackages(t *testing.T) {
 		t.Errorf("expected ripgrep, got %+v", pkgs)
 	}
 }
-

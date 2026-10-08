@@ -1,14 +1,14 @@
 package main
 
 import (
-	"testing"
-	"strings"
 	"github.com/charmbracelet/lipgloss"
+	"strings"
+	"testing"
 )
 
 func TestAllConfirmationMenus(t *testing.T) {
 	cfg := DefaultConfig()
-	
+
 	tests := []struct {
 		name        string
 		confirmType confirmationType
@@ -77,9 +77,9 @@ func TestAllConfirmationMenus(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(m)
 			}
-			
+
 			view := m.renderConfirmationDialog(80, 24, lipgloss.Color("7"))
-			
+
 			for _, exp := range tt.expected {
 				if !strings.Contains(stripAnsi(view), exp) {
 					t.Errorf("Expected view to contain %q, but it didn't.\nView:\n%s", exp, view)
