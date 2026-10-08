@@ -86,7 +86,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.showErrorOverlay {
 			if key.Matches(msg, m.keys.Cancel) || key.Matches(msg, m.keys.Confirm) || key.Matches(msg, m.keys.Quit) {
-				m.showErrorOverlay = false
+				m.resetErrorOverlay()
 			}
 			return m, nil
 		}
@@ -687,7 +687,7 @@ func (m *model) handleConfirmationKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, executeRemoveOrphansInTerminal(m, m.confirmPackages)
 		}
 	} else if key.Matches(msg, m.keys.Cancel) || msg.String() == "n" || msg.String() == "N" {
-		m.showConfirmation = false
+		m.resetConfirmation()
 	}
 
 	// Scrolling in confirmation

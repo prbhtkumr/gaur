@@ -266,3 +266,76 @@ func TestSwitchToMode(t *testing.T) {
 		t.Errorf("switchToMode(modeUpdate) failed: mode=%v, loading=%v, cmd=%v", m.mode, m.loading, cmd)
 	}
 }
+
+func TestModelSubStateResets(t *testing.T) {
+	m := &model{
+		searchingAUR:          true,
+		lastAURQuery:          "test-query",
+		searchStatus:          "Searching...",
+		searchError:           true,
+		searchTerm:            "term",
+		lastQuery:             "query",
+		aurPackages:           []Package{{Name: "pkg1"}},
+		markedPackages:        map[string]bool{"pkg1": true},
+		selectionPanelFocused: true,
+		selectionPanelIndex:   3,
+		selectionScrollOffset: 2,
+		packageDetails:        "details",
+		detailsForPackage:     "pkg1",
+		detailsScrollOffset:   5,
+		loadingDetails:        true,
+		showConfirmation:      true,
+		confirmPackages:       []string{"pkg1"},
+		confirmScrollOffset:   4,
+		maxConfirmScroll:      10,
+		showErrorOverlay:      true,
+		errorTitle:            "Error Title",
+		errorMessage:          "Error Message",
+		errorDetails:          "Error Details",
+		cacheToFree:           1024,
+		selectedIndex:         7,
+		updateScrollOffset:    3,
+		cacheMenuIndex:        2,
+	}
+	m.textInput.SetValue("input value")
+
+	// Test resetConfirmation isolated
+	m.resetConfirmation()
+	if m.showConfirmation || len(m.confirmPackages) != 0 || m.confirmScrollOffset != 0 || m.maxConfirmScroll != 0 {
+		t.Errorf("resetConfirmation failed: showConfirmation=%v, pkgs=%v, offset=%d", m.showConfirmation, m.confirmPackages, m.confirmScrollOffset)
+	}
+
+	// Test resetErrorOverlay isolated
+	m.resetErrorOverlay()
+	if m.showErrorOverlay || m.errorTitle != "" || m.errorMessage != "" || m.errorDetails != "" {
+		t.Errorf("resetErrorOverlay failed: show=%v, title=%q, msg=%q", m.showErrorOverlay, m.errorTitle, m.errorMessage)
+	}
+
+	// Test resetSelectionPanel isolated
+	m.resetSelectionPanel()
+	if len(m.markedPackages) != 0 || m.selectionPanelFocused || m.selectionPanelIndex != 0 || m.selectionScrollOffset != 0 {
+		t.Errorf("resetSelectionPanel failed: marked=%v, focused=%v, index=%d", m.markedPackages, m.selectionPanelFocused, m.selectionPanelIndex)
+	}
+
+	// Test resetDetailsPane isolated
+	m.resetDetailsPane()
+	if m.packageDetails != "" || m.detailsForPackage != "" || m.detailsScrollOffset != 0 || m.loadingDetails {
+		t.Errorf("resetDetailsPane failed: details=%q, loading=%v", m.packageDetails, m.loadingDetails)
+	}
+
+	// Test full resetState
+	m.showConfirmation = true
+	m.confirmPackages = []string{"pkg2"}
+	m.showErrorOverlay = true
+	m.resetState()
+
+	if m.searchingAUR || m.lastAURQuery != "" || m.searchStatus != "" || m.searchError || m.searchTerm != "" {
+		t.Errorf("resetState did not clean search state")
+	}
+	if m.textInput.Value() != "" || m.lastQuery != "" || len(m.aurPackages) != 0 {
+		t.Errorf("resetState did not clean query inputs")
+	}
+	if m.showConfirmation || m.showErrorOverlay || m.cacheToFree != 0 || m.selectedIndex != 0 || m.updateScrollOffset != 0 || m.cacheMenuIndex != 0 {
+		t.Errorf("resetState did not clean all view modes and overlay states")
+	}
+}

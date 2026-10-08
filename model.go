@@ -275,8 +275,7 @@ func (m *model) refreshAll() tea.Cmd {
 	)
 }
 
-// resetState clears common state fields like search progress and package selections
-func (m *model) resetState() {
+func (m *model) resetSearchState() {
 	if m.aurCancelFunc != nil {
 		m.aurCancelFunc()
 		m.aurCancelFunc = nil
@@ -286,21 +285,53 @@ func (m *model) resetState() {
 	m.searchStatus = ""
 	m.searchError = false
 	m.searchTerm = ""
+	m.textInput.SetValue("")
+	m.lastQuery = ""
+	m.aurPackages = nil
+}
+
+func (m *model) resetSelectionPanel() {
 	m.markedPackages = make(map[string]bool)
 	m.selectionPanelFocused = false
 	m.selectionPanelIndex = 0
 	m.selectionScrollOffset = 0
-	m.cacheToFree = 0
+}
+
+func (m *model) resetDetailsPane() {
 	m.packageDetails = ""
 	m.detailsForPackage = ""
 	m.detailsScrollOffset = 0
 	m.loadingDetails = false
-	m.textInput.SetValue("")
-	m.lastQuery = ""
+}
+
+func (m *model) resetConfirmation() {
+	m.showConfirmation = false
+	m.confirmPackages = nil
+	m.confirmScrollOffset = 0
+	m.maxConfirmScroll = 0
+}
+
+func (m *model) resetErrorOverlay() {
+	m.showErrorOverlay = false
+	m.errorTitle = ""
+	m.errorMessage = ""
+	m.errorDetails = ""
+}
+
+// resetState clears common state fields like search progress and package selections
+func (m *model) resetState() {
+	m.resetSearchState()
+	m.resetSelectionPanel()
+	m.resetDetailsPane()
+	m.resetConfirmation()
+	m.resetErrorOverlay()
+	m.cacheToFree = 0
 	m.selectedIndex = 0
-	m.aurPackages = nil
 	m.filtered = nil
 	m.filteredInstalled = nil
+	m.updateScrollOffset = 0
+	m.maxUpdateScroll = 0
+	m.cacheMenuIndex = 0
 	m.updatePlaceholder()
 	m.recalculateTextInputWidth()
 }
