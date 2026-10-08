@@ -118,46 +118,35 @@ func checkDependencies() error {
 	return nil
 }
 
-// executeInstallInTerminal runs the AUR helper interactively using tea.ExecProcess
-func executeInstallInTerminal(m *model, packages []string) tea.Cmd {
-	LogCommand("install", packages)
+// executePackageOperationInTerminal runs the AUR helper interactively for a package operation.
+func executePackageOperationInTerminal(m *model, op confirmationType, action string, packages []string) tea.Cmd {
+	LogCommand(action, packages)
 
 	validNames, _ := sanitizePackageNames(packages)
 	if len(validNames) == 0 {
-		LogError("CMD", "Install aborted: no valid package names from %v", packages)
+		LogError("CMD", "%s operation aborted: no valid package names from %v", action, packages)
 		return func() tea.Msg {
-			return execCompleteMsg{operation: confirmInstall, packages: packages, err: fmt.Errorf("no valid package names")}
+			return execCompleteMsg{operation: op, packages: packages, err: fmt.Errorf("no valid package names")}
 		}
 	}
 
-	args := BuildAURCommand(&m.config, "install", validNames...)
+	args := BuildAURCommand(&m.config, action, validNames...)
 	LogDebug("CMD", "Executing: %s", strings.Join(args, " "))
 
 	return runner.Interactive(func(err error) tea.Msg {
-		LogCommandResult("install", err == nil, err)
-		return execCompleteMsg{operation: confirmInstall, packages: validNames, err: err}
+		LogCommandResult(action, err == nil, err)
+		return execCompleteMsg{operation: op, packages: validNames, err: err}
 	}, args[0], args[1:]...)
+}
+
+// executeInstallInTerminal runs the AUR helper interactively using tea.ExecProcess
+func executeInstallInTerminal(m *model, packages []string) tea.Cmd {
+	return executePackageOperationInTerminal(m, confirmInstall, "install", packages)
 }
 
 // executeRemoveInTerminal runs the AUR helper interactively using tea.ExecProcess
 func executeRemoveInTerminal(m *model, packages []string) tea.Cmd {
-	LogCommand("remove", packages)
-
-	validNames, _ := sanitizePackageNames(packages)
-	if len(validNames) == 0 {
-		LogError("CMD", "Remove aborted: no valid package names from %v", packages)
-		return func() tea.Msg {
-			return execCompleteMsg{operation: confirmRemove, packages: packages, err: fmt.Errorf("no valid package names")}
-		}
-	}
-
-	args := BuildAURCommand(&m.config, "remove", validNames...)
-	LogDebug("CMD", "Executing: %s", strings.Join(args, " "))
-
-	return runner.Interactive(func(err error) tea.Msg {
-		LogCommandResult("remove", err == nil, err)
-		return execCompleteMsg{operation: confirmRemove, packages: validNames, err: err}
-	}, args[0], args[1:]...)
+	return executePackageOperationInTerminal(m, confirmRemove, "remove", packages)
 }
 
 // executeUpdateInTerminal runs the AUR helper interactively using tea.ExecProcess
@@ -307,33 +296,12 @@ func executeSelectiveClean(m *model, packages []string, pacmanCachePath string, 
 
 // executeRemoveOrphansInTerminal runs the AUR helper interactively using tea.ExecProcess
 func executeRemoveOrphansInTerminal(m *model, orphans []string) tea.Cmd {
-
-	validNames, _ := sanitizePackageNames(orphans)
-	if len(validNames) == 0 {
-		return func() tea.Msg {
-			return execCompleteMsg{operation: confirmRemoveOrphans, packages: orphans, err: fmt.Errorf("no valid package names")}
-		}
-	}
-
-	args := BuildAURCommand(&m.config, "remove", validNames...)
-	return runner.Interactive(func(err error) tea.Msg {
-		return execCompleteMsg{operation: confirmRemoveOrphans, packages: validNames, err: err}
-	}, args[0], args[1:]...)
+	return executePackageOperationInTerminal(m, confirmRemoveOrphans, "remove", orphans)
 }
 
 // executeSelectiveUpdateInTerminal runs the AUR helper interactively using tea.ExecProcess
 func executeSelectiveUpdateInTerminal(m *model, packages []string) tea.Cmd {
-	validNames, _ := sanitizePackageNames(packages)
-	if len(validNames) == 0 {
-		return func() tea.Msg {
-			return execCompleteMsg{operation: confirmSelectiveUpdate, packages: packages, err: fmt.Errorf("no valid package names")}
-		}
-	}
-
-	args := BuildAURCommand(&m.config, "install", validNames...)
-	return runner.Interactive(func(err error) tea.Msg {
-		return execCompleteMsg{operation: confirmSelectiveUpdate, packages: validNames, err: err}
-	}, args[0], args[1:]...)
+	return executePackageOperationInTerminal(m, confirmSelectiveUpdate, "install", packages)
 }
 
 // syncRepositoriesInTerminal runs the AUR helper interactively to sync databases
