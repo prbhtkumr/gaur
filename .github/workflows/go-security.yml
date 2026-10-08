@@ -93,6 +93,9 @@ jobs:
       - name: Verify go mod tidy
         run: go mod tidy -diff
 
+      - name: Verify go vet
+        run: go vet ./...
+
   # ════════════════════════════════════════════════════════════════════════════
   # Security Tests
   # ════════════════════════════════════════════════════════════════════════════
@@ -279,7 +282,6 @@ jobs:
 
       - name: Check licenses
         run: go-licenses check ./...
-        continue-on-error: true # Report but don't fail
 
   # ════════════════════════════════════════════════════════════════════════════
   # CI Gate (Unified Required Check)
