@@ -190,3 +190,39 @@ func TestResolvePackages(t *testing.T) {
 		t.Errorf("Expected fallback package for missing-pkg, got %+v", resolved[1])
 	}
 }
+
+func TestModelRunnerInjection(t *testing.T) {
+	// 1. Default runner when nil
+	var nilModel *model
+	if nilModel.getRunner() != runner {
+		t.Errorf("nilModel.getRunner() should return global runner")
+	}
+
+	emptyModel := &model{}
+	if emptyModel.getRunner() != runner {
+		t.Errorf("emptyModel.getRunner() without runner should return global runner")
+	}
+
+	// 2. Injected runner
+	mockCalled := false
+	mock := &MockCommandRunner{
+		RunFunc: func(name string, args ...string) ([]byte, error) {
+			mockCalled = true
+			return []byte("mock output"), nil
+		},
+	}
+
+	cfg := DefaultConfig()
+	m := initialModel(modeInstall, cfg, nil, mock)
+	if m.runner != mock {
+		t.Fatalf("initialModel did not inject mock runner into model.runner")
+	}
+	if m.getRunner() != mock {
+		t.Fatalf("m.getRunner() should return injected mock")
+	}
+
+	out, err := m.getRunner().Run("test-cmd")
+	if err != nil || string(out) != "mock output" || !mockCalled {
+		t.Errorf("Injected mock was not executed correctly, got out: %s, err: %v, called: %v", out, err, mockCalled)
+	}
+}

@@ -107,6 +107,14 @@ func (r RealCommandRunner) Interactive(onExit func(error) tea.Msg, name string, 
 
 var runner CommandRunner = RealCommandRunner{}
 
+// getActiveRunner returns the first provided CommandRunner, or the global runner if none provided.
+func getActiveRunner(r ...CommandRunner) CommandRunner {
+	if len(r) > 0 && r[0] != nil {
+		return r[0]
+	}
+	return runner
+}
+
 // View modes for the TUI application
 type viewMode int
 

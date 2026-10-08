@@ -1188,7 +1188,7 @@ func (m *model) renderMirrorOverlay(innerWidth, innerHeight int) string {
 	content = append(content, "")
 
 	// Reflector check
-	if !checkReflectorInstalled() {
+	if !checkReflectorInstalled(m.getRunner()) {
 		errorStyle := lipgloss.NewStyle().Foreground(colorRed).Width(overlayWidth - 4).Align(lipgloss.Center)
 		content = append(content, errorStyle.Render("reflector is not installed!"))
 		content = append(content, "")

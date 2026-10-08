@@ -11,6 +11,15 @@ import (
 )
 
 func (m *model) initSettings() {
+	var themeOptions []string
+	if m.themeLoader != nil {
+		themeOptions = m.themeLoader.ListThemes()
+	} else if globalThemeLoader != nil {
+		themeOptions = globalThemeLoader.ListThemes()
+	} else {
+		themeOptions = []string{"default"}
+	}
+
 	m.settingsItems = []SettingItem{
 		{
 			Label:     "AUR Helper",
@@ -20,7 +29,7 @@ func (m *model) initSettings() {
 		{
 			Label:     "Theme",
 			ConfigKey: "ui.theme",
-			Options:   m.themeLoader.ListThemes(),
+			Options:   themeOptions,
 		},
 		{
 			Label:     "Default View",

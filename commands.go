@@ -78,7 +78,7 @@ func getPackageDetails(m *model, pkg Package) tea.Cmd {
 		}
 
 		args := []string{"--noconfirm", arg, pkg.Name}
-		out, err := runner.Run(m.config.Commands.AurHelper, args...)
+		out, err := m.getRunner().Run(m.config.Commands.AurHelper, args...)
 		if err != nil {
 			return packageDetailsMsg{details: "Failed to get package details", packageName: pkg.Name, err: err}
 		}
@@ -133,7 +133,7 @@ func executePackageOperationInTerminal(m *model, op confirmationType, action str
 	args := BuildAURCommand(&m.config, action, validNames...)
 	LogDebug("CMD", "Executing: %s", strings.Join(args, " "))
 
-	return runner.Interactive(func(err error) tea.Msg {
+	return m.getRunner().Interactive(func(err error) tea.Msg {
 		LogCommandResult(action, err == nil, err)
 		return execCompleteMsg{operation: op, packages: validNames, err: err}
 	}, args[0], args[1:]...)
@@ -155,7 +155,7 @@ func executeUpdateInTerminal(m *model) tea.Cmd {
 	args := BuildAURCommand(&m.config, "full-update")
 	LogDebug("CMD", "Executing: %s", strings.Join(args, " "))
 
-	return runner.Interactive(func(err error) tea.Msg {
+	return m.getRunner().Interactive(func(err error) tea.Msg {
 		LogCommandResult("full-update", err == nil, err)
 		return execCompleteMsg{operation: confirmUpdate, err: err}
 	}, args[0], args[1:]...)
@@ -185,7 +185,7 @@ func executeCleanCache(m *model, op confirmationType, keep int, removed bool) te
 	// System cache cleaning command
 	sysArgs := append([]string{"-r"}, args...)
 
-	return runner.Interactive(func(err error) tea.Msg {
+	return m.getRunner().Interactive(func(err error) tea.Msg {
 		if err != nil {
 			return execCompleteMsg{operation: op, err: err}
 		}
@@ -201,7 +201,7 @@ func executeCleanCache(m *model, op confirmationType, keep int, removed bool) te
 						cleanArgs := append([]string{"-q", "-r", "-c", pkgPath}, args...)
 						// We run these silently for now or we could chain them.
 						// To keep it simple and interactive-friendly, we'll just do it sequentially.
-						_, _ = runner.Run(cacheTool, cleanArgs...)
+						_, _ = m.getRunner().Run(cacheTool, cleanArgs...)
 					}
 				}
 			}
@@ -292,7 +292,7 @@ func executeSelectiveClean(m *model, packages []string, pacmanCachePath string, 
 		execArgs = args
 	}
 
-	return runner.Interactive(func(err error) tea.Msg {
+	return m.getRunner().Interactive(func(err error) tea.Msg {
 		return execCompleteMsg{operation: confirmCleanSelective, err: err}
 	}, execCmd, execArgs...)
 }
@@ -313,7 +313,7 @@ func syncRepositoriesInTerminal(m *model) tea.Cmd {
 	args := BuildAURCommand(&m.config, "sync")
 	LogDebug("CMD", "Executing: %s", strings.Join(args, " "))
 
-	return runner.Interactive(func(err error) tea.Msg {
+	return m.getRunner().Interactive(func(err error) tea.Msg {
 		LogCommandResult("sync", err == nil, err)
 		return syncRepositoriesMsg{err: err}
 	}, args[0], args[1:]...)

@@ -29,7 +29,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+r" && m.mode == modeDashboard {
 			m.loading = true
 			m.statusMessage = "Refreshing dashboard..."
-			return m, getDashboardData(&m.config)
+			return m, getDashboardData(&m.config, m.getRunner())
 		}
 
 		// 2. Overlays & Panel Intercepts
@@ -108,7 +108,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = modeDashboard
 					m.loading = true
 					m.resetState()
-					return m, getDashboardData(&m.config)
+					return m, getDashboardData(&m.config, m.getRunner())
 				}
 			case '2':
 				if key.Matches(msg, m.keys.InstallMode) {
@@ -134,7 +134,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.resetState()
 						m.loading = true
 						m.statusMessage = "Refreshing installed packages..."
-						return m, getInstalledPackages()
+						return m, getInstalledPackages(m.getRunner())
 					}
 					return m, nil
 				}
@@ -206,7 +206,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case msg.String() == "R":
 			if m.mode == modeDashboard && !m.loading && m.dashboard.Orphans > 0 {
-				orphanList, _ := runner.Run(m.config.Commands.AurHelper, "-Qdtq")
+				orphanList, _ := m.getRunner().Run(m.config.Commands.AurHelper, "-Qdtq")
 				m.confirmPackages = strings.Fields(string(orphanList))
 				m.showConfirmation = true
 				m.confirmType = confirmRemoveOrphans
@@ -222,13 +222,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, m.performFiltering()
 				}
 				m.loading = true
-				return m, getInstalledPackages()
+				return m, getInstalledPackages(m.getRunner())
 			}
 		case key.Matches(msg, m.keys.DashboardMode):
 			m.mode = modeDashboard
 			m.loading = true
 			m.resetState()
-			return m, getDashboardData(&m.config)
+			return m, getDashboardData(&m.config, m.getRunner())
 		case key.Matches(msg, m.keys.InstallMode):
 			if m.mode != modeInstall {
 				m.mode = modeInstall
@@ -248,7 +248,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.resetState()
 				m.loading = true
 				m.statusMessage = "Refreshing installed packages..."
-				return m, getInstalledPackages()
+				return m, getInstalledPackages(m.getRunner())
 			}
 			return m, nil
 		case key.Matches(msg, m.keys.Selective):
@@ -410,7 +410,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				// Re-apply search filter if there was one
 				if m.textInput.Value() != "" {
-					m.filtered = fuzzyFilter(m.filtered, m.textInput.Value())
+					m.filtered = fuzzyFilter(m.filtered, m.textInput.Value(), m.getRunner())
 					m.matchIndices = computeAllMatchIndices(m.filtered, m.textInput.Value())
 				}
 			}
@@ -437,7 +437,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.statusMessage = "Update completed successfully"
 			}
-			return m, checkUpdates(&m.config)
+			return m, checkUpdates(&m.config, m.getRunner())
 		}
 
 	case execCompleteMsg:
@@ -785,7 +785,7 @@ func (m *model) performFiltering() tea.Cmd {
 		if shouldSearchAUR && len(searchQuery) >= minSearchQueryLen && searchQuery != m.lastAURQuery && !m.searchingAUR {
 			m.searchingAUR = true
 			m.lastAURQuery = searchQuery
-			cmds = append(cmds, m.spinner.Tick, searchAUR(&m.config, searchQuery))
+			cmds = append(cmds, m.spinner.Tick, searchAUR(&m.config, searchQuery, m.getRunner()))
 		}
 
 		m.filterAllPackages(query)
@@ -798,7 +798,7 @@ func (m *model) performFiltering() tea.Cmd {
 			m.filtered = m.updatableAll
 			m.matchIndices = nil
 		} else {
-			m.filtered = fuzzyFilter(m.updatableAll, query)
+			m.filtered = fuzzyFilter(m.updatableAll, query, m.getRunner())
 			m.matchIndices = computeAllMatchIndices(m.filtered, query)
 		}
 	}
@@ -812,7 +812,7 @@ func (m *model) performFiltering() tea.Cmd {
 			m.filtered = allPkgs
 			m.matchIndices = nil
 		} else {
-			m.filtered = fuzzyFilter(allPkgs, query)
+			m.filtered = fuzzyFilter(allPkgs, query, m.getRunner())
 			m.matchIndices = computeAllMatchIndices(m.filtered, query)
 		}
 	}
@@ -1000,7 +1000,7 @@ func (m *model) handleMirrorOverlayKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.adjustMirrorOption(1)
 
 	case key.Matches(msg, m.keys.Confirm):
-		if !checkReflectorInstalled() {
+		if !checkReflectorInstalled(m.getRunner()) {
 			m.mirrorError = "reflector is not installed"
 			return m, nil
 		}
@@ -1009,7 +1009,7 @@ func (m *model) handleMirrorOverlayKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.mirrorProgressTotal = m.mirrorConfig.Latest
 		m.mirrorError = ""
 		LogInfo("MIRROR", "Acquiring sudo credentials for mirror update")
-		return m, acquireSudoForMirror()
+		return m, acquireSudoForMirror(m.getRunner())
 	}
 
 	return m, nil

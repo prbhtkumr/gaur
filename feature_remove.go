@@ -7,15 +7,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func getInstalledPackages() tea.Cmd {
+func getInstalledPackages(r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
-
-		out, err := runner.Run("pacman", "-Qi")
+		activeRunner := getActiveRunner(r...)
+		out, err := activeRunner.Run("pacman", "-Qi")
 		if err != nil {
 			return installedPackagesMsg{err: err}
 		}
 
-		packages, err := parseInstalledPackages(string(out))
+		packages, err := parseInstalledPackages(string(out), r...)
 		if err != nil {
 			return installedPackagesMsg{err: fmt.Errorf("failed to parse installed packages: %w", err)}
 		}
@@ -23,7 +23,7 @@ func getInstalledPackages() tea.Cmd {
 	}
 }
 
-func parseInstalledPackages(output string) ([]Package, error) {
+func parseInstalledPackages(output string, r ...CommandRunner) ([]Package, error) {
 	var packages []Package
 	blocks := strings.Split(output, "\n\n")
 
@@ -61,8 +61,10 @@ func parseInstalledPackages(output string) ([]Package, error) {
 		}
 	}
 
+	activeRunner := getActiveRunner(r...)
+
 	repoMap := make(map[string]string)
-	repoOut, err := runner.Run("pacman", "-Sl")
+	repoOut, err := activeRunner.Run("pacman", "-Sl")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query package repositories: %w", err)
 	}
@@ -80,7 +82,7 @@ func parseInstalledPackages(output string) ([]Package, error) {
 		}
 	}
 
-	foreignOut, err := runner.Run("pacman", "-Qm")
+	foreignOut, err := activeRunner.Run("pacman", "-Qm")
 	if err == nil {
 		foreignPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(foreignOut), "\n") {
@@ -96,7 +98,7 @@ func parseInstalledPackages(output string) ([]Package, error) {
 		}
 	}
 
-	explicitOut, err := runner.Run("pacman", "-Qe")
+	explicitOut, err := activeRunner.Run("pacman", "-Qe")
 	if err == nil {
 		explicitPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(explicitOut), "\n") {
@@ -110,7 +112,7 @@ func parseInstalledPackages(output string) ([]Package, error) {
 		}
 	}
 
-	orphanOut, err := runner.Run("pacman", "-Qdt")
+	orphanOut, err := activeRunner.Run("pacman", "-Qdt")
 	if err == nil {
 		orphanPkgs := make(map[string]bool)
 		for _, line := range strings.Split(string(orphanOut), "\n") {
@@ -167,6 +169,6 @@ func (m *model) filterInstalledPackages(query string) {
 		return
 	}
 
-	m.filteredInstalled = fuzzyFilter(candidates, searchQuery)
+	m.filteredInstalled = fuzzyFilter(candidates, searchQuery, m.getRunner())
 	m.matchIndices = computeAllMatchIndices(m.filteredInstalled, searchQuery)
 }

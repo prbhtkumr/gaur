@@ -126,8 +126,8 @@ type mirrorSudoReadyMsg struct {
 
 // acquireSudoForMirror suspends the TUI and runs "sudo -v" to cache credentials,
 // so the subsequent background reflector process won't need to prompt for a password.
-func acquireSudoForMirror() tea.Cmd {
-	return runner.Interactive(func(err error) tea.Msg {
+func acquireSudoForMirror(r ...CommandRunner) tea.Cmd {
+	return getActiveRunner(r...).Interactive(func(err error) tea.Msg {
 		return mirrorSudoReadyMsg{err: err}
 	}, "sudo", "-v")
 }
@@ -293,8 +293,8 @@ func waitForMirrorProgress(ch chan tea.Msg) tea.Cmd {
 }
 
 // checkReflectorInstalled verifies reflector is available
-func checkReflectorInstalled() bool {
-	_, err := runner.Run("which", "reflector")
+func checkReflectorInstalled(r ...CommandRunner) bool {
+	_, err := getActiveRunner(r...).Run("which", "reflector")
 	return err == nil
 }
 

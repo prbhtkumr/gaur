@@ -10,6 +10,7 @@ import (
 // Model
 type model struct {
 	config                Config
+	runner                CommandRunner
 	keys                  KeyMap
 	themeLoader           *ThemeLoader
 	textInput             textinput.Model
@@ -80,7 +81,10 @@ type model struct {
 	mirrorProgressTotal   int // Total number of mirrors to process
 }
 
-func initialModel(initialMode viewMode, cfg Config, tl *ThemeLoader) *model {
+func initialModel(initialMode viewMode, cfg Config, tl *ThemeLoader, r ...CommandRunner) *model {
+	if tl == nil {
+		tl = GetThemeLoader()
+	}
 	ti := textinput.New()
 	ti.CharLimit = textInputCharLimit
 	ti.Width = textInputDefaultWidth
@@ -91,6 +95,7 @@ func initialModel(initialMode viewMode, cfg Config, tl *ThemeLoader) *model {
 
 	m := &model{
 		config:         cfg,
+		runner:         getActiveRunner(r...),
 		keys:           NewKeyMap(cfg.Keys),
 		themeLoader:    tl,
 		textInput:      ti,
@@ -133,14 +138,14 @@ func (m *model) Init() tea.Cmd {
 	return tea.Batch(
 		textinput.Blink,
 		m.spinner.Tick,
-		loadRepoPackages(),
-		getInstalledPackages(),
+		loadRepoPackages(m.getRunner()),
+		getInstalledPackages(m.getRunner()),
 		func() tea.Msg {
 			switch m.mode {
 			case modeDashboard:
-				return getDashboardData(&m.config)()
+				return getDashboardData(&m.config, m.getRunner())()
 			case modeUpdate:
-				return checkUpdates(&m.config)()
+				return checkUpdates(&m.config, m.getRunner())()
 			}
 			return nil
 		},
@@ -177,16 +182,24 @@ func (m *model) selectedPackage() *Package {
 	return nil
 }
 
+// getRunner returns the model's injected CommandRunner, or the global runner if unset.
+func (m *model) getRunner() CommandRunner {
+	if m != nil && m.runner != nil {
+		return m.runner
+	}
+	return runner
+}
+
 // refreshAll triggers a full refresh of all system data
 func (m *model) refreshAll() tea.Cmd {
 	m.loading = true
 	m.pendingUpdates = nil
 	m.detailsCache = make(map[string]string)
 	return tea.Batch(
-		getDashboardData(&m.config),
-		loadRepoPackages(),
-		getInstalledPackages(),
-		checkUpdates(&m.config),
+		getDashboardData(&m.config, m.getRunner()),
+		loadRepoPackages(m.getRunner()),
+		getInstalledPackages(m.getRunner()),
+		checkUpdates(&m.config, m.getRunner()),
 	)
 }
 

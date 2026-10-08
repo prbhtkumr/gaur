@@ -44,7 +44,7 @@ func sanitizePackageNames(names []string) ([]string, bool) {
 
 // fuzzyFilter filters packages using fzf for fuzzy matching.
 // Returns filtered packages sorted by fzf's relevance ranking.
-func fuzzyFilter(packages []Package, query string) []Package {
+func fuzzyFilter(packages []Package, query string, r ...CommandRunner) []Package {
 	if query == "" || len(packages) == 0 {
 		return packages
 	}
@@ -55,7 +55,7 @@ func fuzzyFilter(packages []Package, query string) []Package {
 		input.WriteString(fmt.Sprintf("%d\t%s\n", i, pkg.Name))
 	}
 
-	stdout, _ := runner.RunWithInput(input.String(), "fzf", "--filter", query, "-d", "\t", "-n2", "--tiebreak=begin,length")
+	stdout, _ := getActiveRunner(r...).RunWithInput(input.String(), "fzf", "--filter", query, "-d", "\t", "-n2", "--tiebreak=begin,length")
 
 	// Parse output and rebuild package list
 	var result []Package

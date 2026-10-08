@@ -15,8 +15,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func getDashboardData(c *Config) tea.Cmd {
+func getDashboardData(c *Config, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
+		activeRunner := getActiveRunner(r...)
 		var data DashboardData
 		var errs []error
 		var dataMu sync.Mutex
@@ -37,7 +38,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		go func() {
 			defer wg.Done()
 			args := BuildAURCommand(c, "query-all", "-Qq") // Using a generic query
-			out, err := runner.Run(args[0], args[1:]...)
+			out, err := activeRunner.Run(args[0], args[1:]...)
 			if err == nil {
 				lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 				dataMu.Lock()
@@ -61,7 +62,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		go func() {
 			defer wg.Done()
 			args := BuildAURCommand(c, "query-explicit", "-Qe")
-			out, err := runner.Run(args[0], args[1:]...)
+			out, err := activeRunner.Run(args[0], args[1:]...)
 			if err == nil {
 				val := countLines(string(out))
 				dataMu.Lock()
@@ -77,7 +78,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		go func() {
 			defer wg.Done()
 			args := BuildAURCommand(c, "query-foreign", "-Qm")
-			out, err := runner.Run(args[0], args[1:]...)
+			out, err := activeRunner.Run(args[0], args[1:]...)
 			if err == nil {
 				val := countLines(string(out))
 				dataMu.Lock()
@@ -93,7 +94,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		go func() {
 			defer wg.Done()
 			args := BuildAURCommand(c, "query-orphans", "-Qdt")
-			out, err := runner.Run(args[0], args[1:]...)
+			out, err := activeRunner.Run(args[0], args[1:]...)
 			if err == nil {
 				val := countLines(string(out))
 				dataMu.Lock()
@@ -114,7 +115,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			out, err := runner.Run("pacman", "-Sl")
+			out, err := activeRunner.Run("pacman", "-Sl")
 			if err == nil {
 				dist := make(map[string]int)
 				lines := strings.Split(strings.TrimSpace(string(out)), "\n")
@@ -137,7 +138,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		go func() {
 			defer wg.Done()
 			// Many helpers support -Ps for stats
-			out, err := runner.Run(c.Commands.AurHelper, "-Ps")
+			out, err := activeRunner.Run(c.Commands.AurHelper, "-Ps")
 			if err == nil {
 				ts, tsb, miss, top := parseParuStats(string(out))
 				dataMu.Lock()
@@ -155,7 +156,7 @@ func getDashboardData(c *Config) tea.Cmd {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			out, err := runner.Run("grep", " installed ", "/var/log/pacman.log")
+			out, err := activeRunner.Run("grep", " installed ", "/var/log/pacman.log")
 			if err == nil {
 				var recent []RecentPackage
 				lines := strings.Split(strings.TrimSpace(string(out)), "\n")
@@ -205,7 +206,7 @@ func getDashboardData(c *Config) tea.Cmd {
 			// Fetch installed list locally for this goroutine to avoid complex sync
 			installed := make(map[string]bool)
 			args := BuildAURCommand(c, "query-all", "-Qq")
-			if out, err := runner.Run(args[0], args[1:]...); err == nil {
+			if out, err := activeRunner.Run(args[0], args[1:]...); err == nil {
 				for _, name := range strings.Split(string(out), "\n") {
 					if n := strings.TrimSpace(name); n != "" {
 						installed[n] = true
@@ -372,7 +373,7 @@ func getDashboardData(c *Config) tea.Cmd {
 			estimatesTotal := make(map[confirmationType]string)
 
 			fetchDetailedEstimate := func(ct confirmationType, aurCount int, aurSaved int64, args ...string) {
-				out, _ := runner.Run("paccache", append([]string{"-d", "-c", pacmanCachePath}, args...)...)
+				out, _ := activeRunner.Run("paccache", append([]string{"-d", "-c", pacmanCachePath}, args...)...)
 				pacmanCount, pacmanSavedStr := parsePaccacheDryRunDetailed(string(out))
 				pacmanSavedBytes := parseSizeToBytes(pacmanSavedStr)
 

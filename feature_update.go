@@ -9,10 +9,11 @@ import (
 )
 
 // checkUpdates fetches available updates using the AUR helper
-func checkUpdates(c *Config) tea.Cmd {
+func checkUpdates(c *Config, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
+		activeRunner := getActiveRunner(r...)
 
-		foreignOut, err := runner.Run("pacman", "-Qm")
+		foreignOut, err := activeRunner.Run("pacman", "-Qm")
 		foreignPkgs := make(map[string]bool)
 		if err == nil {
 			for _, line := range strings.Split(string(foreignOut), "\n") {
@@ -27,7 +28,7 @@ func checkUpdates(c *Config) tea.Cmd {
 			}
 		}
 
-		repoOut, err := runner.Run("pacman", "-Sl")
+		repoOut, err := activeRunner.Run("pacman", "-Sl")
 		repoMap := make(map[string]string)
 		if err == nil {
 			for _, line := range strings.Split(string(repoOut), "\n") {
@@ -42,7 +43,7 @@ func checkUpdates(c *Config) tea.Cmd {
 		}
 
 		args := BuildAURCommand(c, "check-updates")
-		stdout, err := runner.Run(args[0], args[1:]...)
+		stdout, err := activeRunner.Run(args[0], args[1:]...)
 		if err != nil {
 
 			if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {

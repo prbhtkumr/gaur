@@ -10,15 +10,15 @@ import (
 
 // Commands
 // loadRepoPackages loads all packages from local pacman database
-func loadRepoPackages() tea.Cmd {
+func loadRepoPackages(r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
-
-		stdout, err := runner.Run("pacman", "-Sl")
+		activeRunner := getActiveRunner(r...)
+		stdout, err := activeRunner.Run("pacman", "-Sl")
 		if err != nil {
 			return repoPackagesMsg{err: err}
 		}
 
-		installedOut, err := runner.Run("pacman", "-Qq")
+		installedOut, err := activeRunner.Run("pacman", "-Qq")
 		if err != nil {
 			return repoPackagesMsg{err: fmt.Errorf("failed to get installed packages list: %w", err)}
 		}
@@ -93,12 +93,12 @@ func (m *model) filterAllPackages(query string) {
 		return
 	}
 
-	m.filtered = fuzzyFilter(allPackages, searchQuery)
+	m.filtered = fuzzyFilter(allPackages, searchQuery, m.getRunner())
 
 	m.matchIndices = computeAllMatchIndices(m.filtered, searchQuery)
 }
 
-func searchAUR(c *Config, query string) tea.Cmd {
+func searchAUR(c *Config, query string, r ...CommandRunner) tea.Cmd {
 	return func() tea.Msg {
 		if query == "" {
 			return aurSearchMsg{packages: []Package{}, query: query}
@@ -122,7 +122,7 @@ func searchAUR(c *Config, query string) tea.Cmd {
 		}
 
 		args := BuildAURCommand(c, "search", searchQuery)
-		stdout, err := runner.Run(args[0], args[1:]...)
+		stdout, err := getActiveRunner(r...).Run(args[0], args[1:]...)
 		duration := time.Since(start)
 		if err != nil {
 			// Some helpers return exit 1 when no packages are found.
