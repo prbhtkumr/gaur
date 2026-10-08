@@ -447,3 +447,24 @@ extra/vim 9.0-1
 	}
 }
 
+func TestHighlightMatchesConsecutiveRuns(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	tl := newTestThemeLoader()
+	theme, _ := tl.GetTheme("Catppuccin Mocha")
+	setTheme(theme)
+
+	s := "extra/firefox"
+	// match "fire" (indices 6, 7, 8, 9)
+	res := highlightMatches(s, []int{6, 7, 8, 9})
+	if lipgloss.Width(res) != len(s) {
+		t.Errorf("Width mismatch: got %d, want %d", lipgloss.Width(res), len(s))
+	}
+
+	pkg := Package{Source: "extra", Name: "firefox"}
+	resPkg := highlightMatchesWithSourceColor(pkg, []int{6, 7, 8, 9})
+	if lipgloss.Width(resPkg) != len(pkg.Source)+1+len(pkg.Name) {
+		t.Errorf("Width mismatch with source color: got %d, want %d", lipgloss.Width(resPkg), len(pkg.Source)+1+len(pkg.Name))
+	}
+}
+
+

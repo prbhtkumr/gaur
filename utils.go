@@ -375,12 +375,24 @@ func highlightMatches(s string, matchedIndices []int) string {
 	var result strings.Builder
 	result.Grow(len(s) * 2)
 	runes := []rune(s)
-	for i, r := range runes {
-		if _, matched := matchSet[i]; matched {
-			result.WriteString(matchHighlightStyle.Render(string(r)))
-		} else {
-			result.WriteRune(r)
+	start := 0
+	for start < len(runes) {
+		_, isMatch := matchSet[start]
+		end := start + 1
+		for end < len(runes) {
+			_, nextMatch := matchSet[end]
+			if nextMatch != isMatch {
+				break
+			}
+			end++
 		}
+		chunk := string(runes[start:end])
+		if isMatch {
+			result.WriteString(matchHighlightStyle.Render(chunk))
+		} else {
+			result.WriteString(chunk)
+		}
+		start = end
 	}
 	return result.String()
 }
@@ -408,21 +420,49 @@ func highlightMatchesWithSourceColor(pkg Package, matchedIndices []int) string {
 
 	slashIdx := len(pkg.Source)
 
+	type tokenKind int
+	const (
+		tokenNormal tokenKind = iota
+		tokenSource
+		tokenMatch
+	)
+
+	kindAt := func(i int) tokenKind {
+		if _, ok := matchSet[i]; ok {
+			return tokenMatch
+		}
+		if i < slashIdx && hasSourceColor {
+			return tokenSource
+		}
+		return tokenNormal
+	}
+
+	var sourceStyle lipgloss.Style
+	if hasSourceColor {
+		sourceStyle = lipgloss.NewStyle().Foreground(sourceColor)
+	}
+
 	var result strings.Builder
 	result.Grow(len(pkgStr) * 2)
 	runes := []rune(pkgStr)
 
-	for i, r := range runes {
-		if _, matched := matchSet[i]; matched {
-
-			result.WriteString(matchHighlightStyle.Render(string(r)))
-		} else if i < slashIdx && hasSourceColor {
-
-			result.WriteString(lipgloss.NewStyle().Foreground(sourceColor).Render(string(r)))
-		} else {
-
-			result.WriteRune(r)
+	start := 0
+	for start < len(runes) {
+		k := kindAt(start)
+		end := start + 1
+		for end < len(runes) && kindAt(end) == k {
+			end++
 		}
+		chunk := string(runes[start:end])
+		switch k {
+		case tokenMatch:
+			result.WriteString(matchHighlightStyle.Render(chunk))
+		case tokenSource:
+			result.WriteString(sourceStyle.Render(chunk))
+		default:
+			result.WriteString(chunk)
+		}
+		start = end
 	}
 	return result.String()
 }
