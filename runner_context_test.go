@@ -169,3 +169,47 @@ func TestParseInstalledPackages(t *testing.T) {
 		t.Errorf("expected ripgrep, got %+v", pkgs)
 	}
 }
+
+func TestRealCommandRunnerRunWithStderrScan(t *testing.T) {
+	r := RealCommandRunner{}
+	var lines []string
+	err := r.RunWithStderrScan("sh", func(line string) {
+		lines = append(lines, line)
+	}, "-c", "echo line1 >&2; echo line2 >&2")
+	if err != nil {
+		t.Fatalf("RunWithStderrScan failed: %v", err)
+	}
+	if len(lines) != 2 || lines[0] != "line1" || lines[1] != "line2" {
+		t.Errorf("Unexpected lines: %v", lines)
+	}
+}
+
+func TestMockCommandRunnerRunWithStderrScan(t *testing.T) {
+	var capturedName string
+	mock := &MockCommandRunner{
+		RunWithStderrScanFunc: func(name string, onLine func(string), args ...string) error {
+			capturedName = name
+			if onLine != nil {
+				onLine("progress 1")
+				onLine("progress 2")
+			}
+			return nil
+		},
+	}
+
+	var scanned []string
+	err := mock.RunWithStderrScan("sudo", func(line string) {
+		scanned = append(scanned, line)
+	}, "reflector")
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedName != "sudo" {
+		t.Errorf("expected sudo, got %s", capturedName)
+	}
+	if len(scanned) != 2 || scanned[0] != "progress 1" || scanned[1] != "progress 2" {
+		t.Errorf("expected scanned progress lines, got %v", scanned)
+	}
+}
+

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os/exec"
@@ -82,6 +83,7 @@ type CommandRunner interface {
 	RunWithInput(input string, name string, args ...string) ([]byte, error)
 	RunWithInputContext(ctx context.Context, input string, name string, args ...string) ([]byte, error)
 	Interactive(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd
+	RunWithStderrScan(name string, onLine func(string), args ...string) error
 }
 
 // RealCommandRunner implements CommandRunner using os/exec.
@@ -115,6 +117,25 @@ func (r RealCommandRunner) RunWithInputContext(ctx context.Context, input string
 	cmd := exec.CommandContext(ctx, name, args...) // #nosec G204 - executable and arguments are validated
 	cmd.Stdin = strings.NewReader(input)
 	return cmd.CombinedOutput()
+}
+
+// RunWithStderrScan executes a command and streams each line of stderr to onLine.
+func (r RealCommandRunner) RunWithStderrScan(name string, onLine func(string), args ...string) error {
+	cmd := exec.Command(name, args...) // #nosec G204 - executable and arguments are validated
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(stderr)
+	for scanner.Scan() {
+		if onLine != nil {
+			onLine(scanner.Text())
+		}
+	}
+	return cmd.Wait()
 }
 
 // filterResultMsg is delivered asynchronously after fuzzy filtering finishes.

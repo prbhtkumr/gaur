@@ -13,6 +13,7 @@ type MockCommandRunner struct {
 	RunWithInputFunc        func(input string, name string, args ...string) ([]byte, error)
 	RunWithInputContextFunc func(ctx context.Context, input string, name string, args ...string) ([]byte, error)
 	InteractiveFunc         func(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd
+	RunWithStderrScanFunc   func(name string, onLine func(string), args ...string) error
 }
 
 func (m *MockCommandRunner) Run(name string, args ...string) ([]byte, error) {
@@ -49,3 +50,12 @@ func (m *MockCommandRunner) Interactive(onExit func(error) tea.Msg, name string,
 	}
 	return nil
 }
+
+func (m *MockCommandRunner) RunWithStderrScan(name string, onLine func(string), args ...string) error {
+	if m.RunWithStderrScanFunc != nil {
+		return m.RunWithStderrScanFunc(name, onLine, args...)
+	}
+	_, err := m.Run(name, args...)
+	return err
+}
+
