@@ -9,10 +9,6 @@ import (
 )
 
 func TestLoadRepoPackagesWithMock(t *testing.T) {
-	// Save original runner and restore after test
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			if name == "pacman" && args[0] == "-Sl" {
@@ -24,7 +20,7 @@ func TestLoadRepoPackagesWithMock(t *testing.T) {
 			return nil, nil
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cmd := loadRepoPackages()
 	msg := cmd()
@@ -47,9 +43,6 @@ func TestLoadRepoPackagesWithMock(t *testing.T) {
 }
 
 func TestSearchAURWithMock(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			if name == "paru" && args[0] == "-Ss" {
@@ -58,7 +51,7 @@ func TestSearchAURWithMock(t *testing.T) {
 			return nil, nil
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cfg := DefaultConfig()
 	cmd := searchAUR(&cfg, "pkg")
@@ -79,9 +72,6 @@ func TestSearchAURWithMock(t *testing.T) {
 }
 
 func TestSearchAURFailure(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	expectedError := "network timeout: could not connect to AUR"
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
@@ -89,7 +79,7 @@ func TestSearchAURFailure(t *testing.T) {
 			return []byte(expectedError), fmt.Errorf("exit status 1")
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cfg := DefaultConfig()
 	cmd := searchAUR(&cfg, "pkg")
@@ -110,16 +100,13 @@ func TestSearchAURFailure(t *testing.T) {
 }
 
 func TestSearchAURNoResults(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			// Simulate no packages found (empty output, success)
 			return []byte(""), nil
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cfg := DefaultConfig()
 	cmd := searchAUR(&cfg, "nonexistent-pkg")
@@ -140,16 +127,13 @@ func TestSearchAURNoResults(t *testing.T) {
 }
 
 func TestSearchAURNoResultsExit1(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			// Simulate no packages found with exit 1 (common in some helpers)
 			return []byte(""), fmt.Errorf("exit status 1")
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cfg := DefaultConfig()
 	cmd := searchAUR(&cfg, "nonexistent-pkg")
@@ -210,9 +194,6 @@ func TestUpdateKeyboardNavigation(t *testing.T) {
 }
 
 func TestGetDashboardDataWithMock(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	mock := &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			switch name {
@@ -233,7 +214,7 @@ func TestGetDashboardDataWithMock(t *testing.T) {
 			return []byte(""), nil
 		},
 	}
-	runner = mock
+	setTestRunner(t, mock)
 
 	cfg := DefaultConfig()
 	cmd := getDashboardData(&cfg)
@@ -348,9 +329,6 @@ func TestConfirmationFlow(t *testing.T) {
 }
 
 func TestAURHelperIntegration(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	tests := []struct {
 		helper string
 	}{
@@ -367,7 +345,7 @@ func TestAURHelperIntegration(t *testing.T) {
 					return []byte(""), nil
 				},
 			}
-			runner = mock
+			setTestRunner(t, mock)
 
 			cfg := DefaultConfig()
 			cfg.Commands.AurHelper = tt.helper

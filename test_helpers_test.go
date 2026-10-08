@@ -29,6 +29,16 @@ func testModel(tb testing.TB, mode viewMode, cfg Config) *model {
 	return initialModel(mode, cfg, tl)
 }
 
+// setTestRunner temporarily overrides the global runner and restores it via t.Cleanup.
+func setTestRunner(tb testing.TB, r CommandRunner) {
+	tb.Helper()
+	oldRunner := runner
+	runner = r
+	tb.Cleanup(func() {
+		runner = oldRunner
+	})
+}
+
 // stripSGR removes only legitimate style sequences (ESC[...m)
 func stripSGR(s string) string {
 	var b strings.Builder

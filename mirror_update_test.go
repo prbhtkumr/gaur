@@ -25,12 +25,9 @@ func newTestModelMirror(tb testing.TB) *model {
 // --- handleMirrorOverlayKey tests ---
 
 func TestMirrorOverlayEnterTriggersFromAnyItem(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	// Mock: checkReflectorInstalled returns true, Interactive captures the call
 	var interactiveCalled bool
-	runner = &MockCommandRunner{
+	setTestRunner(t, &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			if name == "which" && len(args) > 0 && args[0] == "reflector" {
 				return []byte("/usr/bin/reflector"), nil
@@ -47,7 +44,7 @@ func TestMirrorOverlayEnterTriggersFromAnyItem(t *testing.T) {
 				return onExit(nil)
 			}
 		},
-	}
+	})
 
 	items := []MirrorOverlayItem{
 		mirrorItemSortBy,
@@ -79,17 +76,14 @@ func TestMirrorOverlayEnterTriggersFromAnyItem(t *testing.T) {
 }
 
 func TestMirrorOverlayEnterBlockedWhenReflectorMissing(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
-	runner = &MockCommandRunner{
+	setTestRunner(t, &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			if name == "which" {
 				return nil, fmt.Errorf("not found")
 			}
 			return nil, nil
 		},
-	}
+	})
 
 	m := newTestModelMirror(t)
 	m.mirrorSelectedItem = mirrorItemSortBy
@@ -172,10 +166,7 @@ func TestMirrorOverlayEscCloses(t *testing.T) {
 }
 
 func TestMirrorOverlayEnterSetsProgressState(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
-	runner = &MockCommandRunner{
+	setTestRunner(t, &MockCommandRunner{
 		RunFunc: func(name string, args ...string) ([]byte, error) {
 			if name == "which" {
 				return []byte("/usr/bin/reflector"), nil
@@ -185,7 +176,7 @@ func TestMirrorOverlayEnterSetsProgressState(t *testing.T) {
 		InteractiveFunc: func(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
 			return func() tea.Msg { return onExit(nil) }
 		},
-	}
+	})
 
 	m := newTestModelMirror(t)
 	m.mirrorConfig.Latest = 15
@@ -349,12 +340,9 @@ func TestWaitForMirrorProgressReadsCompletionMsg(t *testing.T) {
 // --- acquireSudoForMirror tests ---
 
 func TestAcquireSudoForMirrorCallsInteractive(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
 	var capturedName string
 	var capturedArgs []string
-	runner = &MockCommandRunner{
+	setTestRunner(t, &MockCommandRunner{
 		InteractiveFunc: func(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
 			capturedName = name
 			capturedArgs = args
@@ -362,7 +350,7 @@ func TestAcquireSudoForMirrorCallsInteractive(t *testing.T) {
 				return onExit(nil)
 			}
 		},
-	}
+	})
 
 	cmd := acquireSudoForMirror()
 	if cmd == nil {
@@ -388,16 +376,13 @@ func TestAcquireSudoForMirrorCallsInteractive(t *testing.T) {
 }
 
 func TestAcquireSudoForMirrorPropagatesError(t *testing.T) {
-	oldRunner := runner
-	defer func() { runner = oldRunner }()
-
-	runner = &MockCommandRunner{
+	setTestRunner(t, &MockCommandRunner{
 		InteractiveFunc: func(onExit func(error) tea.Msg, name string, args ...string) tea.Cmd {
 			return func() tea.Msg {
 				return onExit(fmt.Errorf("sudo: 3 incorrect password attempts"))
 			}
 		},
-	}
+	})
 
 	cmd := acquireSudoForMirror()
 	msg := cmd()

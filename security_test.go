@@ -21,9 +21,8 @@ type mockRunner = MockCommandRunner
 // ══════════════════════════════════════════════════════════════════════════════
 
 func TestCommandInjection(t *testing.T) {
-	// Save and restore runner
 	oldRunner := runner
-	defer func() { runner = oldRunner }()
+	t.Cleanup(func() { runner = oldRunner })
 
 	t.Run("PackageName_ShellMetachars_Rejected", func(t *testing.T) {
 		// Test various shell injection attempts in package names
@@ -226,7 +225,7 @@ func TestCommandInjection(t *testing.T) {
 
 func TestPrivilegeEscalation(t *testing.T) {
 	oldRunner := runner
-	defer func() { runner = oldRunner }()
+	t.Cleanup(func() { runner = oldRunner })
 
 	t.Run("InstallFlags_NoArbitraryExecution", func(t *testing.T) {
 		// Attacker tries to inject flags that could lead to code execution
@@ -744,11 +743,8 @@ cache_dir = "/tmp/$(whoami)"
 
 func TestSecurityEdgeCases(t *testing.T) {
 	t.Run("EmptyPackageList_NoExecution", func(t *testing.T) {
-		oldRunner := runner
-		defer func() { runner = oldRunner }()
-
 		mRunner := &mockRunner{}
-		runner = mRunner
+		setTestRunner(t, mRunner)
 
 		m := &model{
 			config: Config{
@@ -772,11 +768,8 @@ func TestSecurityEdgeCases(t *testing.T) {
 	})
 
 	t.Run("AllInvalidPackages_NoExecution", func(t *testing.T) {
-		oldRunner := runner
-		defer func() { runner = oldRunner }()
-
 		mRunner := &mockRunner{}
-		runner = mRunner
+		setTestRunner(t, mRunner)
 
 		m := &model{
 			config: Config{
@@ -938,10 +931,8 @@ func TestSecurityFixes(t *testing.T) {
 	})
 
 	t.Run("ExecuteCleanCache_NoInterpolation", func(t *testing.T) {
-		oldRunner := runner
 		mRunner := &mockRunner{}
-		runner = mRunner
-		defer func() { runner = oldRunner }()
+		setTestRunner(t, mRunner)
 
 		m := &model{
 			config: Config{
